@@ -1,0 +1,7 @@
+# Runtime dependencies — exact versions verified in this build.
+# Resolved on Python 3.12.11 (see BUILD_STATUS.md for environment).
+Django==5.2.17
+psycopg[binary]==3.3.5
+django-htmx==1.29.0
+gunicorn==23.0.0
+whitenoise==6.12.0

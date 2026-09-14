@@ -1,0 +1,2 @@
+# Production dependencies: runtime only.
+-r base.txt
