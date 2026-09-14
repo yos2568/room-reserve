@@ -1,0 +1,50 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Policy" %}{% endblock %}
+
+{% block staff_content %}
+  <section class="card">
+    <h2 class="text-base font-semibold">{% blocktrans with version=current.version %}Active policy version {{ version }}{% endblocktrans %}</h2>
+    <dl class="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+      <div><dt class="inline font-medium">{% trans "Horizon (days)" %}:</dt> <dd class="inline">{{ current.horizon_days }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Daily quota" %}:</dt> <dd class="inline">{{ current.daily_quota }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Check-in grace (minutes)" %}:</dt> <dd class="inline">{{ current.checkin_grace_minutes }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Strike window (days)" %}:</dt> <dd class="inline">{{ current.strike_window_days }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Strike threshold" %}:</dt> <dd class="inline">{{ current.strike_threshold }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Suspension (days)" %}:</dt> <dd class="inline">{{ current.auto_suspension_days }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Reminder lead (minutes)" %}:</dt> <dd class="inline">{{ current.reminder_lead_minutes }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Email domain" %}:</dt> <dd class="inline">{{ current.snapshot.institution_email_domain }}</dd></div>
+    </dl>
+    <p class="mt-2 text-xs text-slate-700">
+      {% blocktrans %}Existing bookings keep the values stored on the row, so a change here cannot retroactively invalidate a check-in that was already permitted. Recorded strikes keep the expiry they were given. The fixed hourly slot geometry cannot be edited.{% endblocktrans %}
+    </p>
+  </section>
+
+  <section class="card mt-4">
+    <h2 class="text-base font-semibold">{% trans "Create a new version" %}</h2>
+    <form method="post" action="{% url 'core:staff_create_policy_version' %}" class="mt-2 flex flex-wrap items-end gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="operation_key" value="{{ operation_key }}">
+      <div><label class="label" for="horizon_days">{% trans "Horizon (days)" %}</label><input class="field !w-28" id="horizon_days" name="horizon_days" type="number" min="1" max="60" value="{{ current.horizon_days }}"></div>
+      <div><label class="label" for="daily_quota">{% trans "Daily quota" %}</label><input class="field !w-28" id="daily_quota" name="daily_quota" type="number" min="1" max="10" value="{{ current.daily_quota }}"></div>
+      <div><label class="label" for="checkin_grace_minutes">{% trans "Grace (min)" %}</label><input class="field !w-28" id="checkin_grace_minutes" name="checkin_grace_minutes" type="number" min="1" max="59" value="{{ current.checkin_grace_minutes }}"></div>
+      <div><label class="label" for="strike_window_days">{% trans "Strike window (days)" %}</label><input class="field !w-28" id="strike_window_days" name="strike_window_days" type="number" min="1" max="365" value="{{ current.strike_window_days }}"></div>
+      <div><label class="label" for="strike_threshold">{% trans "Threshold" %}</label><input class="field !w-28" id="strike_threshold" name="strike_threshold" type="number" min="1" max="10" value="{{ current.strike_threshold }}"></div>
+      <div><label class="label" for="auto_suspension_days">{% trans "Suspension (days)" %}</label><input class="field !w-28" id="auto_suspension_days" name="auto_suspension_days" type="number" min="1" max="90" value="{{ current.auto_suspension_days }}"></div>
+      <div><label class="label" for="reminder_lead_minutes">{% trans "Reminder lead (min)" %}</label><input class="field !w-28" id="reminder_lead_minutes" name="reminder_lead_minutes" type="number" min="1" max="180" value="{{ current.reminder_lead_minutes }}"></div>
+      <div><label class="label" for="institution_email_domain">{% trans "Email domain" %}</label><input class="field" id="institution_email_domain" name="institution_email_domain" value="{{ current.snapshot.institution_email_domain }}"></div>
+      <div><label class="label" for="note">{% trans "Note" %}</label><input class="field" id="note" name="note"></div>
+      <button class="btn-primary" type="submit">{% trans "Create version" %}</button>
+    </form>
+  </section>
+
+  <section class="card mt-4">
+    <h2 class="text-base font-semibold">{% trans "Versions" %}</h2>
+    <ul class="mt-2 space-y-1 text-sm">
+      {% for version in versions %}
+        <li>v{{ version.version }} · {{ version.activated_at|date:"j F Y H:i" }} · {{ version.label }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endblock %}

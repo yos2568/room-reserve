@@ -1,0 +1,28 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h1 class="text-xl font-semibold">{% block staff_title %}{% trans "Staff" %}{% endblock %}</h1>
+  </div>
+
+  <nav aria-label="{% trans 'Staff sections' %}" class="mt-2 flex flex-wrap gap-2 text-sm">
+    <a class="btn-secondary" href="{% url 'core:staff_today' %}">{% trans "Today" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_users' %}">{% trans "Users" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_closures' %}">{% trans "Closures" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_calendar' %}">{% trans "Calendar" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_incidents' %}">{% trans "Incidents" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_roster' %}">{% trans "Roster" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_invitations' %}">{% trans "Invitations" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_outbox' %}">{% trans "Mail queue" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_audit' %}">{% trans "Audit" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_stats' %}">{% trans "Statistics" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_posters' %}">{% trans "Posters" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_policy' %}">{% trans "Policy" %}</a>
+    <a class="btn-secondary" href="{% url 'core:staff_admin' %}">{% trans "Configuration" %}</a>
+  </nav>
+
+  <div class="mt-4">
+    {% block staff_content %}{% endblock %}
+  </div>
+{% endblock %}

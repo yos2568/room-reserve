@@ -1,0 +1,35 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Account status" %}{% endblock %}
+
+{% block content %}
+  <h1 class="text-xl font-semibold">{% trans "Account status" %}</h1>
+
+  <div class="card mt-3 max-w-xl text-sm">
+    <dl class="space-y-1">
+      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Institutional ID" %}</dt><dd>{{ user.institutional_id }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Email" %}</dt><dd>{{ user.email }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Email verified" %}</dt><dd>{% if user.email_is_verified %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Eligibility" %}</dt><dd>{{ user.get_eligibility_display }}</dd></div>
+    </dl>
+
+    {% if user.eligibility_reason %}
+      <p class="mt-2 text-slate-700">{% blocktrans with reason=user.eligibility_reason %}Decision note: {{ reason }}{% endblocktrans %}</p>
+    {% endif %}
+
+    {% if suspension %}
+      <p class="mt-2 font-medium text-red-800">
+        {% blocktrans with end=suspension.ends_at|date:'j F Y H:i' %}Booking is suspended until {{ end }}.{% endblocktrans %}
+      </p>
+      <p class="mt-1 text-slate-700">
+        {% blocktrans %}You can sign in, read your history and contact staff. Reserving, checking in and using a room are blocked until the suspension ends.{% endblocktrans %}
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="mt-4 flex flex-wrap gap-2">
+    <a class="btn-secondary" href="{% url 'core:my_bookings' %}">{% trans "My bookings" %}</a>
+    <a class="btn-secondary" href="{% url 'core:help' %}">{% trans "Help" %}</a>
+  </div>
+{% endblock %}

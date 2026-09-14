@@ -1,0 +1,93 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Users" %}{% endblock %}
+
+{% block staff_content %}
+  <form method="get" class="card flex flex-wrap items-end gap-2">
+    <div>
+      <label class="label" for="q">{% trans "Search by ID, email or name" %}</label>
+      <input class="field" id="q" name="q" value="{{ query }}">
+    </div>
+    <button class="btn-secondary" type="submit">{% trans "Search" %}</button>
+  </form>
+
+  <div class="table-wrap mt-3">
+    <table class="w-full text-sm">
+      <thead><tr class="border-b border-slate-300">
+        <th scope="col" class="p-2 text-start">{% trans "ID" %}</th>
+        <th scope="col" class="p-2 text-start">{% trans "Name" %}</th>
+        <th scope="col" class="p-2 text-start">{% trans "Email" %}</th>
+        <th scope="col" class="p-2 text-start">{% trans "Eligibility" %}</th>
+        <th scope="col" class="p-2 text-start">{% trans "Sanction" %}</th>
+        <th scope="col" class="p-2 text-start">{% trans "Actions" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr class="border-b border-slate-200 align-top">
+            <td class="p-2">{{ row.user.institutional_id }}</td>
+            <td class="p-2">{{ row.user.display_name }}</td>
+            <td class="p-2">{{ row.user.email }}{% if not row.user.email_is_verified %} <span class="text-amber-700">(unverified)</span>{% endif %}</td>
+            <td class="p-2">{{ row.user.get_eligibility_display }}{% if not row.user.is_active %} · <span class="text-red-800">{% trans "inactive" %}</span>{% endif %}</td>
+            <td class="p-2">
+              {% if row.suspension %}
+                {{ row.suspension.get_source_display }}
+                {% if row.suspension.ends_at %}{% trans "until" %} {{ row.suspension.ends_at|date:"j M Y H:i" }}{% else %}{% trans "indefinite" %}{% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td class="p-2">
+              <details>
+                <summary class="cursor-pointer">{% trans "Manage" %}</summary>
+
+                <form method="post" action="{% url 'core:staff_record_violation' pk=row.user.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
+                  {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <label class="sr-only" for="note-{{ row.user.pk }}">{% trans "Note" %}</label>
+                  <input class="field !py-1" id="note-{{ row.user.pk }}" name="note" placeholder="{% trans 'Violation note' %}" required>
+                  <label class="flex items-center gap-1 text-xs"><input type="checkbox" name="counts_as_strike" checked> {% trans "counts as strike" %}</label>
+                  <button class="btn-secondary" type="submit">{% trans "Record violation" %}</button>
+                </form>
+
+                <form method="post" action="{% url 'core:staff_suspend' pk=row.user.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
+                  {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <input class="field !py-1" name="reason" placeholder="{% trans 'Suspension reason' %}" required>
+                  <label class="text-xs" for="ends-{{ row.user.pk }}">{% trans "until (blank = indefinite)" %}</label>
+                  <input class="field !py-1" id="ends-{{ row.user.pk }}" name="ends_at" type="datetime-local">
+                  <button class="btn-danger" type="submit">{% trans "Suspend" %}</button>
+                </form>
+
+                {% if row.suspension %}
+                  <form method="post" action="{% url 'core:staff_adjust_suspension' pk=row.suspension.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
+                    {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <input class="field !py-1" name="reason" placeholder="{% trans 'Adjustment reason' %}" required>
+                    <input class="field !py-1" name="ends_at" type="datetime-local">
+                    <button class="btn-secondary" type="submit">{% trans "Adjust end" %}</button>
+                  </form>
+                  <form method="post" action="{% url 'core:staff_lift' pk=row.suspension.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
+                    {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <input class="field !py-1" name="reason" placeholder="{% trans 'Lift reason' %}" required>
+                    <button class="btn-secondary" type="submit">{% trans "Lift suspension" %}</button>
+                  </form>
+                {% endif %}
+
+                <form method="post" action="{% url 'core:staff_deactivate' pk=row.user.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
+                  {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <input class="field !py-1" name="reason" placeholder="{% trans 'Deactivation reason' %}" required>
+                  <button class="btn-danger" type="submit">{% trans "Deactivate account" %}</button>
+                </form>
+
+                <p class="mt-2 text-xs text-slate-600">
+                  {% blocktrans %}Staff cannot grant superuser, change secrets or bypass booking rules.{% endblocktrans %}
+                </p>
+              </details>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

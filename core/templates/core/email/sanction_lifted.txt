@@ -1,0 +1,12 @@
+{% load i18n %}{% blocktrans %}Booking suspension lifted{% endblocktrans %}
+
+{% if automatic %}
+{% blocktrans with ends=ends_at %}The suspension ended at {{ ends }}. You can book again.{% endblocktrans %}
+{% else %}
+{% blocktrans with lifted=lifted_at %}The suspension was lifted at {{ lifted }}. You can book again.{% endblocktrans %}
+{% endif %}
+
+{% blocktrans %}Strikes already used for a suspension stay used, so they cannot cause a second suspension later.{% endblocktrans %}
+{% trans "Reason" %}: {{ reason }}{% if not reason %}{% trans "not given" %}{% endif %}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

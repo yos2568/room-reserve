@@ -1,0 +1,66 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Roster" %}{% endblock %}
+
+{% block staff_content %}
+  <section class="card">
+    <h2 class="text-base font-semibold">{% trans "Import the roster" %}</h2>
+    <p class="mt-1 text-xs text-slate-700">
+      {% blocktrans %}CSV columns: institutional_id, email (both required), then optionally name_th, name_en, program, instrument, year. Imports are all-or-nothing: a contradiction with an existing entry aborts the whole file rather than overwriting it.{% endblocktrans %}
+    </p>
+    <form method="post" action="{% url 'core:staff_import_roster' %}" enctype="multipart/form-data" class="mt-2 flex flex-wrap items-end gap-2">
+      {% csrf_token %}
+      <div>
+        <label class="label" for="file">{% trans "CSV file" %}</label>
+        <input class="field" id="file" name="file" type="file" accept=".csv,text/csv" required>
+      </div>
+      <div>
+        <label class="label" for="batch">{% trans "Batch label" %}</label>
+        <input class="field" id="batch" name="batch" placeholder="2026-intake">
+      </div>
+      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="dry_run" checked> {% trans "Dry run (validate only)" %}</label>
+      <button class="btn-primary" type="submit">{% trans "Import" %}</button>
+    </form>
+
+    {% if report %}
+      <div class="mt-3 card {% if report.errors %}border-red-700 bg-red-50{% else %}border-emerald-700 bg-emerald-50{% endif %}" role="status">
+        <p class="text-sm font-medium">{{ report.summary }}</p>
+        {% if report.errors %}
+          <ul class="mt-2 list-disc ps-5 text-sm">
+            {% for error in report.errors %}<li>{% trans "line" %} {{ error.line }}: {{ error.message }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="card mt-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 class="text-base font-semibold">{% blocktrans %}Roster entries ({{ active }} active of {{ total }}){% endblocktrans %}</h2>
+      <a class="btn-secondary" href="{% url 'core:staff_roster_export' %}">{% trans "Export CSV" %}</a>
+    </div>
+    <div class="table-wrap mt-2">
+      <table class="w-full text-sm">
+        <thead><tr class="border-b border-slate-300">
+          <th scope="col" class="p-2 text-start">{% trans "ID" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "Email" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "Name" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "Programme" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "Active" %}</th>
+        </tr></thead>
+        <tbody>
+          {% for entry in entries %}
+            <tr class="border-b border-slate-200">
+              <td class="p-2">{{ entry.institutional_id }}</td>
+              <td class="p-2">{{ entry.email }}</td>
+              <td class="p-2">{{ entry.name_th }}</td>
+              <td class="p-2">{{ entry.program }}</td>
+              <td class="p-2">{% if entry.is_active %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

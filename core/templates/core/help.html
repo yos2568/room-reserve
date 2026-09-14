@@ -1,0 +1,42 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Help" %}{% endblock %}
+
+{% block content %}
+  <h1 class="text-xl font-semibold">{% trans "Help" %}</h1>
+
+  <section class="card mt-4 max-w-3xl text-sm">
+    <h2 class="text-base font-semibold">{% trans "Booking a room later today or this week" %}</h2>
+    <p class="mt-1">{% trans "Open the availability page, choose a date, then choose Reserve on a free hour. The reservation exists immediately and appears under My bookings." %}</p>
+
+    <h2 class="mt-4 text-base font-semibold">{% trans "Using a room right now" %}</h2>
+    <p class="mt-1">{% trans "If the current hour is free, choose Use now. The session runs to the end of the hour. If you had booked this hour, check in instead." %}</p>
+
+    <h2 class="mt-4 text-base font-semibold">{% trans "Checking in" %}</h2>
+    <p class="mt-1">{% blocktrans with minutes=policy.grace_minutes %}Check-in is available from the start of the hour until {{ minutes }} minutes past it. Checking in means you confirm you are at the room. A reserved hour that is not checked in is released for other students and a strike is recorded.{% endblocktrans %}</p>
+
+    <h2 class="mt-4 text-base font-semibold">{% trans "Cancelling" %}</h2>
+    <p class="mt-1">{% trans "Cancel from My bookings before the hour starts. Cancelling gives the hour back and does not count against your daily limit. Cancelling within an hour of the start is recorded for reporting only." %}</p>
+
+    <h2 class="mt-4 text-base font-semibold">{% trans "Why can I not book?" %}</h2>
+    <ul class="mt-1 list-disc space-y-1 ps-5">
+      <li>{% trans "Your email address is not verified yet." %}</li>
+      <li>{% trans "Your account is waiting for staff approval, or was not matched to the roster." %}</li>
+      <li>{% trans "You have reached the daily limit." %}</li>
+      <li>{% trans "You already hold this hour or an adjacent hour." %}</li>
+      <li>{% trans "The room is closed, or the hour has already started." %}</li>
+      <li>{% trans "Booking is suspended on your account." %}</li>
+    </ul>
+
+    <h2 class="mt-4 text-base font-semibold">{% trans "Something went wrong" %}</h2>
+    <p class="mt-1">{% trans "If a booking, close or anything else goes wrong during a service problem, staff can record the incident and remove any strike that should not apply. Contact the office with the date and time." %}</p>
+  </section>
+
+  <section class="card mt-4 max-w-3xl text-sm">
+    <h2 class="text-base font-semibold">{% trans "Contact" %}</h2>
+    <p class="mt-1">
+      {% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}{{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}
+    </p>
+  </section>
+{% endblock %}

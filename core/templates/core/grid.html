@@ -1,0 +1,82 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Availability" %}{% endblock %}
+
+{% block content %}
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-semibold">{% trans "Practice room availability" %}</h1>
+      <p class="text-sm text-slate-700">
+        {% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Monday to Friday, {{ open }}:00–{{ close }}:00. Each booking is one hour.{% endblocktrans %}
+      </p>
+    </div>
+
+    {# Date navigation is a plain GET link, so it works with JavaScript disabled. #}
+    <nav aria-label="{% trans 'Choose a date' %}" class="flex items-center gap-2">
+      {% if prev_date %}
+        <a class="btn-secondary" href="?date={{ prev_date|date:'Y-m-d' }}">← {% trans "Previous day" %}</a>
+      {% endif %}
+      <span class="text-sm font-medium">
+        {{ local_date|date:"j F Y" }}{% if is_today %} · {% trans "today" %}{% endif %}
+      </span>
+      {% if next_date %}
+        <a class="btn-secondary" href="?date={{ next_date|date:'Y-m-d' }}">{% trans "Next day" %} →</a>
+      {% endif %}
+    </nav>
+  </div>
+
+  <div class="mt-3 flex flex-wrap gap-2 text-xs">
+    {% for day in days %}
+      <a class="rounded border px-2 py-2 {% if day.is_selected %}border-brand-600 bg-brand-50 font-semibold{% else %}border-slate-300 bg-white{% endif %}"
+         href="?date={{ day.date|date:'Y-m-d' }}"
+         {% if day.is_selected %}aria-current="date"{% endif %}>
+        {{ day.date|date:"D j M" }}
+      </a>
+    {% endfor %}
+  </div>
+
+  {% if user.is_authenticated %}
+    <p class="card mt-3 text-sm">
+      {% if user.eligibility == 'PENDING' %}
+        <span class="font-medium text-amber-700">{% trans "Your account is waiting for staff approval; you cannot book yet." %}</span>
+      {% elif not user.email_is_verified %}
+        <span class="font-medium text-amber-700">{% trans "Verify your email address before booking." %}</span>
+      {% else %}
+        {% trans "You can view availability and reserve free hours." %}
+      {% endif %}
+    </p>
+  {% else %}
+    <p class="card mt-3 text-sm">
+      {% trans "Availability is public. Reserving or using a room needs an account." %}
+      <a class="underline" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
+      ·
+      <a class="underline" href="{% url 'core:register' %}">{% trans "Register" %}</a>
+    </p>
+  {% endif %}
+
+  <div class="mt-4">
+    {% include "core/partials/grid_table.html" %}
+  </div>
+
+  <p class="mt-3 text-xs text-slate-600">
+    {% trans "This page refreshes every 30 seconds. A change still has to be accepted by the server, so availability is a snapshot rather than a guarantee." %}
+  </p>
+
+  {# Progressive enhancement only: every action above is a plain link or form. #}
+  <script>
+    (function () {
+      var activeId = null;
+      document.body.addEventListener('htmx:beforeSwap', function () {
+        var el = document.activeElement;
+        activeId = el && el.id ? el.id : null;
+      });
+      document.body.addEventListener('htmx:afterSwap', function () {
+        if (!activeId) return;
+        var restored = document.getElementById(activeId);
+        if (restored && typeof restored.focus === 'function') restored.focus();
+        activeId = null;
+      });
+    })();
+  </script>
+{% endblock %}

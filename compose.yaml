@@ -1,0 +1,92 @@
+# Room Reserve — production-shaped topology (V3 section 2).
+#
+#   web        gunicorn, the only service that talks to students and staff
+#   db         PostgreSQL 16, never published to the host
+#   scheduler  runs `manage.py tick` once a minute from the SAME image as web
+#   caddy      TLS termination and reverse proxy
+#
+# Local development merges compose.override.yaml automatically; that adds the
+# private mail catcher, publishes the database on loopback only, and runs
+# Django's development server instead of gunicorn.
+#
+# The database uses a NAMED volume on purpose. The project directory lives on an
+# exFAT filesystem, which carries no POSIX ownership or permission bits, and
+# PostgreSQL refuses to initialise a data directory it cannot chmod to 0700.
+
+name: roomreserve
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      PYTHON_VERSION: "3.12.11"
+  image: roomreserve-app:${APP_TAG:-local}
+  env_file:
+    - .env
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:16.4-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-roomreserve}
+      POSTGRES_USER: ${POSTGRES_USER:-roomreserve}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      # Deterministic collation so index ordering matches between machines.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  web:
+    <<: *app
+    command: ["gunicorn", "roomreserve.wsgi:application", "--config", "gunicorn.conf.py"]
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz/', timeout=5).status==200 else 1)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  scheduler:
+    <<: *app
+    # Run migrations once as a release step, not on every worker startup, so this
+    # service only runs the tick loop (V3 section 11).
+    command: ["python", "-m", "core.scheduler"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.8.4-alpine
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

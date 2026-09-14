@@ -1,0 +1,44 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Configuration" %}{% endblock %}
+
+{% block staff_content %}
+  <section class="card">
+    <p class="text-sm">
+      {% blocktrans %}This page shows configuration you can act on. Direct editing of lifecycle, deadline, ownership and sanction fields is intentionally not offered here: every operational change goes through a service so the lock, the audit trail and the rule checks all apply.{% endblocktrans %}
+    </p>
+    <dl class="mt-3 grid gap-1 text-sm sm:grid-cols-2">
+      <div><dt class="inline font-medium">{% trans "Accounts" %}:</dt> <dd class="inline">{{ counts.users }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Bookings" %}:</dt> <dd class="inline">{{ counts.bookings }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Violations" %}:</dt> <dd class="inline">{{ counts.violations }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Suspensions" %}:</dt> <dd class="inline">{{ counts.suspensions }}</dd></div>
+    </dl>
+    {% if is_maintainer %}
+      <p class="mt-3 text-sm">
+        {% trans "As maintainer you also have the Django admin at" %} <a class="underline" href="/maintainer/">/maintainer/</a>.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="card mt-4">
+    <h2 class="text-base font-semibold">{% trans "Rooms" %}</h2>
+    <ul class="mt-2 space-y-2 text-sm">
+      {% for room in rooms %}
+        <li>
+          {{ room }}{% if not room.is_active %} · <span class="text-red-800">{% trans "out of service" %}</span>{% endif %}
+          {% if room.is_active %}
+            <form method="post" action="{% url 'core:staff_deactivate_room' pk=room.pk %}" class="mt-1 flex flex-wrap items-center gap-1">
+              {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+              <input class="field !py-1" name="reason" placeholder="{% trans 'Reason' %}" required>
+              <button class="btn-danger" type="submit">{% trans "Take out of service" %}</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="mt-2 text-xs text-slate-700">
+      {% blocktrans %}Taking a room out of service cancels its scheduled bookings without penalty and flags any session in use for review.{% endblocktrans %}
+    </p>
+  </section>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Calendar overrides" %}{% endblock %}
+
+{% block staff_content %}
+  <section class="card">
+    <h2 class="text-base font-semibold">{% trans "Set a date override" %}</h2>
+    <p class="mt-1 text-xs text-slate-700">
+      {% blocktrans %}An override replaces the weekly timetable for one date. An explicit closure always wins over an override, and the fixed hourly slot geometry cannot be changed.{% endblocktrans %}
+    </p>
+    <form method="post" action="{% url 'core:staff_set_override' %}" class="mt-2 flex flex-wrap items-end gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="operation_key" value="{{ operation_key }}">
+      <div>
+        <label class="label" for="local_date">{% trans "Date" %}</label>
+        <input class="field" id="local_date" name="local_date" type="date" required>
+      </div>
+      <div>
+        <label class="label" for="open_hour">{% trans "Open from" %}</label>
+        <input class="field !w-24" id="open_hour" name="open_hour" type="number" min="0" max="23" value="8">
+      </div>
+      <div>
+        <label class="label" for="close_hour">{% trans "Close at (exclusive)" %}</label>
+        <input class="field !w-24" id="close_hour" name="close_hour" type="number" min="1" max="24" value="20">
+      </div>
+      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="is_open" checked> {% trans "Open this date" %}</label>
+      <div>
+        <label class="label" for="reason">{% trans "Reason" %}</label>
+        <input class="field" id="reason" name="reason">
+      </div>
+      <button class="btn-primary" type="submit">{% trans "Save override" %}</button>
+    </form>
+  </section>
+
+  <section class="card mt-4">
+    <h2 class="text-base font-semibold">{% trans "Existing overrides" %}</h2>
+    {% if overrides %}
+      <ul class="mt-2 space-y-1 text-sm">
+        {% for override in overrides %}<li>{{ override }}</li>{% endfor %}
+      </ul>
+    {% else %}
+      <p class="mt-2 text-sm">{% trans "None yet." %}</p>
+    {% endif %}
+  </section>
+{% endblock %}

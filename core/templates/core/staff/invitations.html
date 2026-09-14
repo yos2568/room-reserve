@@ -1,0 +1,70 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Invitations" %}{% endblock %}
+
+{% block staff_content %}
+  {% if issued %}
+    <div class="card mb-3 border-emerald-700 bg-emerald-50" role="status">
+      <p class="text-sm font-medium">{% blocktrans with id=issued.institutional_id %}Activation link for {{ id }}:{% endblocktrans %}</p>
+      <p class="mt-1 break-all text-sm">{{ site_base_url|default:"" }}{{ issued.link }}</p>
+      <p class="mt-1 text-xs text-slate-700">{% trans "Shown once. The link is also emailed, and is never written to logs." %}</p>
+    </div>
+  {% endif %}
+
+  <section class="card">
+    <h2 class="text-base font-semibold">{% trans "Invite an account" %}</h2>
+    <p class="mt-1 text-xs text-slate-700">
+      {% blocktrans %}Staff identities are supplied by the department owner. This cannot grant superuser, and re-inviting never resets an existing password.{% endblocktrans %}
+    </p>
+    <form method="post" action="{% url 'core:staff_create_invitation' %}" class="mt-2 flex flex-wrap items-end gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="operation_key" value="{{ operation_key }}">
+      <div>
+        <label class="label" for="institutional_id">{% trans "Institutional ID" %}</label>
+        <input class="field" id="institutional_id" name="institutional_id" required>
+      </div>
+      <div>
+        <label class="label" for="email">{% trans "Email" %}</label>
+        <input class="field" id="email" name="email" type="email" required>
+      </div>
+      <div>
+        <label class="label" for="name">{% trans "Name" %}</label>
+        <input class="field" id="name" name="name">
+      </div>
+      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="staff"> {% trans "Operational staff" %}</label>
+      <button class="btn-primary" type="submit">{% trans "Send invitation" %}</button>
+    </form>
+  </section>
+
+  <section class="card mt-4">
+    <h2 class="text-base font-semibold">{% trans "Issued invitations" %}</h2>
+    <div class="table-wrap mt-2">
+      <table class="w-full text-sm">
+        <thead><tr class="border-b border-slate-300">
+          <th scope="col" class="p-2 text-start">{% trans "Account" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "Purpose" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "Generation" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "Expires" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "State" %}</th>
+        </tr></thead>
+        <tbody>
+          {% for invitation in invitations %}
+            <tr class="border-b border-slate-200">
+              <td class="p-2">{{ invitation.user.institutional_id }}</td>
+              <td class="p-2">{{ invitation.get_purpose_display }}</td>
+              <td class="p-2">{{ invitation.generation }}</td>
+              <td class="p-2">{{ invitation.expires_at|date:"j M Y H:i" }}</td>
+              <td class="p-2">
+                {% if invitation.used_at %}{% trans "Used" %}
+                {% elif invitation.revoked_at %}{% trans "Superseded" %}
+                {% elif invitation.expires_at <= moment %}{% trans "Expired" %}
+                {% else %}{% trans "Active" %}{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

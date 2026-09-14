@@ -1,0 +1,35 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Register" %}{% endblock %}
+
+{% block content %}
+  <h1 class="text-xl font-semibold">{% trans "Register" %}</h1>
+  <p class="mt-1 max-w-2xl text-sm text-slate-700">
+    {% blocktrans %}Use your institutional ID and institutional email address. You will receive a link to confirm the address, then choose a password. Membership of the department is checked against the roster; an email address alone does not establish it.{% endblocktrans %}
+  </p>
+
+  <form method="post" class="card mt-4 max-w-xl space-y-3">
+    {% csrf_token %}
+    <div>
+      <label class="label" for="id_name">{% trans "Full name" %}</label>
+      <input class="field" id="id_name" name="name" required value="{{ form.name|default:'' }}" autocomplete="name">
+    </div>
+    <div>
+      <label class="label" for="id_institutional_id">{% trans "Institutional ID" %}</label>
+      <input class="field" id="id_institutional_id" name="institutional_id" required
+             value="{{ form.institutional_id|default:'' }}" autocomplete="username">
+    </div>
+    <div>
+      <label class="label" for="id_email">{% trans "Institutional email" %}</label>
+      <input class="field" id="id_email" name="email" type="email" required
+             value="{{ form.email|default:'' }}" autocomplete="email">
+      <p class="mt-1 text-xs text-slate-600">{% blocktrans with domain=policy.snapshot.institution_email_domain %}Must end with {{ domain }}{% endblocktrans %}</p>
+    </div>
+    <button class="btn-primary" type="submit">{% trans "Create account" %}</button>
+  </form>
+
+  <p class="mt-3 text-sm">
+    {% trans "Already registered?" %} <a class="underline" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
+  </p>
+{% endblock %}

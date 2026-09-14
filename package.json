@@ -1,0 +1,13 @@
+{
+  "name": "roomreserve-assets",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Locally compiled Tailwind CSS for the Room Reserve app. Not a runtime dependency.",
+  "scripts": {
+    "build:css": "tailwindcss -i ./tailwind/input.css -o ./core/static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./tailwind/input.css -o ./core/static/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}

@@ -1,0 +1,16 @@
+{% load i18n %}{% blocktrans %}Practice room booked{% endblocktrans %}
+
+{% blocktrans with room=room_label date=slot_start_display %}Room {{ room }} on {{ date }}{% endblocktrans %}
+
+{% if source == "WALK_IN" %}
+{% blocktrans %}You confirmed you are at the room now.{% endblocktrans %}
+{% blocktrans with minutes=remaining_minutes %}Time remaining in this hour: {{ minutes }} minutes.{% endblocktrans %}
+{% else %}
+{% blocktrans with deadline=deadline_local %}Check in at the room between the start of the hour and {{ deadline }}.{% endblocktrans %}
+{% blocktrans %}If you do not check in, the room is released to other students and a strike is recorded.{% endblocktrans %}
+{% endif %}
+
+{% blocktrans %}The session ends at the end of the hour. There is no extra hour and no early self-checkout.{% endblocktrans %}
+{% trans "Booking reference" %}: {{ booking_id }}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

@@ -1,0 +1,21 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Link problem" %}{% endblock %}
+
+{% block content %}
+  <div class="card max-w-xl border-amber-600 bg-amber-50" role="alert">
+    <h1 class="text-lg font-semibold">
+      {% if purpose == "invitation" %}{% trans "This invitation cannot be used" %}{% else %}{% trans "This link cannot be used" %}{% endif %}
+    </h1>
+    <p class="mt-2 text-sm">{{ outcome.message }}</p>
+    <p class="mt-2 text-sm text-slate-700">
+      {% blocktrans %}Links are single use and expire. If you need a new one, ask the department office, or register again with the same details.{% endblocktrans %}
+    </p>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <a class="btn-secondary" href="{% url 'core:register' %}">{% trans "Register again" %}</a>
+      <a class="btn-secondary" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
+      <a class="btn-secondary" href="{% url 'core:password_reset' %}">{% trans "Reset password" %}</a>
+    </div>
+  </div>
+{% endblock %}

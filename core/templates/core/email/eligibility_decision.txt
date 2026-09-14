@@ -1,0 +1,11 @@
+{% load i18n %}{% blocktrans %}Your Room Reserve account decision{% endblocktrans %}
+
+{% if decision == "APPROVED" %}
+{% blocktrans %}Your account is approved and you can book practice rooms.{% endblocktrans %}
+{% else %}
+{% blocktrans %}Your account was not approved for booking. You can still sign in, read this message and contact the office.{% endblocktrans %}
+{% endif %}
+
+{% trans "Decision note" %}: {{ reason }}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

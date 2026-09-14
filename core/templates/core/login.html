@@ -1,0 +1,29 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Sign in" %}{% endblock %}
+
+{% block content %}
+  <h1 class="text-xl font-semibold">{% trans "Sign in" %}</h1>
+
+  <form method="post" class="card mt-4 max-w-xl space-y-3">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <div>
+      <label class="label" for="id_institutional_id">{% trans "Institutional ID" %}</label>
+      <input class="field" id="id_institutional_id" name="institutional_id" required
+             autocomplete="username" value="{{ institutional_id|default:'' }}">
+    </div>
+    <div>
+      <label class="label" for="id_password">{% trans "Password" %}</label>
+      <input class="field" id="id_password" name="password" type="password" required autocomplete="current-password">
+    </div>
+    <button class="btn-primary" type="submit">{% trans "Sign in" %}</button>
+  </form>
+
+  <p class="mt-3 text-sm">
+    <a class="underline" href="{% url 'core:password_reset' %}">{% trans "Forgot your password?" %}</a>
+    ·
+    <a class="underline" href="{% url 'core:register' %}">{% trans "Register" %}</a>
+  </p>
+{% endblock %}

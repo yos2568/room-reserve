@@ -1,0 +1,39 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Privacy notice" %}{% endblock %}
+
+{% block content %}
+  <h1 class="text-xl font-semibold">{% trans "Privacy notice" %}</h1>
+  <p class="mt-2 max-w-3xl rounded border border-amber-600 bg-amber-50 p-3 text-sm" role="status">
+    {% blocktrans %}Draft. The faculty must approve the data-handling basis, this notice and the retention periods before the system is used for real. This page is not a claim of legal compliance.{% endblocktrans %}
+  </p>
+
+  <section class="card mt-4 max-w-3xl text-sm">
+    <h2 class="text-base font-semibold">{% trans "What is collected" %}</h2>
+    <ul class="mt-1 list-disc space-y-1 ps-5">
+      <li>{% trans "Your institutional ID, institutional email address and name." %}</li>
+      <li>{% trans "Your bookings, check-ins, cancellations and whether a room was used." %}</li>
+      <li>{% trans "Violations, strikes and suspensions, with the reason and the staff member who recorded them." %}</li>
+      <li>{% trans "An audit trail of operational actions, including which account performed them." %}</li>
+    </ul>
+
+    <h2 class="mt-4 text-base font-semibold">{% trans "What is not collected" %}</h2>
+    <ul class="mt-1 list-disc space-y-1 ps-5">
+      <li>{% trans "No location tracking and no device fingerprinting." %}</li>
+      <li>{% trans "A static QR code records an account action only; it is not treated as proof of physical presence." %}</li>
+      <li>{% trans "The public availability page contains no student identities." %}</li>
+    </ul>
+
+    <h2 class="mt-4 text-base font-semibold">{% trans "Retention" %}</h2>
+    <p class="mt-1">{% blocktrans %}The proposed period for identifiable records is one academic year plus any documented dispute hold, with backups kept for 30 days. Nothing is deleted automatically under this unendorsed default. The 60-day history shown in the application is a display limit, not a deletion policy.{% endblocktrans %}</p>
+
+    <h2 class="mt-4 text-base font-semibold">{% trans "Your options" %}</h2>
+    <p class="mt-1">{% trans "You can ask the department office to correct your details, to deactivate your account, or for a copy of the records held about you. Account deactivation keeps booking and sanction history so that room records stay accurate." %}</p>
+
+    <h2 class="mt-4 text-base font-semibold">{% trans "Contact" %}</h2>
+    <p class="mt-1">
+      {% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}{{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}
+    </p>
+  </section>
+{% endblock %}

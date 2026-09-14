@@ -1,0 +1,10 @@
+{% load i18n %}{% blocktrans %}Confirm your Room Reserve email address{% endblocktrans %}
+
+{% blocktrans with id=recipient.institutional_id %}Institutional ID: {{ id }}{% endblocktrans %}
+
+{% blocktrans %}Open this link to confirm your email address and choose a password:{% endblocktrans %}
+{{ site_base_url }}{% url 'core:verify_email' token=token %}
+
+{% blocktrans %}The link is single use and expires. If you did not register, you can ignore this message.{% endblocktrans %}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

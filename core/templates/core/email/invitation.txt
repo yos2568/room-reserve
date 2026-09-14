@@ -1,0 +1,8 @@
+{% load i18n %}{% blocktrans %}Your Room Reserve invitation{% endblocktrans %}
+
+{% blocktrans %}The department has created an account for you. Open this link to choose your password:{% endblocktrans %}
+{{ site_base_url }}{% url 'core:accept_invitation' token=token %}
+
+{% blocktrans %}The link is single use and expires. A newer invitation replaces this one.{% endblocktrans %}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

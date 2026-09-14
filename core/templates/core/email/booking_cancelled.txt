@@ -1,0 +1,16 @@
+{% load i18n %}{% blocktrans %}Practice room booking cancelled{% endblocktrans %}
+
+{% blocktrans with room=room_label date=slot_start_display %}Room {{ room }} on {{ date }}{% endblocktrans %}
+{% trans "Reason" %}: {{ reason }}{% if not reason %}{% trans "not given" %}{% endif %}
+
+{% if reason == "SUSPENSION" %}
+{% blocktrans %}This booking was cancelled because a suspension took effect. No additional penalty applies to the cancellation.{% endblocktrans %}
+{% elif reason == "CLOSURE" %}
+{% blocktrans %}The room was closed during this period. No penalty applies.{% endblocktrans %}
+{% elif reason == "SERVICE_INCIDENT" %}
+{% blocktrans %}A service problem was recorded for this period. No penalty applies.{% endblocktrans %}
+{% elif reason == "ROOM_DEACTIVATED" %}
+{% blocktrans %}The room was taken out of service. No penalty applies.{% endblocktrans %}
+{% endif %}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

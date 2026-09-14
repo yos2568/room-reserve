@@ -1,0 +1,9 @@
+{% load i18n %}{% blocktrans %}Reminder: your practice room booking{% endblocktrans %}
+
+{% blocktrans with room=room_label date=slot_start_display %}Room {{ room }} on {{ date }}{% endblocktrans %}
+{% blocktrans with deadline=deadline_local %}Check in by {{ deadline }} or the room is released.{% endblocktrans %}
+
+{% blocktrans %}If you cannot attend, cancel from My bookings before the hour starts.{% endblocktrans %}
+{% trans "Booking reference" %}: {{ booking_id }}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

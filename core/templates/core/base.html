@@ -1,0 +1,92 @@
+{% load i18n static %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'th' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% trans "Room Reserve" %}{% endblock %} · {% trans "Practice room booking" %}</title>
+  <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+  {# htmx is vendored locally: the deployment must not depend on a CDN. #}
+  <script src="{% static 'js/htmx.min.js' %}" defer></script>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:shadow">
+    {% trans "Skip to main content" %}
+  </a>
+
+  <header class="border-b border-slate-300 bg-white">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-3 py-3">
+      <a href="{% url 'core:home' %}" class="text-base font-semibold text-brand-700">{% trans "Room Reserve" %}</a>
+      <nav aria-label="{% trans 'Main navigation' %}" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:home' %}">{% trans "Availability" %}</a>
+        {% if user.is_authenticated %}
+          <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:my_bookings' %}">{% trans "My bookings" %}</a>
+          {% if user.is_operational_staff or user.is_superuser %}
+            <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:staff_today' %}">{% trans "Staff" %}</a>
+          {% endif %}
+        {% endif %}
+        <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:rules' %}">{% trans "Rules" %}</a>
+        <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:help' %}">{% trans "Help" %}</a>
+        <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:privacy' %}">{% trans "Privacy" %}</a>
+      </nav>
+
+      <div class="ms-auto flex flex-wrap items-center gap-2 text-sm">
+        {# Language toggle: a plain GET form, so it works without JavaScript. #}
+        <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <label class="sr-only" for="language-select">{% trans "Language" %}</label>
+          <select id="language-select" name="language" class="rounded border border-slate-400 px-2 py-1">
+            <option value="th" {% if LANGUAGE_CODE == 'th' %}selected{% endif %}>ไทย</option>
+            <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+          </select>
+          <button type="submit" class="btn-secondary">{% trans "Switch" %}</button>
+        </form>
+
+        {% if user.is_authenticated %}
+          <span class="text-slate-600">{{ user.display_name }}</span>
+          <form method="post" action="{% url 'core:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary">{% trans "Sign out" %}</button>
+          </form>
+        {% else %}
+          <a class="btn-secondary" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
+          <a class="btn-primary" href="{% url 'core:register' %}">{% trans "Register" %}</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  {# Result messages are announced to assistive technology, not just coloured. #}
+  {% if messages %}
+    <div class="mx-auto max-w-7xl px-3 pt-3">
+      {% for message in messages %}
+        <div class="card mb-2 {% if message.tags == 'error' %}border-red-700 bg-red-50{% elif message.tags == 'warning' %}border-amber-600 bg-amber-50{% else %}border-emerald-700 bg-emerald-50{% endif %}"
+             role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}"
+             aria-live="{% if message.tags == 'error' %}assertive{% else %}polite{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main id="main" class="mx-auto max-w-7xl px-3 py-4">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="mt-8 border-t border-slate-300 bg-white">
+    <div class="mx-auto max-w-7xl px-3 py-4 text-sm text-slate-700">
+      <p>
+        {% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}
+      </p>
+      <p class="mt-1">
+        {% blocktrans %}Western Music Department, Faculty of Fine and Applied Arts, Chulalongkorn University{% endblocktrans %}
+      </p>
+      <p class="mt-1">
+        {% url 'core:privacy' as privacy_url %}
+        {% blocktrans %}Dates use the Gregorian calendar (ค.ศ.). See the privacy notice for how data is handled.{% endblocktrans %}
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

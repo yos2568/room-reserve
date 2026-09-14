@@ -1,0 +1,27 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Statistics" %}{% endblock %}
+
+{% block staff_content %}
+  <section class="card">
+    <p class="text-sm">{% blocktrans with since=since|date:"j F Y" %}Counts cover bookings since {{ since }}.{% endblocktrans %}</p>
+    <a class="btn-primary mt-2" href="{% url 'core:staff_stats_export' %}">{% trans "Download CSV" %}</a>
+    <p class="mt-2 text-xs text-slate-600">
+      {% blocktrans %}Exported cells that begin with a formula character are neutralised so a spreadsheet cannot execute them.{% endblocktrans %}
+    </p>
+  </section>
+
+  <div class="table-wrap mt-3">
+    <table class="w-full text-sm">
+      <thead><tr class="border-b border-slate-300">
+        <th scope="col" class="p-2 text-start">{% trans "Room" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for room in rooms %}
+          <tr class="border-b border-slate-200"><td class="p-2">{{ room }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

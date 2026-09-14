@@ -1,0 +1,25 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "QR posters" %}{% endblock %}
+
+{% block staff_content %}
+  <section class="card">
+    <p class="text-sm">
+      {% blocktrans %}One A4 poster per active room, each carrying the room label, its short URL, instructions and the support contact. Print at 100% and fix to the matching door.{% endblocktrans %}
+    </p>
+    <a class="btn-primary mt-2" href="{% url 'core:staff_poster_sheet' %}">{% trans "Open the printable sheet" %}</a>
+  </section>
+
+  <section class="card mt-4">
+    <h2 class="text-base font-semibold">{% trans "Room targets" %}</h2>
+    <ul class="mt-2 space-y-1 text-sm">
+      {% for room in rooms %}
+        <li>{{ room }} → <span class="break-all">/r/{{ room.pk }}/</span></li>
+      {% endfor %}
+    </ul>
+    <p class="mt-2 text-xs text-slate-700">
+      {% blocktrans %}That a QR code encodes the right URL can be checked here. Whether the printed sheet is legible and hung on the correct door is a physical check made during deployment, not something this page can prove.{% endblocktrans %}
+    </p>
+  </section>
+{% endblock %}

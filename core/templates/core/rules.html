@@ -1,0 +1,51 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Rules" %}{% endblock %}
+
+{% block content %}
+  <h1 class="text-xl font-semibold">{% trans "Practice room rules" %}</h1>
+  <p class="mt-1 max-w-3xl text-sm text-slate-700">
+    {% blocktrans %}This is a summary of the department's practice room regulation. The application policy below is set by the department and is not part of the regulation itself.{% endblocktrans %}
+  </p>
+
+  <section class="card mt-4 max-w-3xl">
+    <h2 class="text-base font-semibold">{% trans "From the regulation" %}</h2>
+    <ul class="mt-2 list-disc space-y-1 ps-5 text-sm">
+      <li>{% trans "One booking is one hour." %}</li>
+      <li>{% blocktrans with quota=policy.daily_quota %}A person may hold at most {{ quota }} bookings in a day, across all rooms.{% endblocktrans %}</li>
+      <li>{% trans "Use the room at the booked time and finish on time." %}</li>
+      <li>{% trans "Do not book on behalf of someone else and do not reserve a room you will not use." %}</li>
+      <li>{% blocktrans with minutes=policy.grace_minutes %}Arrive within {{ minutes }} minutes of the start. After that the booking is forfeited and other students may take the remaining time.{% endblocktrans %}</li>
+      <li>{% trans "Cancel promptly when you cannot attend." %}</li>
+      <li>{% trans "Musical practice includes instruments, voice and ensemble. Unrelated activities are not allowed." %}</li>
+      <li>{% trans "Clean up, return equipment, do not remove equipment without permission, and report damage." %}</li>
+      <li>{% trans "No food. Drinks are allowed in securely covered containers, handled with care." %}</li>
+      <li>{% trans "Respect others and avoid overstaying or disturbing nearby rooms." %}</li>
+      <li>{% trans "Repeat violations or damage may lead to warnings and suspension." %}</li>
+    </ul>
+  </section>
+
+  <section class="card mt-4 max-w-3xl">
+    <h2 class="text-base font-semibold">{% trans "Application policy (set by the department)" %}</h2>
+    <ul class="mt-2 list-disc space-y-1 ps-5 text-sm">
+      <li>{% blocktrans with days=policy.horizon_days %}Bookings open {{ days }} days ahead, including today.{% endblocktrans %}</li>
+      <li>{% blocktrans with minutes=policy.grace_minutes %}Check-in opens at the start of the hour and closes exactly {{ minutes }} minutes later.{% endblocktrans %}</li>
+      <li>{% blocktrans %}A free room can be used immediately for the remainder of the current hour, and always ends at the hour boundary.{% endblocktrans %}</li>
+      <li>{% blocktrans %}You cannot hold two rooms in the same hour, or bookings in adjacent hours.{% endblocktrans %}</li>
+      <li>{% blocktrans with threshold=policy.strike_threshold window=policy.strike_window_days days=policy.auto_suspension_days %}{{ threshold }} unconsumed strikes within {{ window }} days cause one suspension of {{ days }} days.{% endblocktrans %}</li>
+      <li>{% blocktrans %}A strike can only cause one suspension; a suspension does not extend itself.{% endblocktrans %}</li>
+      <li>{% blocktrans %}Scheduled bookings are cancelled without extra penalty when a suspension starts; a session already in use may finish.{% endblocktrans %}</li>
+    </ul>
+    <p class="mt-2 text-xs text-slate-600">
+      {% blocktrans %}These numeric thresholds are the department's operational defaults, not figures stated in the regulation.{% endblocktrans %}
+    </p>
+  </section>
+
+  <section class="card mt-4 max-w-3xl">
+    <h2 class="text-base font-semibold">{% trans "Contact" %}</h2>
+    <p class="mt-1 text-sm">
+      {% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}{{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}
+    </p>
+  </section>
+{% endblock %}

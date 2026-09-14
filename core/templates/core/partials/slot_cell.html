@@ -1,0 +1,34 @@
+{% load i18n %}
+{# One slot. Text labels carry the meaning so colour is never the only signal. #}
+{% if cell.can_reserve %}
+  <a class="btn-primary w-full !px-2 text-xs"
+     href="{% url 'core:book_slot' room_id=cell.room.pk slot=cell.slot_key %}"
+     aria-label="{% blocktrans with room=cell.room time=cell.local_start|date:'H:i' %}Reserve {{ room }} at {{ time }}{% endblocktrans %}">
+    {% trans "Reserve" %}
+  </a>
+{% elif cell.can_use_now %}
+  <a class="btn-primary w-full !px-2 text-xs {% if cell.is_short %}!bg-amber-600 hover:!bg-amber-700{% endif %}"
+     href="{% url 'core:use_now' room_id=cell.room.pk slot=cell.slot_key %}"
+     aria-label="{% blocktrans with room=cell.room time=cell.local_start|date:'H:i' %}Use {{ room }} now from {{ time }}{% endblocktrans %}">
+    {% trans "Use now" %}{% if cell.is_short %} · {{ cell.remaining_minutes }}{% trans "min" %}{% endif %}
+  </a>
+{% elif cell.state == "free_now" %}
+  <span class="btn-secondary w-full !px-2 text-xs">{% trans "Free" %}</span>
+{% elif cell.state == "past" %}
+  <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-600">{% trans "Finished" %}</span>
+{% elif cell.state == "closed" %}
+  <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700"
+        {% if cell.closed_reason %}title="{{ cell.closed_reason }}"{% endif %}>
+    {% trans "Closed" %}
+  </span>
+{% elif cell.state == "in_use" or cell.state == "held" %}
+  <span class="block w-full rounded bg-brand-100 px-2 py-2 text-center text-xs text-brand-700">
+    {% if cell.is_mine %}{% trans "Yours" %}{% else %}{% trans "In use" %}{% endif %}
+  </span>
+{% elif cell.state == "completed" %}
+  <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700">{% trans "Used" %}</span>
+{% elif cell.state == "taken" %}
+  <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700">{% trans "Booked" %}</span>
+{% elif cell.state == "outside_horizon" %}
+  <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-500">{% trans "Too far ahead" %}</span>
+{% endif %}

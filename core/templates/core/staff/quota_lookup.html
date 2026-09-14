@@ -1,0 +1,21 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Quota detail" %}{% endblock %}
+
+{% block staff_content %}
+  <section class="card text-sm">
+    <p class="font-medium">{{ target.display_name }} ({{ target.institutional_id }})</p>
+    <p class="mt-1">{% blocktrans with used=used total=policy.daily_quota %}Bookings counted today: {{ used }} of {{ total }}.{% endblocktrans %}</p>
+    <h2 class="mt-3 text-base font-semibold">{% trans "Upcoming" %}</h2>
+    {% if upcoming %}
+      <ul class="mt-1 space-y-1">
+        {% for booking in upcoming %}
+          <li>{{ booking.room }} · {{ booking.local_start|date:"j F Y H:i" }} · {{ booking.get_status_display }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mt-1">{% trans "None." %}</p>
+    {% endif %}
+  </section>
+{% endblock %}

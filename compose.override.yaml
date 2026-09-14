@@ -1,0 +1,40 @@
+# Development overrides. Compose merges this automatically when you run
+# `docker compose up` from the project root.
+#
+# Adds the private mail catcher, publishes PostgreSQL on loopback only (so test
+# runs on the host can reach it), and serves Django's development server with a
+# source bind mount for fast iteration.
+
+services:
+  db:
+    ports:
+      # Loopback only. The database is never reachable from the network.
+      - "127.0.0.1:5432:5432"
+
+  web:
+    command:
+      - python
+      - manage.py
+      - runserver
+      - 0.0.0.0:8000
+    environment:
+      DJANGO_SETTINGS_MODULE: roomreserve.settings.dev
+      ALLOW_TEST_CLOCK: "true"
+    volumes:
+      - .:/app
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  scheduler:
+    environment:
+      DJANGO_SETTINGS_MODULE: roomreserve.settings.dev
+
+  # Local mail catcher: a real SMTP conversation, no external delivery.
+  mailpit:
+    image: axllent/mailpit:v1.20.5
+    environment:
+      MP_MAX_MESSAGES: "1000"
+    ports:
+      - "127.0.0.1:1025:1025"  # SMTP
+      - "127.0.0.1:8025:8025"  # web inbox
+    restart: unless-stopped

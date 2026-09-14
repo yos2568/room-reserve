@@ -1,0 +1,44 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Use this room now" %}{% endblock %}
+
+{% block content %}
+  <h1 class="text-xl font-semibold">{% trans "Use this room now" %}</h1>
+
+  {% if outcome and not outcome.ok %}
+    <div class="card mt-3 border-red-700 bg-red-50" role="alert">{{ outcome.message }}</div>
+  {% endif %}
+
+  {% if suspension %}
+    <div class="card mt-3 border-red-700 bg-red-50" role="alert">
+      {% trans "Booking is suspended on this account. You can still read your history and ask staff for help." %}
+    </div>
+  {% endif %}
+
+  <div class="card mt-4 max-w-xl">
+    <dl class="space-y-1 text-sm">
+      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Room" %}</dt><dd>{{ room }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Current hour" %}</dt><dd>{{ cell.slot_start|date:"H:i" }}–{{ cell.slot_end|date:"H:i" }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Time remaining" %}</dt><dd>{{ remaining_minutes }} {% trans "min" %}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Bookings that day" %}</dt><dd>{{ quota_used }} / {{ policy.daily_quota }}</dd></div>
+    </dl>
+
+    {% if short_warning %}
+      <p class="mt-3 rounded border border-amber-600 bg-amber-50 p-2 text-sm" role="status">
+        {% blocktrans %}Less than five minutes remain in this hour. The session will still end at the hour boundary.{% endblocktrans %}
+      </p>
+    {% endif %}
+
+    <p class="mt-3 text-xs text-slate-700">
+      {% blocktrans %}The session ends at the end of the current hour. There is no extra hour and no early self-checkout. This page confirms an account action; it cannot prove you are physically in the room, and staff may spot check.{% endblocktrans %}
+    </p>
+
+    <form method="post" class="mt-4" action="{% url 'core:use_now' room_id=room.pk slot=cell.slot_key %}">
+      {% csrf_token %}
+      <input type="hidden" name="operation_key" value="{{ operation_key }}">
+      <button class="btn-primary" type="submit">{% trans "I am at this room / ยืนยันว่าฉันอยู่ที่ห้องนี้" %}</button>
+      <a class="btn-secondary" href="{% url 'core:home' %}">{% trans "Cancel" %}</a>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,61 @@
+# Caddy reverse proxy for Room Reserve (V3 section 2 and section 11).
+#
+# Development: plain HTTP on localhost.
+# Production: replace the site address with the real domain; Caddy obtains and
+# renews the certificate automatically, which is what makes
+# DEPLOYMENT_VERIFIED possible. Until a domain and host are supplied, those
+# checks stay BLOCKED/NOT RUN rather than being claimed.
+
+{
+	admin off
+	email {$ACME_EMAIL:maintainer@example.invalid}
+}
+
+:80 {
+	encode zstd gzip
+
+	# Health probes stay reachable without a Host match for external monitoring.
+	handle /healthz/* {
+		reverse_proxy web:8000
+	}
+	handle /readyz/* {
+		reverse_proxy web:8000
+	}
+
+	# Everything else is proxied to gunicorn.
+	handle {
+		reverse_proxy web:8000 {
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+		# The app is not designed to be framed; clickjacking protection is also
+		# enforced by Django's XFrameOptionsMiddleware.
+		X-Frame-Options DENY
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# Production example (uncomment after the domain resolves to this host):
+#
+# roomreserve.your-domain.ac.th {
+# 	encode zstd gzip
+# 	reverse_proxy web:8000 {
+# 		header_up X-Forwarded-Proto {scheme}
+# 	}
+# 	header {
+# 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+# 		X-Content-Type-Options nosniff
+# 		X-Frame-Options DENY
+# 		Referrer-Policy same-origin
+# 	}
+# }

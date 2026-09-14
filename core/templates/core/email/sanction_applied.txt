@@ -1,0 +1,14 @@
+{% load i18n %}{% if review %}{% blocktrans %}A strike behind your suspension was cancelled{% endblocktrans %}{% else %}{% blocktrans %}Booking suspension applied{% endblocktrans %}{% endif %}
+
+{% if review %}
+{% blocktrans %}Staff cancelled one of the strikes that led to this suspension. Whether the suspension is lifted is a separate decision, and staff will review it explicitly.{% endblocktrans %}
+{% else %}
+{% blocktrans with start=starts_at ends=ends %}Suspension period: {{ start }} to {{ ends }}.{% endblocktrans %}
+{% blocktrans %}Scheduled bookings were cancelled without extra penalty. A session already in use may finish.{% endblocktrans %}
+{% endif %}
+
+{% trans "Reason" %}: {{ reason }}
+
+{% blocktrans %}You can still sign in, read your history and ask for help, but cannot reserve, check in or use a room while suspended.{% endblocktrans %}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

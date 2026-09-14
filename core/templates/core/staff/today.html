@@ -1,0 +1,163 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% blocktrans %}Today, {{ local_date }}{% endblocktrans %}{% endblock %}
+
+{% block staff_content %}
+  {% if heartbeat_stale %}
+    <div class="card mb-3 border-red-700 bg-red-50" role="alert">
+      {% blocktrans with at=heartbeat.last_run_at %}The scheduler heartbeat is stale (last run {{ at }}). Background reconciliation and mail are not running. Bookings made through the site are still reconciled on request.{% endblocktrans %}
+    </div>
+  {% endif %}
+  {% if outbox_stale %}
+    <div class="card mb-3 border-amber-600 bg-amber-50" role="alert">
+      {% blocktrans with age=outbox_age_seconds %}The oldest queued message is {{ age }} seconds old. Check the mail provider.{% endblocktrans %}
+    </div>
+  {% endif %}
+
+  <section class="card">
+    <h2 class="text-base font-semibold">{% trans "Bookings today" %}</h2>
+    {% if bookings %}
+      <div class="table-wrap mt-2">
+        <table class="w-full text-sm">
+          <thead><tr class="border-b border-slate-300">
+            <th scope="col" class="p-2 text-start">{% trans "Hour" %}</th>
+            <th scope="col" class="p-2 text-start">{% trans "Room" %}</th>
+            <th scope="col" class="p-2 text-start">{% trans "Student" %}</th>
+            <th scope="col" class="p-2 text-start">{% trans "Status" %}</th>
+            <th scope="col" class="p-2 text-start">{% trans "Actions" %}</th>
+          </tr></thead>
+          <tbody>
+            {% for booking in bookings %}
+              <tr class="border-b border-slate-200">
+                <td class="p-2">{{ booking.local_start|date:"H:i" }}</td>
+                <td class="p-2">{{ booking.room }}</td>
+                <td class="p-2">{{ booking.user.display_name }} ({{ booking.user.institutional_id }})</td>
+                <td class="p-2">{{ booking.get_status_display }}{% if booking.needs_review %} · <span class="text-red-800">{% trans "review needed" %}</span>{% endif %}</td>
+                <td class="p-2">
+                  {% if booking.status == 'SCHEDULED' %}
+                    <form method="post" action="{% url 'core:staff_assisted_check_in' pk=booking.pk %}" class="inline-flex items-center gap-1">
+                      {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                      <label class="sr-only" for="ci-{{ booking.pk }}">{% trans "Reason" %}</label>
+                      <input class="field !py-1" id="ci-{{ booking.pk }}" name="reason" placeholder="{% trans 'Attendance verified how?' %}" required>
+                      <button class="btn-primary" type="submit">{% trans "Check in" %}</button>
+                    </form>
+                  {% elif booking.status == 'IN_USE' %}
+                    <form method="post" action="{% url 'core:staff_complete_early' pk=booking.pk %}" class="inline-flex items-center gap-1">
+                      {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                      <input class="field !py-1" name="reason" placeholder="{% trans 'Evacuation reason' %}" required>
+                      <button class="btn-danger" type="submit">{% trans "End early" %}</button>
+                    </form>
+                  {% endif %}
+                  {% if booking.status == 'SCHEDULED' or booking.status == 'IN_USE' %}
+                    <form method="post" action="{% url 'core:staff_cancel_booking' pk=booking.pk %}" class="mt-1 inline-flex items-center gap-1">
+                      {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                      <input class="field !py-1" name="reason" placeholder="{% trans 'Cancellation reason' %}" required>
+                      <button class="btn-danger" type="submit">{% trans "Cancel" %}</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="mt-2 text-sm">{% trans "No bookings for today." %}</p>
+    {% endif %}
+  </section>
+
+  <section class="card mt-4">
+    <h2 class="text-base font-semibold">{% trans "Waiting for approval" %}</h2>
+    {% if pending %}
+      <ul class="mt-2 space-y-2 text-sm">
+        {% for candidate in pending %}
+          <li class="border-b border-slate-200 pb-2">
+            <p>{{ candidate.display_name }} ({{ candidate.institutional_id }}) · {{ candidate.email }}
+              {% if not candidate.email_is_verified %}<span class="text-amber-700">{% trans "email not verified" %}</span>{% endif %}
+            </p>
+            <form method="post" action="{% url 'core:staff_decide_eligibility' pk=candidate.pk %}" class="mt-1 flex flex-wrap items-center gap-1">
+              {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+              <label class="sr-only" for="reason-{{ candidate.pk }}">{% trans "Reason" %}</label>
+              <input class="field !py-1" id="reason-{{ candidate.pk }}" name="reason" placeholder="{% trans 'Reason (required)' %}" required>
+              <button class="btn-primary" name="decision" value="APPROVED" type="submit">{% trans "Approve" %}</button>
+              <button class="btn-danger" name="decision" value="REJECTED" type="submit">{% trans "Reject" %}</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mt-2 text-sm">{% trans "Nothing waiting." %}</p>
+    {% endif %}
+  </section>
+
+  <div class="mt-4 grid gap-4 md:grid-cols-2">
+    <section class="card">
+      <h2 class="text-base font-semibold">{% trans "Active sanctions" %}</h2>
+      {% if active_suspensions %}
+        <ul class="mt-2 space-y-2 text-sm">
+          {% for suspension in active_suspensions %}
+            <li>
+              {{ suspension.user.display_name }} — {{ suspension.get_source_display }}
+              {% if suspension.ends_at %}{% trans "until" %} {{ suspension.ends_at|date:"j F Y H:i" }}{% else %}{% trans "indefinite" %}{% endif %}
+              <form method="post" action="{% url 'core:staff_lift' pk=suspension.pk %}" class="mt-1 flex items-center gap-1">
+                {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                <input class="field !py-1" name="reason" placeholder="{% trans 'Reason' %}" required>
+                <button class="btn-secondary" type="submit">{% trans "Lift" %}</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-2 text-sm">{% trans "No active suspensions." %}</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2 class="text-base font-semibold">{% trans "On-site reviews pending" %}</h2>
+      {% if pending_reviews %}
+        <ul class="mt-2 space-y-2 text-sm">
+          {% for booking in pending_reviews %}
+            <li>
+              {{ booking.room }} · {{ booking.user.display_name }} · {{ booking.local_start|date:"H:i" }}
+              <p class="text-slate-700">{{ booking.review_note }}</p>
+              <form method="post" action="{% url 'core:staff_resolve_review' pk=booking.pk %}" class="mt-1 flex items-center gap-1">
+                {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                <input class="field !py-1" name="note" placeholder="{% trans 'What was confirmed on site?' %}" required>
+                <button class="btn-secondary" type="submit">{% trans "Resolve" %}</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-2 text-sm">{% trans "Nothing pending." %}</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2 class="text-base font-semibold">{% trans "Open incidents" %}</h2>
+      {% if open_incidents %}
+        <ul class="mt-2 text-sm">
+          {% for incident in open_incidents %}
+            <li>{{ incident.starts_at|date:"j F Y H:i" }}–{{ incident.ends_at|date:"H:i" }} · {{ incident.reason }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-2 text-sm">{% trans "No open incidents." %}</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2 class="text-base font-semibold">{% trans "Failed mail" %}</h2>
+      {% if failed_mail %}
+        <ul class="mt-2 space-y-1 text-sm">
+          {% for note in failed_mail %}
+            <li>{{ note.kind }} → {{ note.recipient.institutional_id }}: {{ note.last_error }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-2 text-sm">{% trans "No failed messages." %}</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

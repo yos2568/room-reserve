@@ -1,0 +1,67 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Service incidents" %}{% endblock %}
+
+{% block staff_content %}
+  <section class="card">
+    <h2 class="text-base font-semibold">{% trans "Record an incident" %}</h2>
+    <p class="mt-1 text-xs text-slate-700">
+      {% blocktrans %}While an incident covers a period, no-shows are not recorded automatically for it, and affected scheduled bookings can be cancelled without penalty.{% endblocktrans %}
+    </p>
+    <form method="post" action="{% url 'core:staff_create_incident' %}" class="mt-2 space-y-2">
+      {% csrf_token %}
+      <input type="hidden" name="operation_key" value="{{ operation_key }}">
+      <div class="flex flex-wrap items-end gap-2">
+        <div>
+          <label class="label" for="starts_at">{% trans "From" %}</label>
+          <input class="field" id="starts_at" name="starts_at" type="datetime-local" required>
+        </div>
+        <div>
+          <label class="label" for="ends_at">{% trans "To" %}</label>
+          <input class="field" id="ends_at" name="ends_at" type="datetime-local" required>
+        </div>
+        <div>
+          <label class="label" for="reason">{% trans "Reason" %}</label>
+          <input class="field" id="reason" name="reason" required>
+        </div>
+      </div>
+      <fieldset class="text-sm">
+        <legend class="label">{% trans "Rooms (leave all unticked to cover every room)" %}</legend>
+        <div class="flex flex-wrap gap-3">
+          {% for room in rooms %}
+            <label class="flex items-center gap-1"><input type="checkbox" name="rooms" value="{{ room.pk }}"> {{ room }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="cancel_scheduled" checked> {% trans "Cancel affected scheduled bookings without penalty" %}</label>
+      <button class="btn-primary" type="submit">{% trans "Record incident" %}</button>
+    </form>
+  </section>
+
+  <section class="card mt-4">
+    <h2 class="text-base font-semibold">{% trans "Recorded incidents" %}</h2>
+    {% if incidents %}
+      <ul class="mt-2 space-y-3 text-sm">
+        {% for incident in incidents %}
+          <li class="border-b border-slate-200 pb-2">
+            <p>{{ incident.starts_at|date:"j F Y H:i" }}–{{ incident.ends_at|date:"j F Y H:i" }} · {{ incident.reason }}</p>
+            <p class="text-slate-700">
+              {% trans "Rooms" %}:
+              {% for room in incident.rooms.all %}{{ room }}{% if not forloop.last %}, {% endfor %}{% empty %}{% trans "all rooms" %}{% endfor %}
+            </p>
+            {% if not incident.resolved_at %}
+              <form method="post" action="{% url 'core:staff_void_incident' pk=incident.pk %}" class="mt-1 flex flex-wrap items-center gap-1">
+                {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                <input class="field !py-1" name="reason" placeholder="{% trans 'Why are these strikes void?' %}" required>
+                <button class="btn-danger" type="submit">{% trans "Void affected strikes" %}</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mt-2 text-sm">{% trans "No incidents recorded." %}</p>
+    {% endif %}
+  </section>
+{% endblock %}

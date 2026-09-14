@@ -1,0 +1,10 @@
+{% load i18n %}{% blocktrans %}Missed practice room booking{% endblocktrans %}
+
+{% blocktrans with room=room_label date=slot_start_display %}Room {{ room }} on {{ date }}{% endblocktrans %}
+{% blocktrans %}The booking was not checked in before the deadline, so it was released for other students and one strike was recorded.{% endblocktrans %}
+
+{% blocktrans %}You cannot use this same room and hour again for the released slot. Strikes expire after the rolling window.{% endblocktrans %}
+
+{% blocktrans %}If you believe this is wrong, for example because the service was unavailable, contact the office with the date and time so it can be reviewed.{% endblocktrans %}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}
