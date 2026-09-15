@@ -175,3 +175,34 @@ def test_a_lifted_suspension_restores_booking(
 
     assert Booking.objects.filter(user=student, status=Booking.Status.SCHEDULED).count() == 1
     watched.assert_clean(allow_console_status=(409,))
+
+
+def test_staff_correct_a_roster_address_from_the_roster_screen(
+    rooms, live_server, browser_clock, staff_user, watched
+):
+    """The department's remedy for a roster address that a student cannot use.
+
+    The importer refuses to change an address on an existing entry, so this screen
+    is the only path — and it is the path the office will be told to use.
+    """
+    entry = factories.make_roster_entry(
+        institutional_id="6699000123",
+        email="personal.address@gmail.com",
+        instrument="เปียโน",
+    )
+
+    page = watched.page
+    base = live_server.url
+    be_staff(page, base, staff_user)
+    visit(page, base, "staff/roster/", lang="en")
+    browserlib.expand_details(page)
+
+    page.fill(f"#email-{entry.pk}", "6699000123@student.chula.ac.th")
+    page.fill(f"#why-{entry.pk}", "Confirmed with the department")
+    page.locator(f"form:has(#email-{entry.pk}) button[type=submit]").click()
+
+    entry.refresh_from_db()
+    assert entry.email == "6699000123@student.chula.ac.th"
+    expect(page.locator("main")).to_contain_text("6699000123@student.chula.ac.th")
+
+    watched.assert_clean()

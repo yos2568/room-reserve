@@ -21,6 +21,7 @@ from core.models import EligibleStudent
 from . import clock, instruments
 from .audit import record_audit
 from .csvio import read_csv
+from .errors import Code, OperationRejected
 from .identity import normalize_email
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,10 @@ class ImportReport:
     # works — but a student nobody has categorised cannot reserve an
     # instrument-specific room, so this has to be visible rather than swallowed.
     unrecognised_instruments: list[str] = field(default_factory=list)
+    # Roster addresses this import rewrote. Only ever non-zero when the caller
+    # explicitly allowed it, and always reported: silently changing the address a
+    # student will be matched against is the one thing an import must never hide.
+    email_changed: int = 0
 
     @property
     def ok(self) -> bool:
@@ -62,6 +67,12 @@ class ImportReport:
             f"{self.created} {verb} created; {self.unchanged} unchanged; "
             f"{len(self.errors)} errors."
         ]
+        if self.email_changed:
+            lines.append(
+                f"{self.email_changed} existing roster address(es) {verb} rewritten. "
+                f"Check them against the department's confirmation before relying on "
+                f"automatic approval."
+            )
         if self.unrecognised_instruments:
             lines.append(
                 f"{len(self.unrecognised_instruments)} instrument spelling(s) have no "
@@ -71,13 +82,39 @@ class ImportReport:
         return "\n".join(lines)
 
 
-def import_roster_text(*, text: str, actor=None, dry_run: bool = False, batch: str = "") -> ImportReport:
-    return import_roster_rows(rows=read_csv(text), actor=actor, dry_run=dry_run, batch=batch)
+def import_roster_text(
+    *,
+    text: str,
+    actor=None,
+    dry_run: bool = False,
+    batch: str = "",
+    allow_email_change: bool = False,
+) -> ImportReport:
+    return import_roster_rows(
+        rows=read_csv(text),
+        actor=actor,
+        dry_run=dry_run,
+        batch=batch,
+        allow_email_change=allow_email_change,
+    )
 
 
 def import_roster_rows(
-    *, rows: list[dict], actor=None, dry_run: bool = False, batch: str = ""
+    *,
+    rows: list[dict],
+    actor=None,
+    dry_run: bool = False,
+    batch: str = "",
+    allow_email_change: bool = False,
 ) -> ImportReport:
+    """Validate and apply a roster.
+
+    ``allow_email_change`` is the explicit opt-in for rewriting the address on an
+    entry that already exists. Without it a difference is a conflict and the whole
+    file is refused, because an import must never silently rebind an identity. With
+    it, an address that already belongs to a *different* institutional ID is still
+    refused: that is a rebinding, not a correction.
+    """
     report = ImportReport(rows_read=len(rows), dry_run=dry_run)
 
     cleaned: list[dict] = []
@@ -143,31 +180,36 @@ def import_roster_rows(
         return report
 
     if dry_run:
-        # A dry run must answer the two questions it is asked: how many rows would
-        # be created, and would the import be refused. Returning early here used to
-        # report "0 would be created" for any valid file, which reads as "nothing
-        # to do" and makes the preflight worse than useless for a real roster.
+        # A dry run must answer the three questions it is asked: how many rows
+        # would be created, would the import be refused, and how many existing
+        # addresses would be rewritten. Returning early here used to report
+        # "0 would be created" for any valid file, which reads as "nothing to do"
+        # and makes the preflight worse than useless for a real roster.
         for entry in cleaned:
-            conflict = _conflicting_entry(entry)
+            conflict = _conflicting_entry(entry, allow_email_change=allow_email_change)
             if conflict is not None:
                 report.errors.append(RowError(0, conflict))
                 continue
-            if EligibleStudent.objects.filter(institutional_id=entry["institutional_id"]).exists():
-                report.unchanged += 1
-            else:
+            existing = EligibleStudent.objects.filter(institutional_id=entry["institutional_id"]).first()
+            if existing is None:
                 report.created += 1
+            else:
+                report.unchanged += 1
+                if existing.email != entry["email"]:
+                    report.email_changed += 1
         return report
 
     with transaction.atomic():
         for entry in cleaned:
-            conflict = _conflicting_entry(entry)
+            conflict = _conflicting_entry(entry, allow_email_change=allow_email_change)
             if conflict is not None:
                 report.errors.append(RowError(0, conflict))
                 # Raising aborts the transaction: imports are all-or-nothing.
                 raise ValueError(conflict)
-            created = _apply_entry(entry, batch=batch)
+            created, address_rewritten = _apply_entry(entry, batch=batch)
             report.created += int(created)
             report.unchanged += int(not created)
+            report.email_changed += int(address_rewritten)
 
         record_audit(
             action="roster.imported",
@@ -178,6 +220,8 @@ def import_roster_rows(
                 "rows_read": report.rows_read,
                 "created": report.created,
                 "unchanged": report.unchanged,
+                "email_changed": report.email_changed,
+                "allow_email_change": allow_email_change,
                 "batch": batch,
             },
         )
@@ -185,12 +229,20 @@ def import_roster_rows(
     return report
 
 
-def _conflicting_entry(entry: dict) -> str | None:
-    """Detect a contradiction with stored data before any write happens."""
+def _conflicting_entry(entry: dict, *, allow_email_change: bool = False) -> str | None:
+    """Detect a contradiction with stored data before any write happens.
+
+    Two different failures, deliberately treated differently:
+
+    * the same institutional ID with a **different address** — a correction when the
+      caller has opted in, a refused conflict otherwise;
+    * an address that already belongs to a **different ID** — always refused, because
+      that is rebinding an identity to another person, not correcting one.
+    """
     by_id = EligibleStudent.objects.filter(institutional_id=entry["institutional_id"]).first()
     by_email = EligibleStudent.objects.filter(email=entry["email"]).first()
 
-    if by_id is not None and by_id.email != entry["email"]:
+    if by_id is not None and by_id.email != entry["email"] and not allow_email_change:
         return (
             f"Institutional ID {entry['institutional_id']} is already on the roster with a "
             f"different email address; refusing to overwrite it."
@@ -203,8 +255,14 @@ def _conflicting_entry(entry: dict) -> str | None:
     return None
 
 
-def _apply_entry(entry: dict, *, batch: str) -> bool:
-    """Create or refresh a roster entry. Returns True when a row was created."""
+def _apply_entry(entry: dict, *, batch: str) -> tuple[bool, bool]:
+    """Create or refresh a roster entry.
+
+    Returns ``(created, address_rewritten)``. The second is only ever True when the
+    caller passed ``allow_email_change`` — ``_conflicting_entry`` has already
+    refused the change otherwise, so reaching here with a different address means
+    the rewrite was explicitly authorised.
+    """
     existing = EligibleStudent.objects.filter(institutional_id=entry["institutional_id"]).first()
     if existing is None:
         EligibleStudent.objects.create(
@@ -212,9 +270,10 @@ def _apply_entry(entry: dict, *, batch: str) -> bool:
             is_active=True,
             import_batch=batch,
         )
-        return True
+        return True, False
 
     changed = []
+    address_rewritten = False
     for field_name in ("name_th", "name_en", "program", "year"):
         value = entry[field_name]
         if value and getattr(existing, field_name) != value:
@@ -232,13 +291,110 @@ def _apply_entry(entry: dict, *, batch: str) -> bool:
             existing.instrument_category = entry["instrument_category"]
             changed.append("instrument_category")
 
+    if existing.email != entry["email"]:
+        existing.email = entry["email"]
+        changed.append("email")
+        address_rewritten = True
+
     if not existing.is_active:
         existing.is_active = True
         changed.append("is_active")
     if changed:
         existing.updated_at = clock.now()
         existing.save(update_fields=[*changed, "updated_at"])
-    return False
+    return False, address_rewritten
+
+
+def correct_email(ctx, *, entry: EligibleStudent, email: str, reason: str) -> dict:
+    """Correct one roster entry's address, deliberately and with a trail.
+
+    The import refuses to change an address on an existing entry, because it must
+    never silently rebind an identity. That left no way to fix a roster that is
+    simply wrong — which is the normal case: the department's own list can hold a
+    personal address for a student who must register with their institutional one.
+    This is the explicit path for that, one entry at a time, with a reason.
+
+    Two things it deliberately does **not** do:
+
+    * it does not touch the student's account, even when the row is linked to one.
+      Their login identity is theirs, not something a roster correction rewrites;
+    * it does not re-run eligibility. Approval is a staff decision recorded at a
+      point in time, and withdrawing it because a spreadsheet was wrong would
+      penalise the student for somebody else's mistake.
+
+    The returned ``linked_account_matches`` says whether a linked account still
+    agrees with the corrected address, so staff can see when an approval now rests
+    on a stale match.
+    """
+    email = normalize_email(email)
+    if not email:
+        raise OperationRejected(Code.INVALID_INPUT, field="email")
+    try:
+        validate_email(email)
+    except ValidationError as exc:
+        raise OperationRejected(Code.INVALID_INPUT, field="email") from exc
+    if not (reason or "").strip():
+        raise OperationRejected(Code.INVALID_INPUT, field="reason")
+
+    entry = EligibleStudent.objects.select_for_update().get(pk=entry.pk)
+    previous = entry.email
+
+    if previous == email:
+        # Nothing to do. Deliberately not an error: re-submitting the same address is
+        # a no-op, not a mistake worth a generic "check the form" message.
+        return {
+            "entry_id": entry.pk,
+            "institutional_id": entry.institutional_id,
+            "previous_email": previous,
+            "email": email,
+            "linked_account_id": getattr(entry.account, "pk", None),
+            "linked_account_matches": bool(
+                entry.account is not None and normalize_email(entry.account.email) == email
+            ),
+            "changed": False,
+        }
+
+    holder = EligibleStudent.objects.filter(email=email).exclude(pk=entry.pk).first()
+    if holder is not None:
+        # Refuse rather than steal another student's address: addresses are unique
+        # because a registration is matched on ID *and* address together.
+        raise OperationRejected(
+            Code.DUPLICATE_ACCOUNT,
+            email=email,
+            held_by=holder.institutional_id,
+        )
+
+    entry.email = email
+    entry.updated_at = clock.now()
+    entry.save(update_fields=["email", "updated_at"])
+
+    account = entry.account
+    linked_account_matches = bool(account is not None and normalize_email(account.email) == email)
+
+    ctx.audit(
+        action="roster.email_corrected",
+        entity_type="EligibleStudent",
+        entity_id=entry.pk,
+        actor=ctx.actor,
+        changes={
+            "institutional_id": entry.institutional_id,
+            "from": previous,
+            "to": email,
+            "linked_account_id": getattr(account, "pk", None),
+            "linked_account_matches": linked_account_matches,
+        },
+        reason=reason.strip(),
+    )
+
+    return {
+        "entry_id": entry.pk,
+        "institutional_id": entry.institutional_id,
+        "previous_email": previous,
+        "email": email,
+        "linked_account_id": getattr(account, "pk", None),
+        "linked_account_matches": linked_account_matches,
+        "changed": True,
+    }
 
 
 def deactivate_missing(*, keep_ids: set[str], actor=None, dry_run: bool = False) -> int:

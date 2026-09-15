@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Room Reserve\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-15 22:36+0700\n"
+"POT-Creation-Date: 2026-09-15 23:07+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -82,34 +82,43 @@ msgstr "การจอง"
 #: core/models/identity.py:22
 msgid "Piano"
 msgstr "เปียโน"
+
 #: core/models/identity.py:23
-#| msgid "Versions"
 msgid "Percussion"
 msgstr "เครื่องตี"
+
 #: core/models/identity.py:24
 msgid "Strings"
 msgstr "เครื่องสาย"
+
 #: core/models/identity.py:25
 msgid "Woodwind"
 msgstr "เครื่องลมไม้"
+
 #: core/models/identity.py:26
 msgid "Brass"
 msgstr "เครื่องทองเหลือง"
+
 #: core/models/identity.py:27
 msgid "Voice"
 msgstr "ขับร้อง"
+
 #: core/models/identity.py:28
 msgid "Guitar"
 msgstr "กีตาร์"
+
 #: core/models/identity.py:29
 msgid "Harp"
 msgstr "ฮาร์ป"
+
 #: core/models/identity.py:30
 msgid "Other"
 msgstr "อื่น ๆ"
+
 #: core/models/identity.py:31
 msgid "Not yet categorised"
 msgstr "ยังไม่จัดหมวดหมู่"
+
 #: core/models/identity.py:42 core/models/user.py:70
 msgid "institutional ID"
 msgstr "รหัสนิสิต"
@@ -139,8 +148,10 @@ msgid "instrument category"
 msgstr "หมวดหมู่เครื่องดนตรี"
 
 #: core/models/identity.py:53
-msgid "Canonical family derived from the instrument text; drives room audiences."
+msgid ""
+"Canonical family derived from the instrument text; drives room audiences."
 msgstr "หมวดหมู่มาตรฐานที่ได้จากข้อความเครื่องดนตรี ใช้กำหนดว่าห้องใดจองได้โดยใคร"
+
 #: core/models/identity.py:55
 msgid "year"
 msgstr "ชั้นปี"
@@ -246,12 +257,13 @@ msgid "service incidents"
 msgstr "เหตุขัดข้องของระบบ"
 
 #: core/models/room.py:25 core/templates/core/staff/admin.html:47
-#| msgid "eligible student"
 msgid "Any eligible student"
 msgstr "นิสิตที่มีสิทธิ์ทุกคน"
+
 #: core/models/room.py:26
 msgid "Only the instrument categories listed"
 msgstr "เฉพาะหมวดหมู่เครื่องดนตรีที่ระบุ"
+
 #: core/models/room.py:28
 msgid "room number"
 msgstr "หมายเลขห้อง"
@@ -265,9 +277,9 @@ msgid "Display order."
 msgstr "ลำดับการแสดงผล"
 
 #: core/models/room.py:33
-#| msgid "Room Reserve"
 msgid "who may reserve"
 msgstr "ผู้ที่จองได้"
+
 #: core/models/room.py:41
 msgid "room"
 msgstr "ห้อง"
@@ -279,9 +291,11 @@ msgstr "ห้อง"
 #: core/models/room.py:86
 msgid "room instrument category"
 msgstr "หมวดหมู่เครื่องดนตรีของห้อง"
+
 #: core/models/room.py:87
 msgid "room instrument categories"
 msgstr "หมวดหมู่เครื่องดนตรีของห้อง"
+
 #: core/models/room.py:113
 msgid "Leave empty to close every room."
 msgstr "เว้นว่างเพื่อปิดทุกห้อง"
@@ -456,8 +470,13 @@ msgid "That room is closed for the selected time."
 msgstr "ห้องนี้ปิดในเวลาที่เลือก"
 
 #: core/services/errors.py:78
-msgid "That room can only be reserved by piano and percussion students. Once the hour starts, anyone may use it if it is still free."
-msgstr "ห้องนี้จองล่วงหน้าได้เฉพาะนิสิตเปียโนและเครื่องตีเท่านั้น เมื่อเริ่มชั่วโมงแล้ว หากห้องยังว่าง ผู้ใช้อื่นสามารถเข้าใช้ได้"
+msgid ""
+"That room can only be reserved by piano and percussion students. Once the "
+"hour starts, anyone may use it if it is still free."
+msgstr ""
+"ห้องนี้จองล่วงหน้าได้เฉพาะนิสิตเปียโนและเครื่องตีเท่านั้น เมื่อเริ่มชั่วโมงแล้ว หากห้องยังว่าง "
+"ผู้ใช้อื่นสามารถเข้าใช้ได้"
+
 #: core/services/errors.py:81
 msgid "That is not a bookable hour."
 msgstr "ไม่ใช่ชั่วโมงที่สามารถจองได้"
@@ -842,7 +861,7 @@ msgstr "รหัสนิสิต"
 
 #: core/templates/core/eligibility_status.html:12
 #: core/templates/core/staff/invitations.html:28
-#: core/templates/core/staff/roster.html:47
+#: core/templates/core/staff/roster.html:54
 #: core/templates/core/staff/users.html:20
 msgid "Email"
 msgstr "อีเมล"
@@ -852,12 +871,12 @@ msgid "Email verified"
 msgstr "ยืนยันอีเมลแล้ว"
 
 #: core/templates/core/eligibility_status.html:13
-#: core/templates/core/staff/roster.html:70
+#: core/templates/core/staff/roster.html:78
 msgid "Yes"
 msgstr "ใช่"
 
 #: core/templates/core/eligibility_status.html:13
-#: core/templates/core/staff/roster.html:70
+#: core/templates/core/staff/roster.html:78
 msgid "No"
 msgstr "ไม่ใช่"
 
@@ -902,6 +921,7 @@ msgstr "ห้อง %(room)s วันที่ %(date)s"
 #: core/templates/core/staff/calendar.html:29
 #: core/templates/core/staff/closures.html:50
 #: core/templates/core/staff/incidents.html:25
+#: core/templates/core/staff/roster.html:89
 #: core/templates/core/staff/today.html:41
 #: core/templates/core/staff/today.html:81
 #: core/templates/core/staff/today.html:105
@@ -1443,11 +1463,16 @@ msgid "Too far ahead"
 msgstr "ไกลเกินไป"
 
 #: core/templates/core/partials/slot_cell.html:38
-msgid "This room is kept for piano and percussion students to reserve. Once the hour starts, anyone may use it if it is still free."
-msgstr "ห้องนี้สงวนไว้ให้นิสิตเปียโนและเครื่องตีจอง เมื่อเริ่มชั่วโมงแล้ว หากยังว่าง ผู้ใช้อื่นสามารถเข้าใช้ได้"
+msgid ""
+"This room is kept for piano and percussion students to reserve. Once the "
+"hour starts, anyone may use it if it is still free."
+msgstr ""
+"ห้องนี้สงวนไว้ให้นิสิตเปียโนและเครื่องตีจอง เมื่อเริ่มชั่วโมงแล้ว หากยังว่าง ผู้ใช้อื่นสามารถเข้าใช้ได้"
+
 #: core/templates/core/partials/slot_cell.html:39
 msgid "Piano & percussion only"
 msgstr "เปียโน"
+
 #: core/templates/core/password_reset.html:4
 #: core/templates/core/register_done.html:17
 #: core/templates/core/token_problem.html:18
@@ -1647,8 +1672,12 @@ msgid "This is the page the printed QR code points to."
 msgstr "หน้านี้คือหน้าที่ QR code ที่พิมพ์ไว้เชื่อมไปถึง"
 
 #: core/templates/core/room_qr.html:12
-msgid "Piano and percussion students may reserve this room in advance. If the hour is still free once it has started, anyone may use it — the button below does exactly that."
+msgid ""
+"Piano and percussion students may reserve this room in advance. If the hour "
+"is still free once it has started, anyone may use it — the button below does "
+"exactly that."
 msgstr "เปียโน"
+
 #: core/templates/core/room_qr.html:18
 msgid ""
 "Booking is suspended on this account, so this room cannot be used now. You "
@@ -1944,35 +1973,42 @@ msgid "out of service"
 msgstr "นอกให้บริการ"
 
 #: core/templates/core/staff/admin.html:32
-#| msgid "Reserved"
 msgid "Reserved for"
 msgstr "สงวนไว้สำหรับ"
+
 #: core/templates/core/staff/admin.html:36
 msgid "nobody (no categories configured)"
 msgstr "ไม่มีผู้ใด (ยังไม่ได้กำหนดหมวดหมู่)"
+
 #: core/templates/core/staff/admin.html:42
-#| msgid "Room Reserve"
 msgid "Who may reserve"
 msgstr "ผู้ที่จองได้"
+
 #: core/templates/core/staff/admin.html:51
 msgid "Only these instrument categories"
 msgstr "เฉพาะหมวดหมู่เครื่องดนตรีเหล่านี้"
+
 #: core/templates/core/staff/admin.html:63
 msgid "Anyone may still walk in once an hour has started and the room is free."
 msgstr "เมื่อเริ่มชั่วโมงแล้วและห้องว่าง ผู้ใช้ทุกคนยังเข้าใช้ได้"
+
 #: core/templates/core/staff/admin.html:65
 msgid "Save audience"
 msgstr "บันทึกผู้ที่จองได้"
+
 #: core/templates/core/staff/admin.html:73
 msgid "Take out of service"
 msgstr "นำออกจากให้บริการ"
 
 #: core/templates/core/staff/admin.html:80
-#| msgid ""
-#| "Taking a room out of service cancels its scheduled bookings without "
-#| "penalty and flags any session in use for review."
-msgid "Taking a room out of service cancels its scheduled bookings without penalty and flags any session in use for review. Changing who may reserve a room never cancels a booking that already exists."
-msgstr "การนำห้องออกจากให้บริการจะยกเลิกการจองที่กำหนดไว้โดยไม่มีการลงโทษ และตั้งค่าการใช้งานที่กำลังดำเนินอยู่เพื่อทบทวน การเปลี่ยนผู้ที่จองได้จะไม่ยกเลิกการจองที่มีอยู่แล้ว"
+msgid ""
+"Taking a room out of service cancels its scheduled bookings without penalty "
+"and flags any session in use for review. Changing who may reserve a room "
+"never cancels a booking that already exists."
+msgstr ""
+"การนำห้องออกจากให้บริการจะยกเลิกการจองที่กำหนดไว้โดยไม่มีการลงโทษ "
+"และตั้งค่าการใช้งานที่กำลังดำเนินอยู่เพื่อทบทวน การเปลี่ยนผู้ที่จองได้จะไม่ยกเลิกการจองที่มีอยู่แล้ว"
+
 #: core/templates/core/staff/audit.html:4
 msgid "Audit trail"
 msgstr "บันทึกการตรวจสอบ"
@@ -2203,7 +2239,7 @@ msgstr ""
 "และการเชิญซ้ำจะไม่รีเซ็ตรหัสผ่านที่มีอยู่"
 
 #: core/templates/core/staff/invitations.html:32
-#: core/templates/core/staff/roster.html:48
+#: core/templates/core/staff/roster.html:55
 #: core/templates/core/staff/users.html:19
 msgid "Name"
 msgstr "ชื่อ"
@@ -2249,7 +2285,7 @@ msgid "Expired"
 msgstr "หมดอายุ"
 
 #: core/templates/core/staff/invitations.html:62
-#: core/templates/core/staff/roster.html:51
+#: core/templates/core/staff/roster.html:58
 msgid "Active"
 msgstr "ใช้งานได้"
 
@@ -2419,8 +2455,11 @@ msgid "The session ends at the hour boundary."
 msgstr "การใช้งานสิ้นสุดเมื่อหมดชั่วโมง"
 
 #: core/templates/core/staff/poster_sheet.html:36
-msgid "Piano and percussion students may reserve this room in advance. Once an hour has started, anyone may use it if it is still free."
+msgid ""
+"Piano and percussion students may reserve this room in advance. Once an hour "
+"has started, anyone may use it if it is still free."
 msgstr "เปียโน"
+
 #: core/templates/core/staff/poster_sheet.html:40
 #, python-format
 msgid "Problems? %(name)s, %(phone)s, %(email)s"
@@ -2506,39 +2545,70 @@ msgstr "ป้ายชื่อรอบนำเข้า"
 msgid "Dry run (validate only)"
 msgstr "ตรวจสอบเท่านั้น (ไม่บันทึก)"
 
-#: core/templates/core/staff/roster.html:23
+#: core/templates/core/staff/roster.html:25
+msgid "Also rewrite existing addresses in this file"
+msgstr "เขียนที่อยู่เดิมในไฟล์นี้ทับที่อยู่ที่มีอยู่"
+#: core/templates/core/staff/roster.html:27
 msgid "Import"
 msgstr "นำเข้า"
 
-#: core/templates/core/staff/roster.html:31
+#: core/templates/core/staff/roster.html:30
+msgid "An import never changes the address on an entry that already exists unless you tick that box, because the address is what a registration is matched against. An address that already belongs to a different institutional ID is refused either way."
+msgstr "การนำเข้าจะไม่เปลี่ยนที่อยู่ของรายการที่มีอยู่แล้ว เว้นแต่คุณจะติ๊กช่องนั้น เพราะที่อยู่คือสิ่งที่ใช้จับคู่กับการลงทะเบียน ที่อยู่ที่เป็นของรหัสนิสิตอื่นอยู่แล้วจะถูกปฏิเสธทั้งสองกรณี"
+#: core/templates/core/staff/roster.html:38
 msgid "line"
 msgstr "บรรทัด"
 
-#: core/templates/core/staff/roster.html:40
+#: core/templates/core/staff/roster.html:47
 #, python-format
 msgid "Roster entries (%(active)s active of %(total)s)"
 msgstr "รายการในทะเบียน (%(active)s จาก %(total)s รายการที่ใช้งานอยู่)"
 
-#: core/templates/core/staff/roster.html:41
+#: core/templates/core/staff/roster.html:48
 msgid "Export CSV"
 msgstr "ส่งออก CSV"
 
-#: core/templates/core/staff/roster.html:46
+#: core/templates/core/staff/roster.html:53
 #: core/templates/core/staff/users.html:18
 msgid "ID"
 msgstr "รหัส"
 
-#: core/templates/core/staff/roster.html:49
-#| msgid "instrument"
+#: core/templates/core/staff/roster.html:56
 msgid "Instrument"
 msgstr "เครื่องดนตรี"
-#: core/templates/core/staff/roster.html:50
+
+#: core/templates/core/staff/roster.html:57
 msgid "Programme"
 msgstr "หลักสูตร"
 
-#: core/templates/core/staff/roster.html:64
+#: core/templates/core/staff/roster.html:59
+#: core/templates/core/staff/today.html:28
+#: core/templates/core/staff/users.html:23
+msgid "Actions"
+msgstr "การดำเนินการ"
+
+#: core/templates/core/staff/roster.html:72
 msgid "no category — cannot use instrument-specific rooms"
 msgstr "ยังไม่จัดหมวดหมู่ — ใช้ห้องเฉพาะเครื่องดนตรีไม่ได้"
+
+#: core/templates/core/staff/roster.html:83
+#| msgid "Check your email"
+msgid "Correct email"
+msgstr "แก้ไขอีเมล"
+#: core/templates/core/staff/roster.html:86
+#| msgid "institutional email"
+msgid "Corrected institutional email"
+msgstr "อีเมลสถาบันที่แก้ไขแล้ว"
+#: core/templates/core/staff/roster.html:91
+msgid "Confirmed with the department"
+msgstr "ยืนยันกับภาควิชาแล้ว"
+#: core/templates/core/staff/roster.html:92
+#| msgid "Save audience"
+msgid "Save address"
+msgstr "บันทึกที่อยู่"
+#: core/templates/core/staff/roster.html:95
+msgid "Changes the roster address only. The student's account and its existing approval are left alone."
+msgstr "เปลี่ยนเฉพาะที่อยู่ในทะเบียนเท่านั้น บัญชีของนิสิตและการอนุมัติเดิมไม่ถูกแก้ไข"
 #: core/templates/core/staff/stats.html:8
 #, python-format
 msgid "Counts cover bookings since %(since)s."
@@ -2584,11 +2654,6 @@ msgstr "การจองวันนี้"
 #: core/templates/core/staff/today.html:26
 msgid "Student"
 msgstr "นิสิต"
-
-#: core/templates/core/staff/today.html:28
-#: core/templates/core/staff/users.html:23
-msgid "Actions"
-msgstr "การดำเนินการ"
 
 #: core/templates/core/staff/today.html:36
 msgid "review needed"

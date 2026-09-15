@@ -1,6 +1,6 @@
 # BUILD_STATUS — Room Reserve V3
 
-**Last updated:** 2026-09-15 (instrument-specific tenth room)
+**Last updated:** 2026-09-15 (roster email correction path)
 **Status:** `LOCAL_PASS_CANDIDATE` — every automated local check passes.
 Deployment and pilot are **BLOCKED** on missing external inputs.
 
@@ -21,10 +21,9 @@ and `QA_REPORT.md` (what was run, with what result).
 
 ## Revision
 
-- **Git:** `21d821d7641fdeabb05eb367df54eac6854eae08`, with a **dirty working tree**
-  (86 modified/added/untracked files). **The work is not committed**, so the revision
-  hash does not identify the verified code. Hashes are in `QA_REPORT.md` §8.
-  **Committing is the outstanding action.**
+- **Git:** `05f73ca` — "Browser acceptance, verification runner, roster import,
+  instrument-specific room" (92 files) — followed by a second, uncommitted batch of
+  12 files for the roster email correction path. See `QA_REPORT.md` §8 for hashes.
 - **Runner:** `scripts/verify`
 
 ## Latest real commands and results
@@ -33,11 +32,31 @@ and `QA_REPORT.md` (what was run, with what result).
 bash scripts/verify              # exit 0 — PASS=12 FAIL=0 BLOCKED=0
 python -m ruff check .           # All checks passed!
 python -m ruff format --check .  # 100 files already formatted
-python -m pytest -q              # 343 passed in 30.94s (27 of them in Chromium)
+python -m pytest -q              # 359 passed in 31.62s (28 of them in Chromium)
 ```
 
-Full evidence: `artifacts/qa/verify-20260915T154813Z/`. The bootstrap reports
+Full evidence: `artifacts/qa/verify-20260915T161035Z/`. The bootstrap reports
 `10 rooms` and asserts exactly one room is restricted to piano and percussion.
+
+## Added since the last checkpoint: correcting a roster address
+
+The import refuses to change the address on an entry that already exists — correct,
+because it must never silently rebind an identity — but that left **no way at all**
+to fix a roster that is simply wrong. The department's list holds personal addresses
+for 57 of its 74 students, and without this the corrected file would have been
+rejected. Two deliberate paths now exist (D-27):
+
+- **One student**: Staff → Roster → *Correct email*, reason required, audited as
+  `roster.email_corrected` with before and after.
+- **Many at once**: `--allow-email-change` on the import, or the checkbox on the
+  staff form, which counts and records every address it rewrites.
+
+Neither takes an address that already belongs to a different institutional ID;
+neither edits the student's own account; neither withdraws an existing approval —
+when a linked account no longer matches, the action says so rather than acting.
+
+16 new tests: `tests/test_roster.py` (15, including the permission boundary and the
+opt-in) and one browser flow for the staff screen.
 
 ## Added since the last checkpoint: the instrument-specific tenth room
 
@@ -93,8 +112,8 @@ roster email item below, which is now a hard prerequisite for this feature.
 
 | # | Item | Why it is not done |
 |---|---|---|
-| 1 | **Commit the working tree** | 86 files uncommitted on top of `21d821d`; the largest process risk. |
-| 2 | **Correct the roster email column** | 57 of 74 students have a personal address on file, so they cannot self-register, cannot be matched, and now also **cannot reserve the instrument-specific room** — the roster link is what carries their instrument. Needs the departmental institutional addresses; runbook §7. |
+| 1 | **Commit the second batch, then stop worrying about the tree** | 92 files are committed as `05f73ca`; 12 more (the correction path) are not yet. |
+| 2 | **Get the 57 corrected addresses from the department** | The tooling now exists (Staff → Roster → *Correct email*, or the importer's opt-in — runbook §7–§8). This is a data task, not a code one, and it is what makes both automatic registration and the instrument-specific room work for the 65 students still affected. |
 | 3 | **Clear the demo logins** | 100 synthetic students + 10 staff remain active and bookable. |
 | 4 | A30 p95 latency | Needs the intended deployment hardware. |
 | 5 | A27 `check --deploy`, rollback rehearsal, CI image push | Needs real hostnames/TLS, a previous image, registry credentials. |

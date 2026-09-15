@@ -20,8 +20,15 @@
         <input class="field" id="batch" name="batch" placeholder="2026-intake">
       </div>
       <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="dry_run" checked> {% trans "Dry run (validate only)" %}</label>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="allow_email_change">
+        {% trans "Also rewrite existing addresses in this file" %}
+      </label>
       <button class="btn-primary" type="submit">{% trans "Import" %}</button>
     </form>
+    <p class="mt-1 text-xs text-slate-700">
+      {% blocktrans %}An import never changes the address on an entry that already exists unless you tick that box, because the address is what a registration is matched against. An address that already belongs to a different institutional ID is refused either way.{% endblocktrans %}
+    </p>
 
     {% if report %}
       <div class="mt-3 card {% if report.errors %}border-red-700 bg-red-50{% else %}border-emerald-700 bg-emerald-50{% endif %}" role="status">
@@ -49,6 +56,7 @@
           <th scope="col" class="p-2 text-start">{% trans "Instrument" %}</th>
           <th scope="col" class="p-2 text-start">{% trans "Programme" %}</th>
           <th scope="col" class="p-2 text-start">{% trans "Active" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "Actions" %}</th>
         </tr></thead>
         <tbody>
           {% for entry in entries %}
@@ -68,6 +76,26 @@
               </td>
               <td class="p-2">{{ entry.program }}</td>
               <td class="p-2">{% if entry.is_active %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+              <td class="p-2">
+                {# The address a student is matched against. The import refuses to
+                   change it, so correcting a wrong one is this explicit action. #}
+                <details>
+                  <summary class="cursor-pointer">{% trans "Correct email" %}</summary>
+                  <form method="post" action="{% url 'core:staff_correct_roster_email' pk=entry.pk %}" class="mt-1 flex flex-wrap items-center gap-1">
+                    {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                    <label class="sr-only" for="email-{{ entry.pk }}">{% trans "Corrected institutional email" %}</label>
+                    <input class="field !py-1" id="email-{{ entry.pk }}" name="email" type="email"
+                           value="{{ entry.email }}" required>
+                    <label class="sr-only" for="why-{{ entry.pk }}">{% trans "Reason" %}</label>
+                    <input class="field !py-1" id="why-{{ entry.pk }}" name="reason"
+                           placeholder="{% trans 'Confirmed with the department' %}" required>
+                    <button class="btn-secondary" type="submit">{% trans "Save address" %}</button>
+                  </form>
+                  <p class="mt-1 text-xs text-slate-600">
+                    {% trans "Changes the roster address only. The student's account and its existing approval are left alone." %}
+                  </p>
+                </details>
+              </td>
             </tr>
           {% endfor %}
         </tbody>

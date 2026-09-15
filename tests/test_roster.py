@@ -15,8 +15,9 @@ from __future__ import annotations
 
 import pytest
 
-from core.models import EligibleStudent
+from core.models import EligibleStudent, User
 from core.services.roster import deactivate_missing, import_roster_text
+from tests import factories
 
 pytestmark = pytest.mark.django_db
 
@@ -232,6 +233,243 @@ def test_a_personal_address_is_stored_but_will_not_auto_approve():
     assert report.ok, "the shape is valid, so the import accepts it"
     stored = EligibleStudent.objects.get(institutional_id="6699000001")
     assert stored.email == "someone@gmail.com"
+
+
+# --- Correcting one address -----------------------------------------------------
+
+
+def _correct(entry, email, reason="ยืนยันกับภาควิชาแล้ว", actor=None):
+    """Run the correction the way a view does, through the protocol."""
+    from core.services.errors import OperationOutcome
+    from core.services.protocol import run_operation
+    from core.services.roster import correct_email
+
+    return run_operation(
+        actor=actor,
+        operation="staff_correct_roster_email",
+        payload={"entry": entry.pk, "email": email},
+        key=None,
+        body=lambda ctx: OperationOutcome.success(
+            **correct_email(ctx, entry=entry, email=email, reason=reason)
+        ),
+    )
+
+
+def test_a_wrong_roster_address_can_be_corrected(staff_user):
+    """The one thing the import refuses to do, done explicitly and with a trail.
+
+    The department's list holds personal addresses for students who must register
+    with their institutional one, and without this there is no way to remedy it.
+    """
+    from core.models import AuditEvent
+
+    import_roster_text(text=csv_text("6699000001,personal@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"))
+    entry = EligibleStudent.objects.get(institutional_id="6699000001")
+
+    outcome = _correct(entry, "6699000001@student.chula.ac.th", actor=staff_user)
+
+    assert outcome.ok, outcome.code
+    assert outcome.data["previous_email"] == "personal@gmail.com"
+    assert outcome.data["changed"] is True
+    entry.refresh_from_db()
+    assert entry.email == "6699000001@student.chula.ac.th"
+
+    event = AuditEvent.objects.get(action="roster.email_corrected")
+    assert event.changes["from"] == "personal@gmail.com"
+    assert event.changes["to"] == "6699000001@student.chula.ac.th"
+    assert event.reason
+    assert event.actor_id == staff_user.pk
+
+
+def test_the_corrected_address_now_matches_a_registration(staff_user, frozen):
+    """The point of the whole exercise: the student becomes approvable."""
+    from core.services import identity
+
+    factories_ok = import_roster_text(text=csv_text("6699000001,personal@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"))
+    assert factories_ok.ok
+    entry = EligibleStudent.objects.get(institutional_id="6699000001")
+
+    _correct(entry, "6699000001@student.chula.ac.th", actor=staff_user)
+
+    # Registration rejects the personal domain, and auto-approval needs ID *and*
+    # address to match the roster.
+    result = identity.start_registration(
+        institutional_id="6699000001",
+        email="6699000001@student.chula.ac.th",
+        name="ชื่อ ทดสอบ",
+    )
+    user, _ = identity.verify_email(result.raw_token)
+    assert user.eligibility == User.Eligibility.APPROVED
+
+
+def test_correcting_leaves_the_linked_account_alone(staff_user):
+    """A roster correction is not a licence to change somebody's login identity."""
+    student = factories.make_user(username="6699000001", email="6699000001@student.chula.ac.th")
+    factories.make_roster_entry(user=student, instrument="เปียโน")
+    entry = EligibleStudent.objects.get(institutional_id="6699000001")
+
+    outcome = _correct(entry, "6699000001@student.chula.ac.th", actor=staff_user)
+
+    assert outcome.ok, outcome.code
+    assert outcome.data["changed"] is False, "the same address is a no-op, not an error"
+    student.refresh_from_db()
+    assert student.email == "6699000001@student.chula.ac.th"
+    assert student.eligibility == User.Eligibility.APPROVED
+
+
+def test_a_stale_link_is_reported_rather_than_revoked(staff_user):
+    """When the account no longer agrees, say so — do not silently un-approve."""
+    student = factories.make_user(username="6699000001", email="old@student.chula.ac.th")
+    factories.make_roster_entry(user=student, instrument="เปียโน")
+    entry = EligibleStudent.objects.get(institutional_id="6699000001")
+
+    outcome = _correct(entry, "new@student.chula.ac.th", actor=staff_user)
+
+    assert outcome.ok, outcome.code
+    assert outcome.data["linked_account_id"] == student.pk
+    assert outcome.data["linked_account_matches"] is False
+
+    student.refresh_from_db()
+    assert student.eligibility == User.Eligibility.APPROVED, "approval is not withdrawn"
+    assert student.email == "old@student.chula.ac.th", "the account's own address is kept"
+
+
+def test_an_address_held_by_another_student_is_refused(staff_user):
+    import_roster_text(text=csv_text(GOOD, OTHER))
+    entry = EligibleStudent.objects.get(institutional_id="6699000001")
+
+    outcome = _correct(entry, "6699000002@student.chula.ac.th", actor=staff_user)
+
+    assert not outcome.ok
+    assert outcome.code == "duplicate_account"
+    entry.refresh_from_db()
+    assert entry.email == "6699000001@student.chula.ac.th"
+
+
+@pytest.mark.parametrize("email", ["", "   ", "not-an-address"])
+def test_a_bad_address_is_refused(staff_user, email):
+    import_roster_text(text=csv_text(GOOD))
+    entry = EligibleStudent.objects.get(institutional_id="6699000001")
+
+    outcome = _correct(entry, email, actor=staff_user)
+
+    assert not outcome.ok
+    assert outcome.code == "invalid_input"
+    entry.refresh_from_db()
+    assert entry.email == "6699000001@student.chula.ac.th"
+
+
+def test_a_reason_is_required(staff_user):
+    import_roster_text(text=csv_text(GOOD))
+    entry = EligibleStudent.objects.get(institutional_id="6699000001")
+
+    outcome = _correct(entry, "elsewhere@student.chula.ac.th", reason="   ", actor=staff_user)
+
+    assert not outcome.ok
+    assert outcome.code == "invalid_input"
+    entry.refresh_from_db()
+    assert entry.email == "6699000001@student.chula.ac.th"
+
+
+def test_staff_can_correct_an_address_from_the_roster_screen(client, staff_user):
+    from django.urls import reverse
+
+    import_roster_text(text=csv_text("6699000001,personal@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"))
+    entry = EligibleStudent.objects.get(institutional_id="6699000001")
+    client.force_login(staff_user)
+
+    response = client.post(
+        reverse("core:staff_correct_roster_email", args=[entry.pk]),
+        {"email": "6699000001@student.chula.ac.th", "reason": "ยืนยันกับภาควิชาแล้ว"},
+    )
+
+    assert response.status_code == 302
+    entry.refresh_from_db()
+    assert entry.email == "6699000001@student.chula.ac.th"
+
+
+def test_a_student_cannot_correct_a_roster_address(client, student):
+    from django.urls import reverse
+
+    import_roster_text(text=csv_text("6699000001,personal@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"))
+    entry = EligibleStudent.objects.get(institutional_id="6699000001")
+    client.force_login(student)
+
+    response = client.post(
+        reverse("core:staff_correct_roster_email", args=[entry.pk]),
+        {"email": "6699000001@student.chula.ac.th", "reason": "x"},
+    )
+
+    assert response.status_code == 403
+    entry.refresh_from_db()
+    assert entry.email == "personal@gmail.com"
+
+
+# --- The import's explicit opt-in -----------------------------------------------
+
+
+def test_an_import_still_refuses_an_address_change_by_default():
+    import_roster_text(text=csv_text("6699000001,old@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"))
+
+    with pytest.raises(ValueError):
+        import_roster_text(text=csv_text("6699000001,new@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"))
+
+    assert EligibleStudent.objects.get(institutional_id="6699000001").email == "old@gmail.com"
+
+
+def test_an_import_rewrites_addresses_only_when_explicitly_allowed():
+    import_roster_text(text=csv_text("6699000001,old@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"))
+
+    report = import_roster_text(
+        text=csv_text("6699000001,new@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"),
+        allow_email_change=True,
+    )
+
+    assert report.ok, report.errors
+    assert report.email_changed == 1, "the count must be visible, never silent"
+    assert "rewritten" in report.summary()
+    assert EligibleStudent.objects.get(institutional_id="6699000001").email == "new@gmail.com"
+
+    from core.models import AuditEvent
+
+    event = AuditEvent.objects.filter(action="roster.imported").latest("id")
+    assert event.changes["email_changed"] == 1
+    assert event.changes["allow_email_change"] is True
+
+
+def test_the_opt_in_counts_rewrites_in_a_dry_run_without_writing():
+    import_roster_text(text=csv_text("6699000001,old@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"))
+
+    report = import_roster_text(
+        text=csv_text("6699000001,new@gmail.com,ชื่อ ทดสอบ,เปียโน,1,program"),
+        dry_run=True,
+        allow_email_change=True,
+    )
+
+    assert report.email_changed == 1
+    assert EligibleStudent.objects.get(institutional_id="6699000001").email == "old@gmail.com"
+
+
+def test_the_opt_in_never_steals_another_students_address():
+    """Correcting an address is allowed; taking someone else's identity is not.
+
+    Row 6699000001 is offered 6699000002's address. That is a rebinding, and the
+    opt-in does not cover it.
+    """
+    import_roster_text(text=csv_text(GOOD, OTHER))
+
+    with pytest.raises(ValueError):
+        import_roster_text(
+            text=csv_text(GOOD.replace("6699000001@", "6699000002@")),
+            allow_email_change=True,
+        )
+
+    assert EligibleStudent.objects.get(institutional_id="6699000001").email == (
+        "6699000001@student.chula.ac.th"
+    )
+    assert EligibleStudent.objects.get(institutional_id="6699000002").email == (
+        "6699000002@student.chula.ac.th"
+    )
 
 
 # --- Round trip ----------------------------------------------------------------

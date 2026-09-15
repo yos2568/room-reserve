@@ -4,16 +4,14 @@
 revision. Deployment and pilot are **BLOCKED** on missing external inputs, listed
 in §7. Neither is claimed.
 
-- **Date of final evidence**: 2026-09-15 (UTC), final run `20260915T154813Z`
-  (earlier full passes `20260915T145718Z`, `20260915T135931Z`, `20260915T133827Z`
-  are kept as well)
-- **Code revision**: `21d821d7641fdeabb05eb367df54eac6854eae08` (`21d821d`), with a
-  **dirty working tree**: 86 modified/added/untracked files. The revision hash
-  therefore does **not** identify the code that was verified — the file hashes in
-  §8 do. The work is not committed.
+- **Date of final evidence**: 2026-09-15 (UTC), final run `20260915T161035Z`
+  (earlier full passes `20260915T154813Z`, `20260915T145718Z`, `20260915T135931Z`
+  and `20260915T133827Z` are kept as well)
+- **Code revision**: `05f73ca` plus an uncommitted second batch (the roster email
+  correction path, 12 files). See §8 for the hashes that identify what was verified.
 - **Runner**: `scripts/verify`
-- **Evidence**: `artifacts/qa/verify-20260915T154813Z/` (12 per-check logs plus
-  `summary.tsv`) and the three earlier run directories
+- **Evidence**: `artifacts/qa/verify-20260915T161035Z/` (12 per-check logs plus
+  `summary.tsv`) and the four earlier run directories
 
 ## 1. Environment
 
@@ -41,9 +39,9 @@ Exit code 0 means every check passed. Non-zero means at least one check failed
 **or was blocked**; the summary names which. Per-check logs and a machine-readable
 `summary.tsv` land in `artifacts/qa/verify-<UTC timestamp>/`.
 
-## 3. Results — `bash scripts/verify`, final run `20260915T154813Z`
+## 3. Results — `bash scripts/verify`, final run `20260915T161035Z`
 
-Exit code **0**. `PASS=12 FAIL=0 BLOCKED=0`. Identical results in the three
+Exit code **0**. `PASS=12 FAIL=0 BLOCKED=0`. Identical results in the four
 preceding runs.
 
 | # | Check | Result | Command | Evidence |
@@ -53,7 +51,7 @@ preceding runs.
 | 3 | `format_check` | PASS | `python -m ruff format --check .` | `format_check.log` |
 | 4 | `django_check` | PASS | `manage.py check` (dev settings) | `django_check.log` |
 | 5 | `migration_drift` | PASS | `manage.py makemigrations --check --dry-run` → "No changes detected" | `migration_drift.log` |
-| 6 | `pytest_suite` | PASS | `python -m pytest -q` → `343 passed in 30.94s` | `pytest_suite.log` |
+| 6 | `pytest_suite` | PASS | `python -m pytest -q` → `359 passed in 31.62s` | `pytest_suite.log` |
 | 7 | `collectstatic` | PASS | `manage.py collectstatic --noinput` | `collectstatic.log` |
 | 8 | `clean_bootstrap` | PASS | new database → `migrate` → `seed_rooms` → `seed_demo` → 7 routes over HTTP; asserts `ROOM_COUNT` rooms and exactly one restricted to piano and percussion | `clean_bootstrap.log` |
 | 9 | `docker_image_build` | PASS | `docker compose build web` (legacy-builder fallback) | `docker_image_build.log` |
@@ -63,7 +61,7 @@ preceding runs.
 
 ### Selected evidence, quoted
 
-**Suite** — `343 passed in 30.94s` (27 of them in Chromium).
+**Suite** — `359 passed in 31.62s` (28 of them in Chromium).
 
 **Clean bootstrap** — ten rooms on a database created for the run:
 
@@ -226,11 +224,16 @@ acceptance work touched, plus the runner:
 | `core/templates/core/use_now_confirm.html` | `f6c8399287e73032eb28c6cc3f4b04e4` |
 | `core/templates/core/staff/users.html` | `585f22054ca662ffd31c76a53b8230db` |
 | `locale/th/LC_MESSAGES/django.po` | `67170f72d09837e66bb4a84743231121` |
-| `locale/th/LC_MESSAGES/django.mo` | `5eafc8c35fdbf74081b99c206f0f6007` |
+| `locale/th/LC_MESSAGES/django.mo` | `01b82350415cdda080c0ec461c4013c4` |
 | `Dockerfile` | `cb3b33d5bd28ddd499bb14509d1bb074` |
 | `.dockerignore` | `4d52aead3950b724a11f0b2022fca094` |
 | `tests/browserlib.py` | `90980a641af7c5b3ad7c6bf52b99a2a6` |
-| `core/services/roster.py` | `c98fba524036e3155ce020dc89e0d9e0` |
+| `core/services/roster.py` | `e6fc67867a4247b2f02433f36331a9cb` |
+| `core/views/staff.py` | `0ed847826347c46b31c0132e24b93316` |
+| `core/management/commands/import_roster.py` | `f415d2f75c632168b97bc8a526ec0637` |
+| `core/templates/core/staff/roster.html` | `ad2ad5a5e913ac6d8111fad3c992c240` |
+| `tests/test_roster.py` | `c51610e860de6380d291a26948f33ee1` |
+| `tests/test_browser_staff.py` | `694b6ae4e12412698265d06f5ecf9d7e` |
 | `core/services/instruments.py` | `b764570498c6bbcf236eb4aaa56fa150` |
 | `core/services/rooms.py` | `b5b78df9d1e1ec5fd5cbc49ae106bfaf` |
 | `core/services/eligibility.py` | `42fe45f7d5bdfa51966c81c73d8f0625` |
@@ -242,9 +245,6 @@ acceptance work touched, plus the runner:
 | `core/templates/core/staff/admin.html` | `7787f8a36085ded2d1ff79a2f09006ed` |
 | `tests/test_instruments.py` | `be34c0987b380e3b404830fb54f92698` |
 | `tests/test_room_audience.py` | `12c7249002e1a9f23814fce2ec9f666f` |
-| `locale/th/LC_MESSAGES/django.mo` | `c1f9903071d1b47500ead5c9b54e8196` |
-| `tests/test_roster.py` | `2c0f78c1fdca7fd8248896fd50fa80a7` |
-| `docs/runbook.md` | `af9f61e419e01eb5fddf6e8265c9d53a` |
 | `core/static/css/tailwind.css` | `69a6ebd698252cded5d2ed2cc661c0b6` |
 
 `git diff` against `21d821d` is the authoritative change set; these hashes are for

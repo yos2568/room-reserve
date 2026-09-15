@@ -95,6 +95,17 @@ match together, so 57 students must be approved by staff until the addresses are
 corrected. The mechanism is correct and tested (`tests/test_roster.py`,
 `tests/test_identity.py`); the data is not yet fit for automatic approval.
 
+**The remedy for those 57 rows exists and is tested.** Because the import refuses to
+change an address on an existing entry, correcting a roster is an explicit action:
+one entry at a time from the staff roster screen (audited as
+`roster.email_corrected`), or a bulk refresh with `--allow-email-change`, which
+counts and records every address it rewrites. Neither will take an address that
+already belongs to a different institutional ID, neither edits the student's own
+account, and neither withdraws an existing approval. Covered by
+`tests/test_roster.py` (15 tests, including the permission boundary and the
+importer's opt-in) and
+`test_browser_staff.py::test_staff_correct_a_roster_address_from_the_roster_screen`.
+
 **Nothing here was closed by loosening a threshold.** Two thresholds that look
 arbitrary are derived: the poster legibility check computes printed millimetres per
 QR module rather than asserting a pixel size, and the graph-refresh check asserts a

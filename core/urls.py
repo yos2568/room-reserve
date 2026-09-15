@@ -75,6 +75,11 @@ urlpatterns = [
         name="staff_void_incident",
     ),
     path("staff/roster/", views.staff.roster, name="staff_roster"),
+    path(
+        "staff/roster/<int:pk>/email/",
+        views.staff.correct_roster_email,
+        name="staff_correct_roster_email",
+    ),
     path("staff/roster/import/", views.staff.import_roster, name="staff_import_roster"),
     path("staff/roster/export/", views.staff.roster_export, name="staff_roster_export"),
     path("staff/invitations/", views.staff.invitations, name="staff_invitations"),

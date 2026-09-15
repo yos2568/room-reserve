@@ -199,14 +199,28 @@ distinction impossible to miss at the call site.
 Restricting a room is not retroactive: an existing reservation survives and still
 checks in, and the staff action says so on the page. The alternative punishes a
 student for an administrative decision they had no part in.
- The 2569 file's email column holds 17 institutional addresses and 57
-personal ones (55 `gmail.com`, one `gmail.con`, one `suthi.ac.th`). The importer
-validates only the *shape* of an address, and registration refuses a
-non-institutional domain, so those 57 rows can never match a registration and those
-students need staff approval. The operator was told before writing, chose to import
-the file as it reads, and the consequence is recorded in the runbook rather than
-silently normalised — deriving `<id>@student.chula.ac.th` would have meant
-inventing addresses the university may not have assigned.
+
+**D-27 — Correcting a roster address is an explicit, audited action — never an
+import side effect.**
+The import refuses to change the address on an entry that already exists, because
+it must never silently rebind an identity. That is right, but it left **no way at
+all** to fix a roster that is simply wrong — which is the common case here: the
+department's list holds personal addresses for students who must register with the
+institutional one, and until this existed the corrected file would have been
+rejected. Two ways in, both deliberate:
+
+* a staff action on the roster screen, one entry at a time, with a mandatory reason
+  (`roster.email_corrected`, recording before and after);
+* `--allow-email-change` on the import (or the checkbox on the staff form), which
+  reports how many addresses it rewrote rather than doing it quietly. An address
+  that already belongs to a **different institutional ID** is refused either way:
+  that is rebinding a person, not correcting a record.
+
+The correction touches the roster row only. It does not edit a linked account's own
+address — a login identity is the student's, not something a spreadsheet correction
+rewrites — and it does not re-run eligibility, because withdrawing an approval over
+somebody else's clerical error penalises the wrong person. When a linked account no
+longer matches the corrected address, the action says so rather than acting on it.
 
 ---
 

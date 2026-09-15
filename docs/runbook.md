@@ -198,10 +198,13 @@ Three things to know before you trust a refresh:
    this flag wipes the roster. That is why it is a separate, explicit flag.
 2. **The import does not create accounts.** It writes `EligibleStudent` rows only.
    Students still register themselves, and a student is approved automatically only
-   when their institutional ID **and** email match a row together. It also refuses
-   to change the email on an existing institutional ID — a contradiction aborts the
-   whole file rather than overwriting it.
-3. **Check the email column's domain before importing.** The importer validates
+   when their institutional ID **and** email match a row together.
+3. **An import will not change an address that is already on the roster.** A
+   difference aborts the whole file, because an import must never silently rebind an
+   identity. That is the right default, and it means a corrected file needs one of
+   the two deliberate paths in "Correcting a roster address" below — otherwise the
+   department's fix will be rejected.
+4. **Check the email column's domain before importing.** The importer validates
    only that an address is well-formed. The department's spreadsheet for 2569 had
    17 institutional addresses and 57 personal ones (55 `gmail.com`, one `gmail.con`
    — a typo — and one `suthi.ac.th`). Registration **refuses** a non-institutional
@@ -222,6 +225,44 @@ print(f'{len(rows) - len(bad)}/{len(rows)} rows can auto-approve; {len(bad)} can
 
 Every import and deactivation is written to the audit trail
 (`roster.imported`, `roster.deactivated`).
+
+### Correcting a roster address
+
+This is the remedy for the 57 rows above, and it is also the prerequisite for the
+instrument-specific room: a student's instrument is found through the roster row,
+and the row is linked to an account only when the address matches.
+
+**One student** — Staff → Roster → *Correct email* on their row. A reason is
+required, the change is audited (`roster.email_corrected`), and it is the right tool
+for a handful of students.
+
+**Many at once** — the department returns a corrected CSV, and you tell the import
+that rewriting addresses is intended:
+
+```bash
+# Always dry-run first: it reports how many addresses it would rewrite.
+DJANGO_SETTINGS_MODULE=roomreserve.settings.dev \
+  ~/.virtualenvs/roomreserve/bin/python manage.py import_roster corrected.csv \
+  --dry-run --allow-email-change --batch "roster-emails-2569"
+```
+
+Then drop `--dry-run`. On the staff screen the same thing is the checkbox *"Also
+rewrite existing addresses in this file"*, and it is off by default for a reason.
+
+What neither path will do:
+
+- **Take an address that already belongs to a different institutional ID.** That is
+  rebinding one student to another person's identity, and it is refused whether or
+  not the opt-in is set.
+- **Change the student's account.** The account's own email is their login
+  identity. If the roster row is linked to an account whose address no longer
+  matches, the action says so and leaves the account — and its approval — alone. If
+  you decide the account should be re-checked, do that deliberately with
+  *Approve/Reject* on the staff user screen; nothing does it automatically.
+- **Write an invalid or empty address**, or accept a correction with no reason.
+
+Every rewritten address is counted in the import report and recorded on the audit
+row, so a bulk correction is never silent.
 
 ## 8. The instrument-specific room
 

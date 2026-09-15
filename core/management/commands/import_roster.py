@@ -23,6 +23,16 @@ class Command(BaseCommand):
         parser.add_argument("--dry-run", action="store_true", help="Validate without writing.")
         parser.add_argument("--batch", default="", help="Batch label recorded on new rows.")
         parser.add_argument(
+            "--allow-email-change",
+            action="store_true",
+            help=(
+                "Permit the file to rewrite the address on an entry that already "
+                "exists. Off by default: an import must never silently rebind an "
+                "identity. An address that already belongs to a different "
+                "institutional ID is refused either way."
+            ),
+        )
+        parser.add_argument(
             "--deactivate-missing",
             action="store_true",
             help=(
@@ -49,6 +59,7 @@ class Command(BaseCommand):
                 actor=None,
                 dry_run=options["dry_run"],
                 batch=options["batch"],
+                allow_email_change=options["allow_email_change"],
             )
         except ValueError as exc:
             raise CommandError(f"Import rejected, nothing written: {exc}") from exc

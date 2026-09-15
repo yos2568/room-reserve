@@ -671,6 +671,7 @@ def roster(request):
 def import_roster(request):
     upload = request.FILES.get("file")
     dry_run = request.POST.get("dry_run") == "on"
+    allow_email_change = request.POST.get("allow_email_change") == "on"
     batch = (request.POST.get("batch") or f"upload-{timezone.now():%Y%m%d%H%M%S}").strip()
 
     if upload is None:
@@ -685,7 +686,11 @@ def import_roster(request):
 
     try:
         report = roster_service.import_roster_text(
-            text=text, actor=request.user, dry_run=dry_run, batch=batch
+            text=text,
+            actor=request.user,
+            dry_run=dry_run,
+            batch=batch,
+            allow_email_change=allow_email_change,
         )
     except ValueError as exc:
         # All-or-nothing: the transaction was rolled back, so report the conflict.
@@ -1062,6 +1067,45 @@ def set_room_audience(request, pk: int):
     )
     add_outcome_message(request, outcome)
     return redirect("core:staff_admin")
+
+
+@staff_required
+@require_POST
+def correct_roster_email(request, pk: int):
+    """Correct one roster entry's address, with a mandatory reason.
+
+    The import deliberately refuses to change an address on an existing entry, so
+    without this there is no way to remedy a roster that is simply wrong — and the
+    department's list does hold addresses a student cannot register with.
+    """
+    entry = get_object_or_404(EligibleStudent, pk=pk)
+    email = (request.POST.get("email") or "").strip()
+    reason = (request.POST.get("reason") or "").strip()
+
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_correct_roster_email",
+        payload={"entry": pk, "email": email},
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            **roster_service.correct_email(ctx, entry=entry, email=email, reason=reason)
+        ),
+    )
+
+    if (
+        outcome.ok
+        and outcome.data.get("linked_account_id")
+        and not outcome.data.get("linked_account_matches")
+    ):
+        messages.warning(
+            request,
+            "ที่อยู่นี้ไม่ตรงกับบัญชีที่เชื่อมอยู่แล้ว การอนุมัติเดิมยังคงอยู่ "
+            "/ The linked account's address no longer matches this entry. Its existing "
+            "approval is unchanged; review the account if it should be re-checked.",
+        )
+
+    add_outcome_message(request, outcome)
+    return redirect("core:staff_roster")
 
 
 @staff_required
