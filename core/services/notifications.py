@@ -59,13 +59,11 @@ def _booking_context(payload: dict, extra: dict | None = None) -> dict:
     slot_start = payload.get("slot_start")
     slot_end = payload.get("slot_end")
     if slot_start:
-        context["slot_start_display"] = clock.local_time(
-            datetime.fromisoformat(slot_start)
-        ).strftime("%d/%m/%Y %H:%M")
+        context["slot_start_display"] = clock.local_time(datetime.fromisoformat(slot_start)).strftime(
+            "%d/%m/%Y %H:%M"
+        )
     if slot_end:
-        context["slot_end_display"] = clock.local_time(
-            datetime.fromisoformat(slot_end)
-        ).strftime("%H:%M")
+        context["slot_end_display"] = clock.local_time(datetime.fromisoformat(slot_end)).strftime("%H:%M")
     context.update(extra or {})
     return context
 
@@ -89,8 +87,7 @@ def revalidate(notification: Notification, now) -> dict:
             raise MessageStale(f"Booking is {booking.status}.")
         if kind == KIND_BOOKING_REMINDER and (
             # A reminder is pointless once the booking is no longer upcoming.
-            booking.status != Booking.Status.SCHEDULED
-            or now >= booking.slot_start
+            booking.status != Booking.Status.SCHEDULED or now >= booking.slot_start
         ):
             raise MessageStale("Reminder no longer applies.")
         if kind == KIND_BOOKING_CANCELLED and booking.status != Booking.Status.CANCELLED:

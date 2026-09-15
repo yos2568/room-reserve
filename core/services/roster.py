@@ -18,7 +18,7 @@ from django.db import transaction
 
 from core.models import EligibleStudent
 
-from . import clock
+from . import clock, instruments
 from .audit import record_audit
 from .csvio import read_csv
 from .identity import normalize_email
@@ -46,6 +46,10 @@ class ImportReport:
     # Every institutional ID that passed validation, so a full refresh can tell
     # which existing entries are absent and therefore stale.
     institutional_ids: list[str] = field(default_factory=list)
+    # Instrument spellings no category covers. Not an error — the import still
+    # works — but a student nobody has categorised cannot reserve an
+    # instrument-specific room, so this has to be visible rather than swallowed.
+    unrecognised_instruments: list[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
@@ -53,18 +57,27 @@ class ImportReport:
 
     def summary(self) -> str:
         verb = "would be" if self.dry_run else "were"
-        return (
+        lines = [
             f"{self.rows_read} rows read; {self.valid} valid; "
             f"{self.created} {verb} created; {self.unchanged} unchanged; "
             f"{len(self.errors)} errors."
-        )
+        ]
+        if self.unrecognised_instruments:
+            lines.append(
+                f"{len(self.unrecognised_instruments)} instrument spelling(s) have no "
+                f"category: {', '.join(self.unrecognised_instruments)}. Those students "
+                f"cannot reserve an instrument-specific room until they are categorised."
+            )
+        return "\n".join(lines)
 
 
 def import_roster_text(*, text: str, actor=None, dry_run: bool = False, batch: str = "") -> ImportReport:
     return import_roster_rows(rows=read_csv(text), actor=actor, dry_run=dry_run, batch=batch)
 
 
-def import_roster_rows(*, rows: list[dict], actor=None, dry_run: bool = False, batch: str = "") -> ImportReport:
+def import_roster_rows(
+    *, rows: list[dict], actor=None, dry_run: bool = False, batch: str = ""
+) -> ImportReport:
     report = ImportReport(rows_read=len(rows), dry_run=dry_run)
 
     cleaned: list[dict] = []
@@ -87,7 +100,9 @@ def import_roster_rows(*, rows: list[dict], actor=None, dry_run: bool = False, b
             continue
 
         if institutional_id in seen_ids:
-            report.errors.append(RowError(index, f"Duplicate institutional ID inside this file: {institutional_id}."))
+            report.errors.append(
+                RowError(index, f"Duplicate institutional ID inside this file: {institutional_id}.")
+            )
             continue
         if email in seen_emails:
             report.errors.append(RowError(index, f"Duplicate email inside this file: {email}."))
@@ -106,6 +121,7 @@ def import_roster_rows(*, rows: list[dict], actor=None, dry_run: bool = False, b
                 report.errors.append(RowError(index, f"Year must be a number from 1 to 12, got {year!r}."))
                 continue
 
+        instrument = (row.get("instrument") or "").strip()
         cleaned.append(
             {
                 "institutional_id": institutional_id,
@@ -113,14 +129,33 @@ def import_roster_rows(*, rows: list[dict], actor=None, dry_run: bool = False, b
                 "name_th": (row.get("name_th") or row.get("name") or "").strip(),
                 "name_en": (row.get("name_en") or "").strip(),
                 "program": (row.get("program") or "").strip(),
-                "instrument": (row.get("instrument") or "").strip(),
+                "instrument": instrument,
+                "instrument_category": instruments.categorise(instrument),
                 "year": year_value,
             }
         )
 
     report.valid = len(cleaned)
     report.institutional_ids = [entry["institutional_id"] for entry in cleaned]
-    if report.errors or dry_run:
+    report.unrecognised_instruments = instruments.unrecognised(entry["instrument"] for entry in cleaned)
+
+    if report.errors:
+        return report
+
+    if dry_run:
+        # A dry run must answer the two questions it is asked: how many rows would
+        # be created, and would the import be refused. Returning early here used to
+        # report "0 would be created" for any valid file, which reads as "nothing
+        # to do" and makes the preflight worse than useless for a real roster.
+        for entry in cleaned:
+            conflict = _conflicting_entry(entry)
+            if conflict is not None:
+                report.errors.append(RowError(0, conflict))
+                continue
+            if EligibleStudent.objects.filter(institutional_id=entry["institutional_id"]).exists():
+                report.unchanged += 1
+            else:
+                report.created += 1
         return report
 
     with transaction.atomic():
@@ -180,11 +215,23 @@ def _apply_entry(entry: dict, *, batch: str) -> bool:
         return True
 
     changed = []
-    for field_name in ("name_th", "name_en", "program", "instrument", "year"):
+    for field_name in ("name_th", "name_en", "program", "year"):
         value = entry[field_name]
         if value and getattr(existing, field_name) != value:
             setattr(existing, field_name, value)
             changed.append(field_name)
+
+    # The instrument and its derived category move together, and only when the
+    # file actually says something: a blank instrument column must not wipe a
+    # category that was set deliberately.
+    if entry["instrument"]:
+        if existing.instrument != entry["instrument"]:
+            existing.instrument = entry["instrument"]
+            changed.append("instrument")
+        if existing.instrument_category != entry["instrument_category"]:
+            existing.instrument_category = entry["instrument_category"]
+            changed.append("instrument_category")
+
     if not existing.is_active:
         existing.is_active = True
         changed.append("is_active")

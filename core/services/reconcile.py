@@ -161,10 +161,7 @@ def _create_automatic_suspension(user_id: int, now, policy, actor) -> Suspension
         starts_at=now,
         ends_at=now + timedelta(days=policy.auto_suspension_days),
         source=Suspension.Source.AUTO,
-        reason=(
-            f"{policy.strike_threshold} eligible strikes within "
-            f"{policy.strike_window_days} days."
-        ),
+        reason=(f"{policy.strike_threshold} eligible strikes within {policy.strike_window_days} days."),
         created_by=actor if getattr(actor, "pk", None) else None,
         start_notified_at=now,
     )

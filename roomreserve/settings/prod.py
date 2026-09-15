@@ -8,8 +8,8 @@ secrets, not use demo defaults").
 
 from __future__ import annotations
 
-from roomreserve.env import env_bool, env_int, env_list, env_str
-from roomreserve.settings.base import *  # noqa: F403
+from roomreserve.env import env_int, env_list, env_str
+from roomreserve.settings.base import *
 
 DEBUG = False
 
@@ -18,22 +18,18 @@ ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
 if not ALLOWED_HOSTS:
     from django.core.exceptions import ImproperlyConfigured
 
-    raise ImproperlyConfigured(
-        "DJANGO_ALLOWED_HOSTS must list the deployed hostnames in production."
-    )
+    raise ImproperlyConfigured("DJANGO_ALLOWED_HOSTS must list the deployed hostnames in production.")
 
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 if not CSRF_TRUSTED_ORIGINS:
     from django.core.exceptions import ImproperlyConfigured
 
-    raise ImproperlyConfigured(
-        "DJANGO_CSRF_TRUSTED_ORIGINS must list the https origins in production."
-    )
+    raise ImproperlyConfigured("DJANGO_CSRF_TRUSTED_ORIGINS must list the https origins in production.")
 
 # PostgreSQL credentials must be supplied; the base default is development-only.
 POSTGRES_PASSWORD = env_str("POSTGRES_PASSWORD", required=True)
-DATABASES["default"]["PASSWORD"] = POSTGRES_PASSWORD  # noqa: F405
-DATABASES["default"]["CONN_MAX_AGE"] = env_int("DJANGO_CONN_MAX_AGE", 60)  # noqa: F405
+DATABASES["default"]["PASSWORD"] = POSTGRES_PASSWORD
+DATABASES["default"]["CONN_MAX_AGE"] = env_int("DJANGO_CONN_MAX_AGE", 60)
 
 # Mail must be configured explicitly in production; no catcher fallback.
 EMAIL_HOST = env_str("EMAIL_HOST", required=True)
@@ -60,4 +56,4 @@ ALLOW_TEST_CLOCK = False
 
 # Do not let an SMTP outage fail process liveness and trigger restart loops
 # (V3 section 11); the outbox worker surfaces the failure instead.
-LOGGING["handlers"]["console"]["formatter"] = "structured"  # noqa: F405
+LOGGING["handlers"]["console"]["formatter"] = "structured"

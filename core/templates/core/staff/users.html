@@ -80,6 +80,33 @@
                   <button class="btn-danger" type="submit">{% trans "Deactivate account" %}</button>
                 </form>
 
+                {# The strikes behind a sanction, and the only way to act on an appeal.
+                   A student who believes a strike is wrong is told to contact the
+                   office; this is where the office can correct it. #}
+                <div class="mt-3 border-t border-slate-200 pt-2">
+                  <p class="text-xs font-medium">{% trans "Strikes on record" %}</p>
+                  {% if row.violations %}
+                    <ul class="mt-1 space-y-2 text-xs">
+                      {% for violation in row.violations %}
+                        <li>
+                          {{ violation.get_kind_display }} · {{ violation.occurred_at|date:"j M Y H:i" }}
+                          {% if violation.consumed_by_id %}· <span class="text-slate-600">{% trans "already used for a suspension" %}</span>{% endif %}
+                          {% if violation.note %}· {{ violation.note }}{% endif %}
+                          <form method="post" action="{% url 'core:staff_void_violation' pk=violation.pk %}" class="mt-1 flex flex-wrap items-center gap-1">
+                            {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <label class="sr-only" for="void-{{ violation.pk }}">{% trans "Why is this strike wrong?" %}</label>
+                            <input class="field !py-1" id="void-{{ violation.pk }}" name="reason" placeholder="{% trans 'Why is this strike wrong?' %}" required>
+                            <button class="btn-secondary" type="submit">{% trans "Void strike" %}</button>
+                          </form>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    <p class="mt-1 text-xs text-slate-600">{% trans "No strikes on record." %}</p>
+                  {% endif %}
+                </div>
+
                 <p class="mt-2 text-xs text-slate-600">
                   {% blocktrans %}Staff cannot grant superuser, change secrets or bypass booking rules.{% endblocktrans %}
                 </p>

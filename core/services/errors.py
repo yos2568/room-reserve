@@ -27,6 +27,7 @@ class Code:
     SLOT_IN_PAST = "slot_in_past"
     SLOT_ELAPSED = "slot_elapsed"
     CLOSED = "closed"
+    ROOM_NOT_FOR_INSTRUMENT = "room_not_for_instrument"
     INVALID_SLOT = "invalid_slot"
     STALE_HOUR = "stale_hour"
     NO_SHOW_RECLAIM = "no_show_reclaim"
@@ -67,14 +68,16 @@ _MESSAGES = {
     Code.OK: _("Done."),
     Code.BUSY: _("The system is busy. Please try again in a moment."),
     Code.SLOT_TAKEN: _("That room and hour has just been taken."),
-    Code.ADJACENCY_CONFLICT: _(
-        "You already have a booking in this hour or an adjacent hour."
-    ),
+    Code.ADJACENCY_CONFLICT: _("You already have a booking in this hour or an adjacent hour."),
     Code.QUOTA_EXCEEDED: _("You have reached your limit of bookings for that day."),
     Code.OUTSIDE_HORIZON: _("That date is further ahead than booking allows."),
     Code.SLOT_IN_PAST: _("That time has already started. Use “Use now” if the room is free."),
     Code.SLOT_ELAPSED: _("That hour has already finished."),
     Code.CLOSED: _("That room is closed for the selected time."),
+    Code.ROOM_NOT_FOR_INSTRUMENT: _(
+        "That room can only be reserved by piano and percussion students. Once the "
+        "hour starts, anyone may use it if it is still free."
+    ),
     Code.INVALID_SLOT: _("That is not a bookable hour."),
     Code.STALE_HOUR: _(
         "The hour changed while this page was open. Check the current slot and confirm again."
@@ -117,6 +120,7 @@ _REJECTION_STATUS = {
     Code.SLOT_TAKEN: 409,
     Code.ADJACENCY_CONFLICT: 409,
     Code.QUOTA_EXCEEDED: 409,
+    Code.ROOM_NOT_FOR_INSTRUMENT: 409,
     Code.NOT_FOUND: 404,
     Code.INVALID_INPUT: 400,
 }

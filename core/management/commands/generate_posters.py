@@ -59,9 +59,7 @@ class Command(BaseCommand):
         sheet = output / "posters.html"
         sheet.write_text(_render(pages), encoding="utf-8")
         self.stdout.write(self.style.SUCCESS(f"Wrote {len(pages)} posters and {sheet}"))
-        self.stdout.write(
-            "Legibility and door mapping are physical checks and are not established here."
-        )
+        self.stdout.write("Legibility and door mapping are physical checks and are not established here.")
 
 
 def _render(pages: list[dict]) -> str:

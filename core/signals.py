@@ -39,8 +39,10 @@ def _on_group_change(sender, instance, action, reverse, pk_set, **kwargs):
         return
 
     affected = (
-        User.objects.filter(pk__in=pk_set) if pk_set else User.objects.filter(groups=instance)
-    ) if reverse else [instance]
+        (User.objects.filter(pk__in=pk_set) if pk_set else User.objects.filter(groups=instance))
+        if reverse
+        else [instance]
+    )
 
     for user in affected:
         _sync_staff_flag(user)

@@ -2,8 +2,8 @@
 {# The grid body. Rendered on first load and again by the HTMX refresh. #}
 <div id="availability-region"
      hx-get="{% url 'core:availability' %}?date={{ local_date|date:'Y-m-d' }}"
-     hx-trigger="every 30s, refresh-availability from:body, htmx:afterOnLoad"
-     hx-swap="innerHTML"
+     hx-trigger="every 30s, refresh-availability from:body"
+     hx-swap="outerHTML"
      aria-live="polite">
 
   {% if grid.day_closed %}

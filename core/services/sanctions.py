@@ -271,9 +271,7 @@ def _cancel_scheduled(ctx, *, user: User, suspension: Suspension, reason: str) -
         booking.cancelled_by = ctx.actor if getattr(ctx.actor, "pk", None) else None
         booking.cancel_reason = reason
         booking.late_cancel = False
-        booking.save(
-            update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "late_cancel"]
-        )
+        booking.save(update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "late_cancel"])
         record_audit(
             action="booking.cancelled",
             entity_type="Booking",

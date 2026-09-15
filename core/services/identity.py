@@ -31,7 +31,7 @@ from core.models import EligibleStudent, Invitation, User
 from . import clock
 from .audit import record_audit
 from .errors import Code, OperationRejected
-from .notifications import KIND_EMAIL_VERIFICATION, KIND_INVITATION
+from .notifications import KIND_EMAIL_VERIFICATION, KIND_INVITATION, KIND_PASSWORD_RESET
 from .outbox import enqueue
 from .policy import current_policy
 
@@ -75,9 +75,7 @@ def create_invitation(*, user, purpose: str, ttl: timedelta, actor=None) -> tupl
         latest_generation = previous.order_by("-generation").values_list("generation", flat=True).first()
         generation = (latest_generation or 0) + 1
 
-        previous.filter(used_at__isnull=True, revoked_at__isnull=True).update(
-            revoked_at=timezone.now()
-        )
+        previous.filter(used_at__isnull=True, revoked_at__isnull=True).update(revoked_at=timezone.now())
 
         invitation = Invitation.objects.create(
             user=user,
@@ -210,8 +208,13 @@ def start_registration(*, institutional_id: str, email: str, name: str, actor=No
 
 
 def resend_verification(user, actor=None) -> tuple[Invitation, str]:
-    """Issue a fresh verification link, invalidating the previous generation."""
-    if user.email_is_verified:
+    """Issue a fresh verification link, invalidating the previous generation.
+
+    The persisted verification timestamp is the authority, not the caller's
+    in-memory copy: a caller holding a stale object must not be able to issue a
+    new link for an account that is already verified.
+    """
+    if User.objects.filter(pk=user.pk, email_verified_at__isnull=False).exists():
         raise OperationRejected(Code.INVALID_INPUT)
     invitation, raw_token = create_invitation(
         user=user, purpose=Invitation.Purpose.EMAIL_VERIFICATION, ttl=VERIFICATION_TTL, actor=actor
@@ -227,9 +230,7 @@ def resend_verification(user, actor=None) -> tuple[Invitation, str]:
 
 def verify_email(raw_token: str) -> tuple[User, Invitation]:
     """Redeem a verification token: mark the email verified, then assess eligibility."""
-    invitation = assert_redeemable(
-        find_invitation(raw_token, Invitation.Purpose.EMAIL_VERIFICATION)
-    )
+    invitation = assert_redeemable(find_invitation(raw_token, Invitation.Purpose.EMAIL_VERIFICATION))
     user = invitation.user
 
     invitation.used_at = clock.now()
@@ -339,6 +340,56 @@ def set_initial_password(*, user, password: str, raw_token: str, purpose: str) -
     if invitation.user_id != user.pk:
         raise OperationRejected(Code.INVALID_TOKEN)
 
+    _store_password(user, password, via=purpose)
+
+    invitation.used_at = clock.now()
+    invitation.save(update_fields=["used_at"])
+
+
+def complete_registration(*, raw_token: str, password: str) -> User:
+    """Redeem a self-registration link and set the password, in one step.
+
+    The verification link is single use, so it has to be consumed exactly once.
+    Redeeming it and setting the password as two separate service calls consumed
+    it twice: ``verify_email`` stamped ``used_at`` and then ``set_initial_password``
+    rejected the very token it had just used, so every real registration ended on
+    "that link has already been used". Service-level tests missed it because they
+    drove the two halves independently.
+
+    The password is validated *before* the link is consumed, so a password that
+    fails the validators leaves the link usable and the student can try again.
+    """
+    purpose = Invitation.Purpose.EMAIL_VERIFICATION
+    invitation = assert_redeemable(find_invitation(raw_token, purpose), purpose)
+    user = invitation.user
+
+    with transaction.atomic():
+        _store_password(user, password, via=purpose)
+
+        invitation.used_at = clock.now()
+        invitation.save(update_fields=["used_at"])
+
+        user.email_verified_at = clock.now()
+        user.save(update_fields=["email_verified_at"])
+
+        record_audit(
+            action="account.email_verified",
+            entity_type="User",
+            entity_id=user.pk,
+            actor=user,
+            changes={"email": user.email},
+        )
+        apply_roster_eligibility(user)
+
+    return user
+
+
+def _store_password(user, password: str, *, via: str) -> None:
+    """Validate and persist a new password, leaving every token untouched.
+
+    Validation runs first on purpose: the caller may still have to consume a
+    single-use link, and a rejected password must not consume it.
+    """
     try:
         validate_password(password, user)
     except ValidationError as exc:
@@ -347,15 +398,12 @@ def set_initial_password(*, user, password: str, raw_token: str, purpose: str) -
     user.set_password(password)
     user.save(update_fields=["password"])
 
-    invitation.used_at = clock.now()
-    invitation.save(update_fields=["used_at"])
-
     record_audit(
         action="account.password_set",
         entity_type="User",
         entity_id=user.pk,
         actor=user,
-        changes={"via": purpose},
+        changes={"via": via},
     )
 
 

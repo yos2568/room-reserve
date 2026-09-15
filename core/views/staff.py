@@ -23,6 +23,7 @@ from core.models import (
     CalendarOverride,
     Closure,
     EligibleStudent,
+    InstrumentCategory,
     JobHeartbeat,
     Notification,
     Room,
@@ -86,10 +87,14 @@ def today(request):
         .order_by("slot_start", "room__position")
     )
 
-    pending = User.objects.filter(eligibility=User.Eligibility.PENDING, is_active=True).order_by("date_joined")
+    pending = User.objects.filter(eligibility=User.Eligibility.PENDING, is_active=True).order_by(
+        "date_joined"
+    )
     active_suspensions = maintenance.active_suspensions(moment)
     pending_reviews = maintenance.reviews_pending()
-    failed_mail = Notification.objects.filter(status=Notification.Status.EXHAUSTED).order_by("-created_at")[:20]
+    failed_mail = Notification.objects.filter(status=Notification.Status.EXHAUSTED).order_by("-created_at")[
+        :20
+    ]
 
     heartbeat = JobHeartbeat.objects.filter(name="tick").first()
     from django.conf import settings as dj_settings
@@ -166,9 +171,7 @@ def assisted_check_in(request, pk: int):
         payload={"booking": pk, "reason": reason},
         key=operation_key(request),
         body=lambda ctx: _success(
-            **check_in_service(
-                ctx, booking=booking, room=booking.room, staff_assisted=True, reason=reason
-            )
+            **check_in_service(ctx, booking=booking, room=booking.room, staff_assisted=True, reason=reason)
         ),
     )
     add_outcome_message(request, outcome)
@@ -189,9 +192,7 @@ def cancel_booking(request, pk: int):
         operation="staff_cancel_booking",
         payload={"booking": pk, "reason": reason},
         key=operation_key(request),
-        body=lambda ctx: _success(
-            **cancel_service(ctx, booking=booking, reason=reason, staff_action=True)
-        ),
+        body=lambda ctx: _success(**cancel_service(ctx, booking=booking, reason=reason, staff_action=True)),
     )
     add_outcome_message(request, outcome)
     return redirect(request.POST.get("next") or "core:staff_today")
@@ -227,9 +228,7 @@ def resolve_review(request, pk: int):
         operation="staff_resolve_review",
         payload={"booking": pk, "note": note},
         key=operation_key(request),
-        body=lambda ctx: _success(
-            booking_id=maintenance.resolve_review(ctx, booking=booking, note=note).pk
-        ),
+        body=lambda ctx: _success(booking_id=maintenance.resolve_review(ctx, booking=booking, note=note).pk),
     )
     add_outcome_message(request, outcome)
     return redirect(request.POST.get("next") or "core:staff_today")
@@ -251,7 +250,23 @@ def users(request):
     queryset = list(queryset[:100])
     suspensions = {s.user_id: s for s in Suspension.objects.active(moment).select_related("user")}
 
-    rows = [{"user": user, "suspension": suspensions.get(user.pk)} for user in queryset]
+    # Open strikes per user, loaded in one query. Staff need to see the strikes
+    # behind a sanction in order to act on an appeal: the student is told to
+    # contact the office, so the office has to have the control.
+    strikes: dict[int, list[Violation]] = {}
+    for violation in Violation.objects.filter(
+        user_id__in=[user.pk for user in queryset], voided_at__isnull=True
+    ).order_by("-occurred_at"):
+        strikes.setdefault(violation.user_id, []).append(violation)
+
+    rows = [
+        {
+            "user": user,
+            "suspension": suspensions.get(user.pk),
+            "violations": strikes.get(user.pk, []),
+        }
+        for user in queryset
+    ]
 
     return render(
         request,
@@ -324,9 +339,7 @@ def manual_suspension(request, pk: int):
         payload={"user": pk, "reason": reason, "ends_at": request.POST.get("ends_at") or ""},
         key=operation_key(request),
         body=lambda ctx: _success(
-            suspension_id=sanctions.apply_manual_suspension(
-                ctx, user=user, reason=reason, ends_at=ends_at
-            ).pk
+            suspension_id=sanctions.apply_manual_suspension(ctx, user=user, reason=reason, ends_at=ends_at).pk
         ),
     )
     add_outcome_message(request, outcome)
@@ -698,10 +711,30 @@ def roster_export(request):
     rows = (
         EligibleStudent.objects.all()
         .order_by("institutional_id")
-        .values_list("institutional_id", "email", "name_th", "name_en", "program", "instrument", "year", "is_active")
+        .values_list(
+            "institutional_id",
+            "email",
+            "name_th",
+            "name_en",
+            "program",
+            "instrument",
+            "instrument_category",
+            "year",
+            "is_active",
+        )
     )
     body = write_csv(
-        ["institutional_id", "email", "name_th", "name_en", "program", "instrument", "year", "is_active"],
+        [
+            "institutional_id",
+            "email",
+            "name_th",
+            "name_en",
+            "program",
+            "instrument",
+            "instrument_category",
+            "year",
+            "is_active",
+        ],
         rows,
     )
     response = HttpResponse(body, content_type="text/csv; charset=utf-8")
@@ -803,9 +836,7 @@ def outbox_page(request):
         {
             "notifications": queryset[:200],
             "status": status,
-            "counts": dict(
-                Notification.objects.values_list("status").annotate(total=Count("id"))
-            ),
+            "counts": dict(Notification.objects.values_list("status").annotate(total=Count("id"))),
             "oldest": oldest,
             "outbox_age_seconds": outbox_age,
             "outbox_stale": outbox_age > dj_settings.OUTBOX_AGE_WARN_SECONDS,
@@ -950,9 +981,7 @@ def create_policy_version(request):
         payload=snapshot,
         key=operation_key(request),
         body=lambda ctx: _success(
-            version=maintenance.update_policy(
-                ctx, snapshot=snapshot, label="Staff edit", note=note
-            ).version
+            version=maintenance.update_policy(ctx, snapshot=snapshot, label="Staff edit", note=note).version
         ),
     )
     add_outcome_message(request, outcome)
@@ -972,7 +1001,8 @@ def admin_home(request):
         request,
         "core/staff/admin.html",
         {
-            "rooms": Room.objects.all().order_by("position"),
+            "rooms": Room.objects.all().order_by("position").prefetch_related("allowed_categories"),
+            "instrument_categories": InstrumentCategory.choices,
             "policy": current_policy(),
             "moment": moment,
             "is_maintainer": request.user.is_superuser,
@@ -999,6 +1029,36 @@ def deactivate_room(request, pk: int):
         payload={"room": pk, "reason": reason},
         key=operation_key(request),
         body=lambda ctx: _success(**maintenance.deactivate_room(ctx, room=room, reason=reason)),
+    )
+    add_outcome_message(request, outcome)
+    return redirect("core:staff_admin")
+
+
+@staff_required
+@require_POST
+def set_room_audience(request, pk: int):
+    """Change who may reserve a room, without a developer running a command.
+
+    The department has already changed the room layout once, so the audience is a
+    configuration a staff member has to be able to adjust. The service that applies
+    it is the same one the seed command uses, so the two cannot drift.
+    """
+    room = get_object_or_404(Room, pk=pk)
+    scope = (request.POST.get("reservation_scope") or "").strip().upper()
+    categories = request.POST.getlist("categories")
+
+    if scope not in Room.ReservationScope.values:
+        messages.error(request, "ต้องระบุขอบเขตการจอง / A reservation scope is required.")
+        return redirect("core:staff_admin")
+
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_set_room_audience",
+        payload={"room": pk, "reservation_scope": scope, "categories": sorted(categories)},
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            **maintenance.set_room_audience(ctx, room=room, scope=scope, categories=categories)
+        ),
     )
     add_outcome_message(request, outcome)
     return redirect("core:staff_admin")

@@ -135,9 +135,7 @@ def void_incident_violations(ctx, *, incident: ServiceIncident, reason: str) -> 
         .filter(status=Booking.Status.NO_SHOW)
         .select_related("room")
     )
-    booking_ids = [
-        booking.pk for booking in bookings if not room_ids or booking.room_id in room_ids
-    ]
+    booking_ids = [booking.pk for booking in bookings if not room_ids or booking.room_id in room_ids]
 
     violations = list(
         Violation.objects.filter(booking_id__in=booking_ids, kind=Violation.Kind.NO_SHOW)

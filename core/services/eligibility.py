@@ -1,4 +1,4 @@
-"""Account eligibility and suspension checks.
+"""Account eligibility, suspension and room-audience checks.
 
 Used by every mutation so that a student can still sign in, read history and ask
 for help while blocked, but cannot reserve, check in or walk in (V3 section 7).
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from core.models import Suspension, User
 
+from . import instruments
 from .errors import Code, OperationRejected
 
 
@@ -50,6 +51,31 @@ def assert_can_operate(user, now) -> None:
 
 
 def assert_may_use_room(user, room, now) -> None:
+    """Raise unless this account may start or hold a booking in this room.
+
+    Deliberately says nothing about the room's reservation audience: that applies
+    to *reserving*, which is ``assert_may_reserve_room``. A walk-in is open to every
+    eligible student once the hour has started and nobody holds the room, which is
+    what keeps a restricted room from standing empty.
+    """
     assert_can_operate(user, now)
     if not room.is_active:
         raise OperationRejected(Code.CLOSED)
+
+
+def assert_may_reserve_room(user, room, now) -> None:
+    """Raise unless this account may reserve this room in advance.
+
+    The audience check lives here, alone, so reservation cannot disagree with
+    itself about who may book a room. Not called by walk-in (open to everyone) and
+    not called by check-in (a booking already made stays valid), which is why it is
+    a separate function rather than a flag on the one above.
+    """
+    assert_may_use_room(user, room, now)
+
+    if not room.may_be_reserved_by(instruments.category_for_user(user)):
+        raise OperationRejected(
+            Code.ROOM_NOT_FOR_INSTRUMENT,
+            room_id=room.pk,
+            allowed_categories=[row.category for row in room.allowed_categories.all()],
+        )

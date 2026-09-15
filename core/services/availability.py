@@ -16,7 +16,7 @@ from django.conf import settings
 
 from core.models import BLOCKING_STATUSES, Booking, Closure, Room
 
-from . import clock, slots
+from . import clock, instruments, slots
 from .calendar import day_hours
 
 
@@ -28,6 +28,11 @@ class SlotState(StrEnum):
     COMPLETED = "completed"
     FREE_NOW = "free_now"
     BOOKABLE = "bookable"
+    # Free and bookable in principle, but not by *this* viewer: the room is
+    # restricted to other instrument categories. Anyone may still walk in once the
+    # hour has started and the room is free, so this state only ever applies to a
+    # slot that has not begun.
+    RESTRICTED = "restricted"
     TAKEN = "taken"
     OUTSIDE_HORIZON = "outside_horizon"
 
@@ -89,17 +94,22 @@ def _closures_for(local_date, room_ids):
     """Unrevoked closures intersecting the local date, grouped by room id (None = all)."""
     day_start = slots.slot_start_for(local_date, 0)
     day_end = day_start + timedelta(hours=24)
-    closures = Closure.objects.filter(
-        revoked_at__isnull=True, starts_at__lt=day_end, ends_at__gt=day_start
-    )
+    closures = Closure.objects.filter(revoked_at__isnull=True, starts_at__lt=day_end, ends_at__gt=day_start)
     by_room: dict[int | None, list[Closure]] = {}
     for closure in closures:
         by_room.setdefault(closure.room_id, []).append(closure)
     return by_room
 
 
-def room_day_cells(room: Room, local_date, now, *, user=None, closure_map=None) -> list[SlotCell]:
-    """Every slot cell for one room on one local date."""
+def room_day_cells(
+    room: Room, local_date, now, *, user=None, closure_map=None, viewer_category=None
+) -> list[SlotCell]:
+    """Every slot cell for one room on one local date.
+
+    ``viewer_category`` is resolved once by the caller rather than per cell, and it
+    decides only whether a *future* slot shows as bookable or as restricted to
+    somebody else's instrument.
+    """
     closure_map = closure_map if closure_map is not None else _closures_for(local_date, [room.pk])
     hours = day_hours(local_date)
     if hours is None:
@@ -112,6 +122,7 @@ def room_day_cells(room: Room, local_date, now, *, user=None, closure_map=None) 
     bookings = _bookings_by_slot(local_date, [room.pk])
     user_id = getattr(user, "pk", None)
     horizon_last = clock.local_date(now) + timedelta(days=settings.HORIZON_DAYS)
+    can_reserve_here = room.may_be_reserved_by(viewer_category)
 
     cells = []
     for slot_start in starts:
@@ -129,6 +140,7 @@ def room_day_cells(room: Room, local_date, now, *, user=None, closure_map=None) 
             closure_reason=reason,
             booking=booking,
             horizon_last=horizon_last,
+            can_reserve_here=can_reserve_here,
         )
         cells.append(
             SlotCell(
@@ -155,7 +167,18 @@ def _closure_reason_for(room, slot_start, slot_end, closure_map) -> str:
     return ""
 
 
-def _classify(*, now, slot_start, slot_end, room_active, day_closed, closure_reason, booking, horizon_last):
+def _classify(
+    *,
+    now,
+    slot_start,
+    slot_end,
+    room_active,
+    day_closed,
+    closure_reason,
+    booking,
+    horizon_last,
+    can_reserve_here=True,
+):
     if slot_end <= now:
         return SlotState.PAST
     if not room_active or day_closed or closure_reason:
@@ -170,15 +193,18 @@ def _classify(*, now, slot_start, slot_end, room_active, day_closed, closure_rea
             return SlotState.HELD
         return SlotState.TAKEN
     if slot_start <= now:
+        # The hour has begun and nobody holds it. Open to everyone, whatever the
+        # room's reservation audience: this is the release valve that keeps a
+        # restricted room from standing empty.
         return SlotState.FREE_NOW
     if clock.local_date(slot_start) <= horizon_last:
-        return SlotState.BOOKABLE
+        return SlotState.BOOKABLE if can_reserve_here else SlotState.RESTRICTED
     return SlotState.OUTSIDE_HORIZON
 
 
 def public_grid(local_date, now, *, user=None) -> dict:
     """The whole grid: active rooms down, hourly slots across."""
-    rooms = list(Room.objects.filter(is_active=True))
+    rooms = list(Room.objects.filter(is_active=True).prefetch_related("allowed_categories"))
     if not rooms:
         return {"rooms": [], "rows": [], "local_date": local_date}
 
@@ -189,9 +215,19 @@ def public_grid(local_date, now, *, user=None) -> dict:
     else:
         column_starts = list(slots.day_slot_starts(local_date, hours[0], hours[1]))
 
+    # Resolved once for the whole grid rather than once per cell.
+    viewer_category = instruments.category_for_user(user)
+
     rows = []
     for room in rooms:
-        cells = room_day_cells(room, local_date, now, user=user, closure_map=closure_map)
+        cells = room_day_cells(
+            room,
+            local_date,
+            now,
+            user=user,
+            closure_map=closure_map,
+            viewer_category=viewer_category,
+        )
         by_start = {cell.slot_start: cell for cell in cells}
         # Keep the column set stable even when the day is closed or shortened.
         rows.append(
@@ -243,7 +279,13 @@ def current_slot_cell(room: Room, now, *, user=None) -> SlotCell:
     """The cell for the hour in progress, used by the QR landing page."""
     local_date = clock.local_date(now)
     slot_start = slots.floor_to_slot(now)
-    cells = room_day_cells(room, local_date, now, user=user)
+    cells = room_day_cells(
+        room,
+        local_date,
+        now,
+        user=user,
+        viewer_category=instruments.category_for_user(user),
+    )
     for cell in cells:
         if cell.slot_start == slot_start:
             return cell

@@ -14,7 +14,7 @@
     <p class="mt-1">{% trans "If the current hour is free, choose Use now. The session runs to the end of the hour. If you had booked this hour, check in instead." %}</p>
 
     <h2 class="mt-4 text-base font-semibold">{% trans "Checking in" %}</h2>
-    <p class="mt-1">{% blocktrans with minutes=policy.grace_minutes %}Check-in is available from the start of the hour until {{ minutes }} minutes past it. Checking in means you confirm you are at the room. A reserved hour that is not checked in is released for other students and a strike is recorded.{% endblocktrans %}</p>
+    <p class="mt-1">{% blocktrans with minutes=policy.checkin_grace_minutes %}Check-in is available from the start of the hour until {{ minutes }} minutes past it. Checking in means you confirm you are at the room. A reserved hour that is not checked in is released for other students and a strike is recorded.{% endblocktrans %}</p>
 
     <h2 class="mt-4 text-base font-semibold">{% trans "Cancelling" %}</h2>
     <p class="mt-1">{% trans "Cancel from My bookings before the hour starts. Cancelling gives the hour back and does not count against your daily limit. Cancelling within an hour of the start is recorded for reporting only." %}</p>

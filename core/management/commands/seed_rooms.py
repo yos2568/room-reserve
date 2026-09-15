@@ -1,30 +1,24 @@
-"""Idempotently ensure the nine practice rooms exist."""
+"""Idempotently ensure the configured practice rooms exist.
 
+The count and the per-room configuration come from settings
+(``ROOM_COUNT`` / ``ROOM_OVERRIDES``), so the tenth room and its audience are
+deployment configuration rather than a literal buried in a command.
+"""
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.db import transaction
 
-from core.models import Room
+from core.services.rooms import ensure_rooms
 
 
 class Command(BaseCommand):
-    help = "Create or refresh the nine practice rooms. Safe to run repeatedly."
+    help = "Create or refresh the practice rooms. Safe to run repeatedly."
 
     def add_arguments(self, parser):
-        parser.add_argument("--count", type=int, default=9)
+        parser.add_argument("--count", type=int, default=settings.ROOM_COUNT)
 
-    @transaction.atomic
     def handle(self, *args, **options):
-        count = options["count"]
-        created = 0
-        for number in range(1, count + 1):
-            _, was_created = Room.objects.get_or_create(
-                number=str(number),
-                defaults={"label": f"ห้องซ้อม {number}", "position": number},
-            )
-            created += int(was_created)
-
-        # A room beyond the configured count is left alone rather than deleted:
-        # bookings may reference it.
+        report = ensure_rooms(count=options["count"])
         self.stdout.write(
-            self.style.SUCCESS(f"rooms ready: {Room.objects.count()} total, {created} created")
+            self.style.SUCCESS(f"rooms ready: {report['total']} total, {report['created']} created")
         )

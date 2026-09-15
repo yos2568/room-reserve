@@ -40,11 +40,7 @@ def blocking_bookings(user, slot_start):
     return Booking.objects.filter(
         user=user,
         status__in=list(BLOCKING_STATUSES),
-    ).filter(
-        Q(slot_start=slot_start)
-        | Q(slot_start=slot_start - SLOT)
-        | Q(slot_start=slot_start + SLOT)
-    )
+    ).filter(Q(slot_start=slot_start) | Q(slot_start=slot_start - SLOT) | Q(slot_start=slot_start + SLOT))
 
 
 def no_show_reclaim(user, room, slot_start) -> bool:

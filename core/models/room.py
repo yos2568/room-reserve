@@ -6,14 +6,35 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from core.models.identity import InstrumentCategory
+
 
 class Room(models.Model):
-    """One of the nine upright-piano practice rooms."""
+    """A practice room. Most are general; the larger room is instrument-specific."""
+
+    class ReservationScope(models.TextChoices):
+        """Who may reserve the room *in advance*.
+
+        A room set to ``LISTED`` with no categories lets **nobody** reserve it.
+        That is deliberate: an empty list is far more likely to be a mistake than
+        an intention to open the room to everyone, so the failure is closed.
+        Everyone may still walk in once an hour has started and the room is free,
+        which is what keeps a restricted room from being dead capacity.
+        """
+
+        EVERYONE = "EVERYONE", _("Any eligible student")
+        LISTED = "LISTED", _("Only the instrument categories listed")
 
     number = models.CharField(_("room number"), max_length=32, unique=True)
     label = models.CharField(_("label"), max_length=120, blank=True)
     is_active = models.BooleanField(_("active"), default=True)
     position = models.PositiveSmallIntegerField(default=0, help_text=_("Display order."))
+    reservation_scope = models.CharField(
+        _("who may reserve"),
+        max_length=16,
+        choices=ReservationScope.choices,
+        default=ReservationScope.EVERYONE,
+    )
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -24,6 +45,55 @@ class Room(models.Model):
 
     def __str__(self) -> str:
         return self.label or f"Room {self.number}"
+
+    @property
+    def is_restricted(self) -> bool:
+        return self.reservation_scope == self.ReservationScope.LISTED
+
+    @property
+    def allowed_category_values(self) -> list[str]:
+        """Categories permitted to reserve. Uses the prefetch cache when present."""
+        return [row.category for row in self.allowed_categories.all()]
+
+    def may_be_reserved_by(self, category: str | None) -> bool:
+        """Whether a student in ``category`` may reserve this room in advance.
+
+        Fails closed: an unlisted category, an empty category, or a room marked
+        ``LISTED`` with nothing configured all answer no.
+        """
+        if not self.is_restricted:
+            return True
+        if not category:
+            return False
+        return any(row.category == category for row in self.allowed_categories.all())
+
+
+class RoomAllowedCategory(models.Model):
+    """One instrument category permitted to reserve a room.
+
+    A separate row per category rather than a list field, so the constraint is in
+    the database and the grid can prefetch it in one query.
+    """
+
+    room = models.ForeignKey(
+        "core.Room",
+        on_delete=models.CASCADE,
+        related_name="allowed_categories",
+    )
+    category = models.CharField(max_length=32, choices=InstrumentCategory.choices)
+
+    class Meta:
+        verbose_name = _("room instrument category")
+        verbose_name_plural = _("room instrument categories")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["room", "category"],
+                name="room_allowed_category_unique",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.room} · {self.get_category_display()}"
 
 
 class Closure(models.Model):

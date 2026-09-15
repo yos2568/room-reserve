@@ -16,7 +16,7 @@ from core.models import BLOCKING_STATUSES, Booking, BookingControl, Room, advanc
 
 from . import slots
 from .calendar import assert_slot_open
-from .eligibility import assert_may_use_room
+from .eligibility import assert_may_reserve_room
 from .errors import Code, OperationRejected
 from .outbox import enqueue
 from .policy import current_policy
@@ -62,7 +62,7 @@ def validate_advance_target(*, user, room: Room, slot_start, now) -> None:
     if not slots.is_within_horizon(now, slot_start, policy.horizon_days):
         raise OperationRejected(Code.OUTSIDE_HORIZON, horizon_days=policy.horizon_days)
 
-    assert_may_use_room(user, room, now)
+    assert_may_reserve_room(user, room, now)
     assert_slot_open(slot_start, room)
     assert_quota_and_adjacency(user, slot_start, room=room)
 

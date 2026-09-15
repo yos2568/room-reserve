@@ -197,9 +197,7 @@ def _run_once(*, actor, operation: str, payload: dict, body, key: str | None) ->
         fingerprint = fingerprint_payload(payload)
 
         if key and actor is not None and getattr(actor, "pk", None):
-            prior = OperationRequest.objects.filter(
-                user=actor, operation=operation, key=key
-            ).first()
+            prior = OperationRequest.objects.filter(user=actor, operation=operation, key=key).first()
             if prior is not None:
                 if prior.payload_fingerprint != fingerprint:
                     return OperationOutcome.reject(Code.IDEMPOTENCY_PAYLOAD_MISMATCH)
@@ -238,9 +236,7 @@ def _run_once(*, actor, operation: str, payload: dict, body, key: str | None) ->
                         result=outcome.as_record(),
                     )
             except IntegrityError:
-                prior = OperationRequest.objects.filter(
-                    user=actor, operation=operation, key=key
-                ).first()
+                prior = OperationRequest.objects.filter(user=actor, operation=operation, key=key).first()
                 if prior is not None and prior.payload_fingerprint == fingerprint:
                     return OperationOutcome.replay(prior.result)
                 return OperationOutcome.reject(Code.IDEMPOTENCY_PAYLOAD_MISMATCH)

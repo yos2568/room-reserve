@@ -46,4 +46,6 @@ def read_csv(text: str) -> list[dict[str, str]]:
     except csv.Error:
         dialect = csv.excel
     reader = csv.DictReader(io.StringIO(text), dialect=dialect)
-    return [{(key or "").strip().lower(): (value or "").strip() for key, value in row.items()} for row in reader]
+    return [
+        {(key or "").strip().lower(): (value or "").strip() for key, value in row.items()} for row in reader
+    ]

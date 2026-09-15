@@ -46,6 +46,7 @@
           <th scope="col" class="p-2 text-start">{% trans "ID" %}</th>
           <th scope="col" class="p-2 text-start">{% trans "Email" %}</th>
           <th scope="col" class="p-2 text-start">{% trans "Name" %}</th>
+          <th scope="col" class="p-2 text-start">{% trans "Instrument" %}</th>
           <th scope="col" class="p-2 text-start">{% trans "Programme" %}</th>
           <th scope="col" class="p-2 text-start">{% trans "Active" %}</th>
         </tr></thead>
@@ -55,6 +56,16 @@
               <td class="p-2">{{ entry.institutional_id }}</td>
               <td class="p-2">{{ entry.email }}</td>
               <td class="p-2">{{ entry.name_th }}</td>
+              <td class="p-2">
+                {{ entry.instrument }}
+                {% if entry.instrument_category == "UNKNOWN" %}
+                  {# Visible on purpose: an uncategorised student cannot reserve an
+                     instrument-specific room, so staff need to see who they are. #}
+                  · <span class="text-amber-700">{% trans "no category — cannot use instrument-specific rooms" %}</span>
+                {% else %}
+                  · <span class="text-slate-600">{{ entry.get_instrument_category_display }}</span>
+                {% endif %}
+              </td>
               <td class="p-2">{{ entry.program }}</td>
               <td class="p-2">{% if entry.is_active %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
             </tr>

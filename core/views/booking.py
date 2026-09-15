@@ -14,16 +14,17 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from core.models import Booking, Room
-from core.services import availability, clock, sanctions, slots
+from core.services import availability, clock, instruments, sanctions, slots
 from core.services import booking as booking_service
 from core.services import cancel as cancel_service
 from core.services import checkin as checkin_service
 from core.services import walkin as walkin_service
 from core.services.eligibility import active_suspension
-from core.services.errors import Code, OperationOutcome
+from core.services.errors import Code, OperationOutcome, message_for
 from core.services.policy import current_policy
 from core.services.quota import quota_remaining, quota_used
 
@@ -50,6 +51,14 @@ def _success(**data) -> OperationOutcome:
     return OperationOutcome.success(**data)
 
 
+def _grid_url(slot_start) -> str:
+    return f"{reverse('core:home')}?date={clock.local_date(slot_start).isoformat()}"
+
+
+def _may_reserve(room: Room, user) -> bool:
+    return room.may_be_reserved_by(instruments.category_for_user(user))
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def book_slot(request, room_id: int, slot: str):
@@ -58,6 +67,12 @@ def book_slot(request, room_id: int, slot: str):
     slot_start = _decode_slot_or_404(slot)
     moment = now()
     policy = current_policy()
+
+    if not _may_reserve(room, request.user):
+        # Never present a form that the server is certain to refuse. The grid
+        # explains the same thing on the cell itself, with the reason.
+        messages.warning(request, message_for(Code.ROOM_NOT_FOR_INSTRUMENT))
+        return redirect(_grid_url(slot_start))
 
     if request.method == "POST":
         return confirm_booking(request, room_id=room_id, slot=slot)
@@ -95,7 +110,9 @@ def confirm_booking(request, room_id: int, slot: str):
         operation="advance_booking",
         payload=payload,
         key=operation_key(request),
-        body=lambda ctx: _success(**booking_service.create_advance_booking(ctx, room=room, slot_start=slot_start)),
+        body=lambda ctx: _success(
+            **booking_service.create_advance_booking(ctx, room=room, slot_start=slot_start)
+        ),
     )
 
     if outcome.ok:
@@ -121,6 +138,10 @@ def confirm_booking(request, room_id: int, slot: str):
         )
 
     add_outcome_message(request, outcome)
+    if outcome.code in {Code.ROOM_NOT_FOR_INSTRUMENT, Code.CLOSED}:
+        # Neither refusal can be resolved by anything on this page, so send the
+        # student back to the grid rather than re-offering the same button.
+        return redirect(_grid_url(slot_start))
     return render(
         request,
         "core/book_confirm.html",

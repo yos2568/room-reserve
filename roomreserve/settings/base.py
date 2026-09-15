@@ -41,6 +41,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
     "core.middleware.RequestContextMiddleware",
+    "core.middleware.PersonalResponseCacheMiddleware",
 ]
 
 ROOT_URLCONF = "roomreserve.urls"
@@ -165,7 +166,20 @@ REMINDER_LEAD_MINUTES = env_int("POLICY_REMINDER_LEAD_MINUTES", 30)
 SLOT_MINUTES = 60
 OPENING_SLOT_START_HOUR = 8
 LAST_SLOT_START_HOUR = 19
-ROOM_COUNT = 9
+ROOM_COUNT = 10
+
+# Per-room configuration applied by `manage.py seed_rooms`, keyed by room number.
+# V3 says "nine rooms"; the department added this tenth, larger room, which only
+# piano and percussion students may *reserve* — anyone may walk in once an hour
+# has started and the room is still free. Recorded as a deviation from V3 in
+# docs/decisions.md. Rooms not listed here are general.
+ROOM_OVERRIDES = {
+    "10": {
+        "label": "ห้องซ้อมใหญ่",
+        "reservation_scope": "LISTED",
+        "categories": ("PIANO", "PERCUSSION"),
+    },
+}
 
 INSTITUTION_EMAIL_DOMAIN = env_str("INSTITUTION_EMAIL_DOMAIN", "student.chula.ac.th")
 

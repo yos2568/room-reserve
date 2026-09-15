@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -59,6 +60,17 @@ class PolicyVersion(models.Model):
     @property
     def horizon_days(self) -> int:
         return int(self.snapshot.get("horizon_days", 7))
+
+    # The fixed hourly geometry, recorded in the snapshot for the audit trail.
+    # Templates state the opening hours from these, so they have to resolve:
+    # without them the grid and the posters silently render ":00–:00".
+    @property
+    def opening_hour(self) -> int:
+        return int(self.snapshot.get("opening_hour", settings.OPENING_SLOT_START_HOUR))
+
+    @property
+    def closing_hour(self) -> int:
+        return int(self.snapshot.get("last_slot_hour", settings.LAST_SLOT_START_HOUR)) + 1
 
     @property
     def checkin_grace_minutes(self) -> int:

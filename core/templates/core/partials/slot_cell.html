@@ -31,4 +31,11 @@
   <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700">{% trans "Booked" %}</span>
 {% elif cell.state == "outside_horizon" %}
   <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-500">{% trans "Too far ahead" %}</span>
+{% elif cell.state == "restricted" %}
+  {# Free, but only reservable by the instruments this room is kept for. The label
+     says which, because "unavailable" with no reason reads as a fault. #}
+  <span class="block w-full rounded bg-violet-50 px-2 py-2 text-center text-xs text-violet-800"
+        title="{% trans 'This room is kept for piano and percussion students to reserve. Once the hour starts, anyone may use it if it is still free.' %}">
+    {% trans "Piano & percussion only" %}
+  </span>
 {% endif %}

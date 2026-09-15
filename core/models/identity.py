@@ -7,6 +7,30 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
+class InstrumentCategory(models.TextChoices):
+    """The instrument families the department recognises.
+
+    The roster's free-text ``instrument`` column is what the department writes and
+    is kept verbatim; this is the canonical value derived from it. A room's
+    audience is expressed in these terms, so the room rule never depends on how
+    somebody spelled an instrument on a spreadsheet.
+
+    ``UNKNOWN`` is a real, deliberate value: the mapping is not a guess, and an
+    instrument nobody has categorised yet cannot open a restricted room.
+    """
+
+    PIANO = "PIANO", _("Piano")
+    PERCUSSION = "PERCUSSION", _("Percussion")
+    STRINGS = "STRINGS", _("Strings")
+    WOODWIND = "WOODWIND", _("Woodwind")
+    BRASS = "BRASS", _("Brass")
+    VOICE = "VOICE", _("Voice")
+    GUITAR = "GUITAR", _("Guitar")
+    HARP = "HARP", _("Harp")
+    OTHER = "OTHER", _("Other")
+    UNKNOWN = "UNKNOWN", _("Not yet categorised")
+
+
 class EligibleStudent(models.Model):
     """An approved roster entry: the institutional ID and email pair that may book.
 
@@ -21,6 +45,13 @@ class EligibleStudent(models.Model):
     name_en = models.CharField(_("English name"), max_length=200, blank=True)
     program = models.CharField(_("programme"), max_length=120, blank=True)
     instrument = models.CharField(_("instrument"), max_length=120, blank=True)
+    instrument_category = models.CharField(
+        _("instrument category"),
+        max_length=32,
+        choices=InstrumentCategory.choices,
+        default=InstrumentCategory.UNKNOWN,
+        help_text=_("Canonical family derived from the instrument text; drives room audiences."),
+    )
     year = models.PositiveSmallIntegerField(_("year"), null=True, blank=True)
     is_active = models.BooleanField(_("active"), default=True)
     account = models.ForeignKey(
@@ -98,8 +129,4 @@ class Invitation(models.Model):
 
     @property
     def is_redeemable(self) -> bool:
-        return (
-            self.used_at is None
-            and self.revoked_at is None
-            and self.expires_at > timezone.now()
-        )
+        return self.used_at is None and self.revoked_at is None and self.expires_at > timezone.now()

@@ -138,9 +138,7 @@ def test_one_user_cannot_win_several_slots_with_one_allowance():
     successes = [w for w in workers if w.outcome.ok]
     assert len(successes) == 1, [w.outcome.code for w in workers]
 
-    charged = Booking.objects.filter(user=user, slot_date=today).exclude(
-        status=Booking.Status.CANCELLED
-    )
+    charged = Booking.objects.filter(user=user, slot_date=today).exclude(status=Booking.Status.CANCELLED)
     assert charged.count() == 2, "quota must be respected exactly at the boundary"
 
     for worker in workers:
@@ -320,9 +318,7 @@ def test_repeated_contention_stress_has_no_invariant_breach():
         room = rooms[round_index % len(rooms)]
         slot_start = slots.slot_start_for(today, 15 + (round_index % 4))
         users = [factories.make_user() for _ in range(6)]
-        workers = [
-            Worker(lambda u=user, r=room, s=slot_start: book(u, r, s), moment) for user in users
-        ]
+        workers = [Worker(lambda u=user, r=room, s=slot_start: book(u, r, s), moment) for user in users]
 
         with clock.frozen_clock(moment):
             run_all(workers)

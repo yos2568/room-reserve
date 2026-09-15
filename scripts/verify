@@ -1,0 +1,490 @@
+#!/usr/bin/env bash
+#
+# scripts/verify — every automated local check V3 requires, with per-check status.
+#
+# V3 section 13 / the build loop: "Build scripts/verify (or one documented
+# equivalent) that runs all automated local checks, fails nonzero on failures and
+# records per-check status. A skipped or missing required check must appear as
+# BLOCKED/NOT RUN and prevent a complete LOCAL_PASS."
+#
+# This script therefore never swallows an exit code: there is no `|| true`, no
+# empty test selection, and no blanket exception handler. Every check ends PASS,
+# FAIL or BLOCKED, and any FAIL or BLOCKED makes the final verdict NOT_LOCAL_PASS.
+#
+# Run it as `bash scripts/verify` — the project lives on exFAT, which carries no
+# POSIX permission bits, so the executable bit cannot be relied on.
+#
+# It never drops or overwrites an existing database or volume. The bootstrap and
+# restore drills use databases it creates itself, named with a run stamp, and
+# removes them again on success.
+
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+VENV_PY="${VENV_PY:-$HOME/.virtualenvs/roomreserve/bin/python}"
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+RUN_DIR="artifacts/qa/verify-$STAMP"
+
+# Isolated databases for this run only. The application's own database and the
+# `roomreserve_pgdata` volume are never touched.
+BOOTSTRAP_DB="roomreserve_bootstrap_$STAMP"
+RESTORE_DB="roomreserve_restore_$STAMP"
+
+PG_USER="${POSTGRES_USER:-roomreserve}"
+PG_SERVICE=db
+
+# The mail catcher runs on ports this script owns. Compose's development catcher
+# publishes SMTP on 127.0.0.1:1025, which is a popular default and is frequently
+# already taken on a developer's machine; the verification must not depend on
+# winning that race. Same image as compose.override.yaml.
+MAIL_IMAGE="axllent/mailpit:v1.20.5"
+MAIL_CONTAINER="roomreserve-verify-mail"
+MAIL_SMTP_HOST_PORT=11025
+MAIL_HTTP_HOST_PORT=18025
+MAILPIT_URL="http://127.0.0.1:$MAIL_HTTP_HOST_PORT"
+
+export POSTGRES_DB="${POSTGRES_DB:-roomreserve}"
+export POSTGRES_USER="$PG_USER"
+export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-roomreserve}"
+export POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
+export POSTGRES_PORT="${POSTGRES_PORT:-5432}"
+export DJANGO_ALLOWED_HOSTS="localhost,127.0.0.1,0.0.0.0,testserver"
+export ALLOW_TEST_CLOCK=true
+
+# DJANGO_SETTINGS_MODULE is deliberately NOT exported. pytest-django prefers the
+# environment over pyproject.toml, so exporting it here would silently run the
+# whole suite on development settings with no test isolation. Each manage.py call
+# below names its settings module on the command line instead.
+DEV_SETTINGS="roomreserve.settings.dev"
+
+NAMES=()
+STATUSES=()
+DETAILS=()
+
+record() {
+  NAMES+=("$1")
+  STATUSES+=("$2")
+  DETAILS+=("$3")
+  printf '%-24s %-8s %s\n' "$1" "$2" "$3"
+}
+
+log_for() { printf '%s/%s.log' "$RUN_DIR" "$1"; }
+
+# Run a check whose success is its exit status.
+run() {
+  local name="$1"
+  shift
+  local log
+  log="$(log_for "$name")"
+  if "$@" >"$log" 2>&1; then
+    record "$name" PASS "$log"
+  else
+    record "$name" FAIL "$log"
+  fi
+}
+
+# Run a check that must also print something specific.
+run_expecting() {
+  local name="$1"
+  local pattern="$2"
+  shift 2
+  local log
+  log="$(log_for "$name")"
+  if "$@" >"$log" 2>&1 && grep -qE "$pattern" "$log"; then
+    record "$name" PASS "$log"
+  else
+    record "$name" FAIL "$log"
+  fi
+}
+
+blocked() { record "$1" BLOCKED "$2"; }
+
+mkdir -p "$RUN_DIR"
+echo "== Room Reserve verification =="
+echo "run:      $STAMP"
+echo "python:   $VENV_PY"
+echo "logs:     $RUN_DIR"
+echo
+
+# --- 1. Interpreter and pinned dependencies ------------------------------------
+pins_log="$(log_for pins)"
+if "$VENV_PY" - <<'PY' >"$pins_log" 2>&1
+import importlib.metadata as md
+import pathlib
+import sys
+
+expected = {"3.12"}
+actual = f"{sys.version_info.major}.{sys.version_info.minor}"
+if actual not in expected:
+    raise SystemExit(f"python {actual} is not 3.12")
+
+problems = []
+for line in ("requirements/base.txt", "requirements/dev.txt"):
+    for raw in pathlib.Path(line).read_text(encoding="utf-8").splitlines():
+        entry = raw.strip()
+        if not entry or entry.startswith("#") or entry.startswith("-r"):
+            continue
+        name, _, pinned = entry.partition("==")
+        name = name.split("[")[0].strip()
+        if not pinned:
+            problems.append(f"{name}: {line} does not pin a version")
+            continue
+        try:
+            installed = md.version(name)
+        except md.PackageNotFoundError:
+            problems.append(f"{name}: not installed")
+            continue
+        if installed != pinned:
+            problems.append(f"{name}: pinned {pinned}, installed {installed}")
+
+if problems:
+    raise SystemExit("; ".join(problems))
+print(f"python {actual}, all pinned versions match requirements/")
+PY
+then
+  record interpreter_and_pins PASS "$pins_log"
+else
+  record interpreter_and_pins FAIL "$pins_log"
+fi
+
+# --- 2. Lint and format --------------------------------------------------------
+run lint "$VENV_PY" -m ruff check .
+run format_check "$VENV_PY" -m ruff format --check .
+
+# --- 3. Django system checks ---------------------------------------------------
+run django_check env DJANGO_SETTINGS_MODULE="$DEV_SETTINGS" "$VENV_PY" manage.py check
+
+# --- 4. Migration drift --------------------------------------------------------
+drift_log="$(log_for migration_drift)"
+if DJANGO_SETTINGS_MODULE="$DEV_SETTINGS" "$VENV_PY" manage.py makemigrations --check --dry-run \
+  >"$drift_log" 2>&1 &&
+  grep -q "No changes detected" "$drift_log"; then
+  record migration_drift PASS "$drift_log"
+else
+  record migration_drift FAIL "$drift_log"
+fi
+
+# --- 5. The suite, PostgreSQL and real browser together ------------------------
+# One invocation, no deselection: the browser tests are part of the gate, not an
+# optional extra, and `--strict-markers` is already on in pyproject.toml.
+run pytest_suite "$VENV_PY" -m pytest -q
+
+# --- Infrastructure preconditions ---------------------------------------------
+docker_ok=0
+if docker info >/dev/null 2>&1; then
+  if docker compose up -d "$PG_SERVICE" >/dev/null 2>&1; then
+    docker_ok=1
+  fi
+fi
+
+if [ "$docker_ok" -eq 0 ]; then
+  blocked collectstatic "Docker/PostgreSQL unavailable"
+  blocked clean_bootstrap "Docker/PostgreSQL unavailable"
+  blocked docker_image_build "Docker/PostgreSQL unavailable"
+  blocked restart_persistence "Docker/PostgreSQL unavailable"
+  blocked backup_and_restore "Docker/PostgreSQL unavailable"
+  blocked local_mail_flow "Docker/PostgreSQL unavailable"
+else
+  # --- 6. Collected static -----------------------------------------------------
+  # STATIC_ROOT is served by WhiteNoise in production and is also what the
+  # production manifest storage reads back. Without it, `{% static %}` cannot
+  # resolve, so this is a real gate rather than housekeeping.
+  run collectstatic env DJANGO_SETTINGS_MODULE="$DEV_SETTINGS" "$VENV_PY" manage.py collectstatic --noinput
+
+  # --- 7. Clean bootstrap on an isolated database (A01) ------------------------
+  # A brand-new database, migrated from scratch, seeded with synthetic demo data,
+  # then exercised over HTTP. The existing database and volume are never touched.
+  bootstrap_log="$(log_for clean_bootstrap)"
+  bootstrap_ok=0
+  if docker compose exec -T "$PG_SERVICE" createdb -U "$PG_USER" "$BOOTSTRAP_DB" \
+    >>"$bootstrap_log" 2>&1; then
+    if DJANGO_SETTINGS_MODULE="$DEV_SETTINGS" POSTGRES_DB="$BOOTSTRAP_DB" "$VENV_PY" manage.py migrate --noinput \
+      >>"$bootstrap_log" 2>&1 &&
+      DJANGO_SETTINGS_MODULE="$DEV_SETTINGS" POSTGRES_DB="$BOOTSTRAP_DB" "$VENV_PY" manage.py seed_rooms >>"$bootstrap_log" 2>&1 &&
+      DJANGO_SETTINGS_MODULE="$DEV_SETTINGS" POSTGRES_DB="$BOOTSTRAP_DB" "$VENV_PY" manage.py seed_demo >>"$bootstrap_log" 2>&1 &&
+      DJANGO_SETTINGS_MODULE="$DEV_SETTINGS" POSTGRES_DB="$BOOTSTRAP_DB" "$VENV_PY" manage.py shell -c '
+from django.conf import settings
+from django.test import Client
+
+from core.models import Booking, Notification, Room, User, advance_deadline
+from core.services import clock, slots
+from core.services.policy import current_policy
+
+PUBLIC_ROUTES = ("/th/", "/en/", "/th/rules/", "/th/help/", "/th/privacy/", "/healthz/", "/readyz/")
+
+rooms = Room.objects.filter(is_active=True).count()
+assert rooms == settings.ROOM_COUNT, f"expected {settings.ROOM_COUNT} rooms, found {rooms}"
+
+# The instrument-specific room: exactly one, and restricted to piano and
+# percussion. Configuration a deployment can get wrong, so it is checked here.
+restricted = list(Room.objects.filter(reservation_scope="LISTED").prefetch_related("allowed_categories"))
+assert len(restricted) == 1, f"expected one restricted room, found {len(restricted)}"
+assert sorted(restricted[0].allowed_category_values) == ["PERCUSSION", "PIANO"], (
+    f"{restricted[0]} is restricted to {restricted[0].allowed_category_values}"
+)
+
+staff = User.objects.filter(is_operational_staff=True).first()
+assert staff is not None, "no staff account was seeded"
+student = User.objects.filter(is_operational_staff=False).first()
+assert student is not None, "no student account was seeded"
+
+client = Client()
+for path in PUBLIC_ROUTES:
+    response = client.get(path)
+    assert response.status_code == 200, f"{path} returned {response.status_code}"
+
+# Real transactional data, so the restart and restore drills have something to
+# prove. Written straight through the ORM on purpose: this is throwaway drill
+# data in a database this script created, and the booking rules already have
+# 250-odd tests of their own.
+room = Room.objects.order_by("position").first()
+day = clock.local_date(clock.now())
+policy = current_policy()
+slot_start = slots.slot_start_for(day, 11)
+Booking.objects.get_or_create(
+    user=student,
+    room=room,
+    slot_start=slot_start,
+    defaults={
+        "slot_end": slots.slot_end_for(slot_start),
+        "status": Booking.Status.SCHEDULED,
+        "source": Booking.Source.ADVANCE,
+        "policy_version": policy,
+        "deadline": advance_deadline(slot_start, policy.checkin_grace_minutes),
+    },
+)
+# Pending work: an undelivered message is exactly what a restore has to bring back.
+Notification.objects.get_or_create(
+    dedupe_key="bootstrap-evidence",
+    defaults={
+        "kind": "booking_confirmation",
+        "recipient": student,
+        "payload": {"booking_id": 1},
+        "status": Notification.Status.PENDING,
+    },
+)
+
+print(
+    f"bootstrap smoke: {rooms} rooms, {User.objects.count()} accounts, "
+    f"{Booking.objects.count()} bookings, {Notification.objects.count()} queued messages, "
+    f"{len(PUBLIC_ROUTES)} routes 200, "
+    f"check-in window {policy.opening_hour}:00-{policy.closing_hour}:00 "
+    f"with {policy.checkin_grace_minutes} minute grace"
+)
+' >>"$bootstrap_log" 2>&1; then
+      bootstrap_ok=1
+      record clean_bootstrap PASS "$bootstrap_log"
+    fi
+  fi
+  if [ "$bootstrap_ok" -eq 0 ]; then
+    record clean_bootstrap FAIL "$bootstrap_log"
+  fi
+
+  # --- 8. Immutable image build ------------------------------------------------
+  # BuildKit's context sender cannot read the extended attributes of the macOS
+  # AppleDouble sidecars (`._name`) that every file gets on this exFAT volume, and
+  # aborts before the first instruction. The legacy builder walks the context
+  # itself and applies .dockerignore, so it is tried as a fallback rather than
+  # assumed.
+  build_image() {
+    local log
+    log="$(log_for docker_image_build)"
+    if docker compose build web >"$log" 2>&1; then
+      return 0
+    fi
+    echo "BuildKit could not transfer the context; retrying with the legacy builder." >>"$log"
+    DOCKER_BUILDKIT=0 docker compose build web >>"$log" 2>&1
+  }
+  run docker_image_build build_image
+
+  # --- 9. Restart persistence --------------------------------------------------
+  # The schema and the data have to survive the database process restarting.
+  persist_log="$(log_for restart_persistence)"
+  counted() {
+    docker compose exec -T "$PG_SERVICE" psql -U "$PG_USER" -d "$BOOTSTRAP_DB" -tAc \
+      "select count(*) from $1" 2>/dev/null | tr -d '[:space:]'
+  }
+  if [ "$bootstrap_ok" -eq 1 ]; then
+    before_users="$(counted core_user)"
+    before_rooms="$(counted core_room)"
+    if docker compose restart "$PG_SERVICE" >"$persist_log" 2>&1; then
+      for _ in $(seq 1 30); do
+        docker compose exec -T "$PG_SERVICE" pg_isready -U "$PG_USER" -d "$BOOTSTRAP_DB" \
+          >>"$persist_log" 2>&1 && break
+        sleep 2
+      done
+      after_users="$(counted core_user)"
+      after_rooms="$(counted core_room)"
+      {
+        echo "before: users=$before_users rooms=$before_rooms"
+        echo "after:  users=$after_users rooms=$after_rooms"
+      } >>"$persist_log"
+      if [ -n "$before_users" ] && [ "$before_users" = "$after_users" ] &&
+        [ -n "$before_rooms" ] && [ "$before_rooms" = "$after_rooms" ]; then
+        record restart_persistence PASS "$persist_log"
+      else
+        record restart_persistence FAIL "$persist_log"
+      fi
+    else
+      record restart_persistence FAIL "$persist_log"
+    fi
+  else
+    blocked restart_persistence "clean_bootstrap did not produce a database to restart"
+  fi
+
+  # --- 10. Backup and restore into an isolated database ------------------------
+  # V3 section 11: demonstrate pg_restore in a clean database and prove that
+  # users, bookings and pending work come back.
+  restore_log="$(log_for backup_and_restore)"
+  restore_ok=0
+  if [ "$bootstrap_ok" -eq 1 ]; then
+    dump="artifacts/qa/verify-$STAMP/pgdata.dump"
+    if docker compose exec -T "$PG_SERVICE" pg_dump -U "$PG_USER" -d "$BOOTSTRAP_DB" \
+      -Fc >"$dump" 2>>"$restore_log" &&
+      docker compose exec -T "$PG_SERVICE" createdb -U "$PG_USER" "$RESTORE_DB" \
+        >>"$restore_log" 2>&1 &&
+      docker compose exec -T "$PG_SERVICE" pg_restore -U "$PG_USER" -d "$RESTORE_DB" \
+        --no-owner --exit-on-error <"$dump" >>"$restore_log" 2>&1; then
+      restored_counted() {
+        docker compose exec -T "$PG_SERVICE" psql -U "$PG_USER" -d "$RESTORE_DB" -tAc \
+          "select count(*) from $1" 2>/dev/null | tr -d '[:space:]'
+      }
+      {
+        echo "source vs restored"
+        for table in core_user core_room core_booking core_notification core_auditevent; do
+          echo "$table: $(counted "$table") -> $(restored_counted "$table")"
+        done
+        echo "dump bytes: $(wc -c <"$dump")"
+      } >>"$restore_log"
+
+      restore_ok=1
+      for table in core_user core_room core_booking core_notification core_auditevent; do
+        if [ "$(counted "$table")" != "$(restored_counted "$table")" ]; then
+          restore_ok=0
+        fi
+      done
+
+      # A restore that produced an empty database would prove nothing: V3 section
+      # 11 asks specifically for users, bookings and pending work to come back.
+      for table in core_user core_booking core_notification; do
+        if [ "$(restored_counted "$table")" = "0" ]; then
+          restore_ok=0
+          echo "restored $table is empty; the drill is inconclusive" >>"$restore_log"
+        fi
+      done
+    fi
+  fi
+  if [ "$restore_ok" -eq 1 ]; then
+    record backup_and_restore PASS "$restore_log"
+  elif [ "$bootstrap_ok" -eq 0 ]; then
+    blocked backup_and_restore "no seeded database to back up"
+  else
+    record backup_and_restore FAIL "$restore_log"
+  fi
+
+  # --- 11. Local mail flow -----------------------------------------------------
+  # A real SMTP conversation with a mail catcher, end to end.
+  #
+  # The catcher is started by this script on its own ports rather than through
+  # `docker compose up mailpit`, which publishes 127.0.0.1:1025 and collides with
+  # whatever else on the developer's machine already holds SMTP. The service is the
+  # same image compose.override.yaml uses, so the SMTP path exercised is the same.
+  mail_log="$(log_for local_mail_flow)"
+  mail_ok=0
+  docker rm -f "$MAIL_CONTAINER" >/dev/null 2>&1
+  if docker run -d --rm --name "$MAIL_CONTAINER" \
+    -p "127.0.0.1:$MAIL_SMTP_HOST_PORT:1025" \
+    -p "127.0.0.1:$MAIL_HTTP_HOST_PORT:8025" \
+    "$MAIL_IMAGE" >"$mail_log" 2>&1; then
+    for _ in $(seq 1 20); do
+      if curl -fsS "$MAILPIT_URL/api/v1/messages" >/dev/null 2>&1; then
+        mail_ok=1
+        break
+      fi
+      sleep 1
+    done
+  fi
+  if [ "$mail_ok" -eq 1 ] && [ "$bootstrap_ok" -eq 1 ]; then
+    curl -fsS -X DELETE "$MAILPIT_URL/api/v1/messages" >>"$mail_log" 2>&1
+    if DJANGO_SETTINGS_MODULE="$DEV_SETTINGS" POSTGRES_DB="$BOOTSTRAP_DB" \
+      EMAIL_HOST=127.0.0.1 EMAIL_PORT="$MAIL_SMTP_HOST_PORT" EMAIL_USE_TLS=false \
+      "$VENV_PY" manage.py shell -c '
+from django.conf import settings
+from django.utils import timezone
+
+from core.models import Notification, User
+from core.services import notifications, outbox
+
+student = User.objects.filter(is_operational_staff=False, email_verified_at__isnull=False).first()
+assert student is not None, "no seeded student to mail"
+
+outbox.enqueue(
+    kind=notifications.KIND_PASSWORD_RESET,
+    recipient=student,
+    dedupe_key="verify-mail-flow",
+    payload={"invitation_id": None, "token": "verify-token"},
+)
+print(f"smtp {settings.EMAIL_HOST}:{settings.EMAIL_PORT} -> {student.institutional_id}")
+print(f"drain: {notifications.drain(timezone.now(), limit=5)}")
+' >>"$mail_log" 2>&1 &&
+      sleep 2 &&
+      curl -fsS "$MAILPIT_URL/api/v1/messages" >>"$mail_log" 2>&1 &&
+      grep -q '"ID"' "$mail_log"; then
+      record local_mail_flow PASS "$mail_log"
+    else
+      record local_mail_flow FAIL "$mail_log"
+    fi
+  elif [ "$mail_ok" -eq 1 ]; then
+    blocked local_mail_flow "no seeded database to send from"
+  else
+    blocked local_mail_flow "the mail catcher image could not be started on ports $MAIL_SMTP_HOST_PORT/$MAIL_HTTP_HOST_PORT"
+  fi
+  docker rm -f "$MAIL_CONTAINER" >/dev/null 2>&1
+fi
+
+# --- Cleanup of this run's own databases --------------------------------------
+if [ "$docker_ok" -eq 1 ]; then
+  docker compose exec -T "$PG_SERVICE" dropdb -U "$PG_USER" --if-exists "$BOOTSTRAP_DB" \
+    >/dev/null 2>&1
+  docker compose exec -T "$PG_SERVICE" dropdb -U "$PG_USER" --if-exists "$RESTORE_DB" \
+    >/dev/null 2>&1
+fi
+
+# --- Summary -------------------------------------------------------------------
+echo
+echo "== summary =="
+passes=0
+fails=0
+blockeds=0
+for index in "${!NAMES[@]}"; do
+  printf '%-24s %s\n' "${NAMES[$index]}" "${STATUSES[$index]}"
+  case "${STATUSES[$index]}" in
+    PASS) passes=$((passes + 1)) ;;
+    FAIL) fails=$((fails + 1)) ;;
+    BLOCKED) blockeds=$((blockeds + 1)) ;;
+  esac
+done
+echo
+echo "PASS=$passes FAIL=$fails BLOCKED=$blockeds"
+echo "logs: $RUN_DIR"
+
+{
+  echo "verification run $STAMP"
+  for index in "${!NAMES[@]}"; do
+    printf '%s\t%s\t%s\n' "${NAMES[$index]}" "${STATUSES[$index]}" "${DETAILS[$index]}"
+  done
+} >"$RUN_DIR/summary.tsv"
+
+if [ "$fails" -gt 0 ] || [ "$blockeds" -gt 0 ]; then
+  echo
+  echo "VERDICT: NOT_LOCAL_PASS — $fails failed, $blockeds blocked."
+  echo "A blocked check is not a pass. See $RUN_DIR for the evidence of each."
+  exit 1
+fi
+
+echo
+echo "VERDICT: LOCAL_PASS_CANDIDATE — every automated local check passed."
+echo "Deployment and pilot remain separate gates that need real SMTP, a domain,"
+echo "a backup destination and faculty sign-off."
+echo "summary: $RUN_DIR/summary.tsv"

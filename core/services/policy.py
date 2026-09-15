@@ -62,7 +62,9 @@ def current_policy() -> PolicyVersion:
         return PolicyVersion.objects.order_by("-version").first()
 
 
-def create_policy_version(*, snapshot: dict[str, Any], actor=None, label: str = "", note: str = "") -> PolicyVersion:
+def create_policy_version(
+    *, snapshot: dict[str, Any], actor=None, label: str = "", note: str = ""
+) -> PolicyVersion:
     """Create the next immutable policy version from a validated snapshot."""
     validated = _validate(snapshot, base=snapshot_from_settings())
     latest = PolicyVersion.objects.order_by("-version").first()
@@ -88,9 +90,7 @@ def _validate(snapshot: dict[str, Any], *, base: dict[str, Any]) -> dict[str, An
     def positive_int(name: str, *, minimum: int, maximum: int) -> None:
         value = merged.get(name)
         if not isinstance(value, int) or isinstance(value, bool) or not (minimum <= value <= maximum):
-            raise ValidationError(
-                {name: f"Must be a whole number between {minimum} and {maximum}."}
-            )
+            raise ValidationError({name: f"Must be a whole number between {minimum} and {maximum}."})
 
     positive_int("horizon_days", minimum=1, maximum=60)
     positive_int("daily_quota", minimum=1, maximum=10)

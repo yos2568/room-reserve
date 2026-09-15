@@ -18,9 +18,11 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from core.models import EligibleStudent, Room, User
+from core.models import EligibleStudent, User
+from core.services import instruments
 from core.services.identity import normalize_email
 from core.services.policy import current_policy
+from core.services.rooms import ensure_rooms
 from core.signals import OPERATIONAL_STAFF_GROUP
 
 # Reserved for documentation by RFC 2606, so a seed can never mail a real person.
@@ -30,12 +32,34 @@ DEMO_STUDENT_PASSWORD = "demo-student-password-1"
 DEMO_STAFF_PASSWORD = "demo-staff-password-1"
 
 FIRST_NAMES = [
-    "สมชาย", "สมหญิง", "ปิยะ", "ณัฐ", "อารี", "มานะ", "วิชัย", "ปรีชา",
-    "กมล", "ธนา", "ศิริ", "รัตนา", "จุฑา", "พิมพ์", "อรุณ", "นภา",
+    "สมชาย",
+    "สมหญิง",
+    "ปิยะ",
+    "ณัฐ",
+    "อารี",
+    "มานะ",
+    "วิชัย",
+    "ปรีชา",
+    "กมล",
+    "ธนา",
+    "ศิริ",
+    "รัตนา",
+    "จุฑา",
+    "พิมพ์",
+    "อรุณ",
+    "นภา",
 ]
 LAST_NAMES = [
-    "ใจดี", "รักเรียน", "แสนสุข", "วงศ์ทอง", "ศรีสุข", "ทองดี", "บุญมี",
-    "พูลผล", "มั่งมี", "เจริญสุข",
+    "ใจดี",
+    "รักเรียน",
+    "แสนสุข",
+    "วงศ์ทอง",
+    "ศรีสุข",
+    "ทองดี",
+    "บุญมี",
+    "พูลผล",
+    "มั่งมี",
+    "เจริญสุข",
 ]
 
 
@@ -89,18 +113,16 @@ class Command(BaseCommand):
     # -- pieces ---------------------------------------------------------------
 
     def _seed_rooms(self) -> int:
-        count = 0
-        for number in range(1, 10):
-            _, was_created = Room.objects.get_or_create(
-                number=str(number),
-                defaults={"label": f"ห้องซ้อม {number}", "position": number},
-            )
-            count += int(was_created)
-        return count
+        # Same provisioning path as `seed_rooms`, so a demo database and a real
+        # one have the same rooms — including the instrument-specific tenth room.
+        return ensure_rooms()["created"]
 
     def _seed_student(self, index: int, password: str) -> str:
         institutional_id = f"66{index:07d}"
         email = normalize_email(f"student{index:04d}@{DEMO_DOMAIN}")
+        # Includes piano and percussion so the instrument-specific tenth room is
+        # demonstrable from a seeded database.
+        instrument = random.choice(["เปียโน", "เครื่องตี", "ไวโอลิน", "ร้องเพลง", "กีตาร์", "ฟลูต", "ทรัมเป็ต", "เชลโล"])
 
         user = User.objects.filter(username=institutional_id).first()
         if user is None:
@@ -129,7 +151,11 @@ class Command(BaseCommand):
                 "email": email,
                 "name_th": user.name_th,
                 "program": "ดนตรีตะวันตก",
-                "instrument": random.choice(["เปียโน", "ไวโอลิน", "ร้องเพลง", "กีตาร์"]),
+                "instrument": instrument,
+                # Categorised like a real roster row, so the demo can exercise the
+                # instrument-specific tenth room rather than leaving every demo
+                # student uncategorised.
+                "instrument_category": instruments.categorise(instrument),
                 "year": random.randint(1, 4),
                 "is_active": True,
                 "account": user,

@@ -41,4 +41,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "SLF001"]
-"core/settings/*" = ["F405", "F403"]
+# Settings modules import * from base and then override, so F403/F405 are
+# expected there.
+"roomreserve/settings/*" = ["F405", "F403"]

@@ -1,0 +1,54 @@
+# Build context exclusions.
+#
+# The first entry is not housekeeping. This project lives on an exFAT volume, so
+# every file gets a macOS AppleDouble sidecar (`._name`). The Docker file sender
+# tries to read their extended attributes, the filesystem refuses, and the whole
+# build aborts before the first instruction:
+#
+#   failed to solve: failed to read dockerfile: error from sender:
+#   failed to xattr /…/._.chart-data-TJiVp4: operation not permitted
+#
+# Nothing below is needed by either build stage. The CSS stage copies exactly the
+# files it needs (package.json, tailwind.config.js, tailwind/, core/templates/),
+# and the app stage installs from requirements/prod.txt and then copies the
+# application. Tests, docs, the real .env, the virtualenv and all local build
+# state stay out of the image.
+
+# --- exFAT / macOS -------------------------------------------------------------
+._*
+.DS_Store
+.Spotlight-V100
+.Trashes
+
+# --- Local state and secrets ---------------------------------------------------
+.env
+.env.*
+.git
+.gitignore
+.ignore
+.venv
+node_modules
+staticfiles
+artifacts
+outputs
+.pytest_cache
+.ruff_cache
+__pycache__
+*.py[cod]
+
+# --- Not part of the runtime image --------------------------------------------
+tests/
+docs/
+scripts/
+deploy/
+handoff*.md
+BUILD_STATUS.md
+QA_REPORT.md
+roomreserveapp*.md
+roomreserveapp*.pdf
+deepseek-v3-build-loop.md
+*.pdf
+*.xlsx
+*.png
+compose*.yaml
+pyproject.toml

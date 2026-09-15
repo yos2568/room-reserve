@@ -18,6 +18,7 @@ import logging
 
 from django.conf import settings
 from django.db import connection, transaction
+from django.utils import timezone
 
 from core.models import BookingControl, JobHeartbeat
 
@@ -66,7 +67,12 @@ def run_tick(now=None) -> dict:
             moment = captured
 
         # Outside the control transaction: SMTP must never hold the booking lock.
-        summary["mail"] = drain(moment)
+        # Drained against the current wall clock rather than the moment captured
+        # before reconciliation: an event this tick just queued is stamped with
+        # ``timezone.now()``, which is later than that captured moment, so using
+        # the captured moment would make every tick wait one further minute
+        # before delivering its own work.
+        summary["mail"] = drain(now if now is not None else timezone.now())
 
         JobHeartbeat.objects.update_or_create(
             name=HEARTBEAT_NAME,

@@ -10,8 +10,16 @@ from datetime import datetime
 
 from django.utils import timezone
 
-from core.models import Booking, EligibleStudent, Room, User, advance_deadline
-from core.services import slots
+from core.models import (
+    Booking,
+    EligibleStudent,
+    InstrumentCategory,
+    Room,
+    RoomAllowedCategory,
+    User,
+    advance_deadline,
+)
+from core.services import instruments, slots
 from core.services.policy import current_policy
 
 TEST_DOMAIN = "student.chula.ac.th"
@@ -70,7 +78,29 @@ def make_roster_entry(user: User | None = None, **overrides) -> EligibleStudent:
         data["email"] = user.email
         data["account"] = user
     data.update(overrides)
+    # Derived the same way the roster import derives it, so a test that writes an
+    # instrument gets the category the real path would produce.
+    if "instrument" in data and "instrument_category" not in data:
+        data["instrument_category"] = instruments.categorise(data["instrument"])
     return EligibleStudent.objects.create(**data)
+
+
+def make_restricted_room(
+    number: str = "10",
+    label: str = "ห้องซ้อมใหญ่",
+    categories: tuple[str, ...] = (InstrumentCategory.PIANO, InstrumentCategory.PERCUSSION),
+    position: int = 10,
+) -> Room:
+    """A room only the listed instrument categories may reserve."""
+    room, _ = Room.objects.get_or_create(
+        number=number,
+        defaults={"label": label, "position": position},
+    )
+    room.reservation_scope = Room.ReservationScope.LISTED
+    room.save(update_fields=["reservation_scope"])
+    for category in categories:
+        RoomAllowedCategory.objects.get_or_create(room=room, category=category)
+    return room
 
 
 def make_rooms(count: int = 9) -> list[Room]:

@@ -14,7 +14,15 @@ from datetime import date, datetime
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
-from core.models import Booking, CalendarOverride, Closure, Room, Suspension, User
+from core.models import (
+    Booking,
+    CalendarOverride,
+    Closure,
+    InstrumentCategory,
+    Room,
+    Suspension,
+    User,
+)
 
 from . import slots
 from .audit import record_audit
@@ -22,6 +30,7 @@ from .errors import Code, OperationRejected
 from .outbox import enqueue
 from .policy import create_policy_version as _create_policy_version
 from .refs import reload_for_update
+from .rooms import set_audience
 
 
 def preview_closure(room: Room | None, starts_at: datetime, ends_at: datetime) -> dict:
@@ -51,7 +60,15 @@ def preview_closure(room: Room | None, starts_at: datetime, ends_at: datetime) -
     }
 
 
-def create_closure(ctx, *, room: Room | None, starts_at: datetime, ends_at: datetime, reason: str, acknowledged_in_use: bool = False) -> Closure:
+def create_closure(
+    ctx,
+    *,
+    room: Room | None,
+    starts_at: datetime,
+    ends_at: datetime,
+    reason: str,
+    acknowledged_in_use: bool = False,
+) -> Closure:
     """Create a closure and cancel the scheduled bookings it affects."""
     if not (reason or "").strip():
         raise OperationRejected(Code.INVALID_INPUT)
@@ -82,9 +99,7 @@ def create_closure(ctx, *, room: Room | None, starts_at: datetime, ends_at: date
         booking.cancelled_by = ctx.actor
         booking.cancel_reason = "CLOSURE"
         booking.late_cancel = False
-        booking.save(
-            update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "late_cancel"]
-        )
+        booking.save(update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "late_cancel"])
         record_audit(
             action="booking.cancelled",
             entity_type="Booking",
@@ -175,9 +190,7 @@ def complete_session_early(ctx, *, booking: Booking, reason: str) -> Booking:
     booking.completion_reason = reason.strip()
     booking.needs_review = False
     booking.review_note = ""
-    booking.save(
-        update_fields=["status", "actual_end", "completion_reason", "needs_review", "review_note"]
-    )
+    booking.save(update_fields=["status", "actual_end", "completion_reason", "needs_review", "review_note"])
 
     record_audit(
         action="booking.completed_early",
@@ -238,10 +251,45 @@ def set_calendar_override(
         entity_type="CalendarOverride",
         entity_id=override.pk,
         actor=ctx.actor,
-        changes={"local_date": local_date, "is_open": is_open, "open_hour": open_hour, "close_hour": close_hour},
+        changes={
+            "local_date": local_date,
+            "is_open": is_open,
+            "open_hour": open_hour,
+            "close_hour": close_hour,
+        },
         reason=reason,
     )
     return override
+
+
+def set_room_audience(ctx, *, room: Room, scope: str, categories) -> dict:
+    """Change who may reserve a room, and record what it was before.
+
+    Existing bookings are deliberately left alone: a student who already holds a
+    reservation keeps it, and can still check in. Restricting a room is not a
+    reason to cancel somebody's booking after the fact.
+    """
+    if scope not in Room.ReservationScope.values:
+        raise OperationRejected(Code.INVALID_INPUT)
+
+    known = {choice for choice, _ in InstrumentCategory.choices}
+    unknown = sorted(set(categories) - known)
+    if unknown:
+        raise OperationRejected(Code.INVALID_INPUT, unknown_categories=unknown)
+
+    room = reload_for_update(room)
+    changes = set_audience(room=room, scope=scope, categories=categories)
+
+    ctx.audit(
+        action="room.audience_changed",
+        entity_type="Room",
+        entity_id=room.pk,
+        actor=ctx.actor,
+        changes={"room": room.number, **changes},
+        reason="Staff changed who may reserve this room.",
+    )
+
+    return {"room_id": room.pk, **changes}
 
 
 def deactivate_room(ctx, *, room: Room, reason: str) -> dict:
@@ -262,9 +310,7 @@ def deactivate_room(ctx, *, room: Room, reason: str) -> dict:
         booking.cancelled_by = ctx.actor
         booking.cancel_reason = "ROOM_DEACTIVATED"
         booking.late_cancel = False
-        booking.save(
-            update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "late_cancel"]
-        )
+        booking.save(update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "late_cancel"])
         enqueue(
             kind="booking_cancelled",
             recipient=booking.user,
@@ -318,9 +364,7 @@ def deactivate_account(ctx, *, user: User, reason: str) -> dict:
         booking.cancelled_by = ctx.actor
         booking.cancel_reason = "ACCOUNT_DEACTIVATED"
         booking.late_cancel = False
-        booking.save(
-            update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "late_cancel"]
-        )
+        booking.save(update_fields=["status", "cancelled_at", "cancelled_by", "cancel_reason", "late_cancel"])
 
     flagged = list(Booking.objects.filter(user=user, status=Booking.Status.IN_USE))
     for booking in flagged:
@@ -342,9 +386,7 @@ def deactivate_account(ctx, *, user: User, reason: str) -> dict:
 def update_policy(ctx, *, snapshot: dict, label: str, note: str):
     """Create the next immutable policy version from validated values."""
     try:
-        policy = _create_policy_version(
-            snapshot=snapshot, actor=ctx.actor, label=label, note=note
-        )
+        policy = _create_policy_version(snapshot=snapshot, actor=ctx.actor, label=label, note=note)
     except ValidationError as exc:
         raise OperationRejected(Code.INVALID_INPUT, errors=getattr(exc, "messages", [])) from exc
 

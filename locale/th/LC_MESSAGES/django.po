@@ -1,0 +1,2847 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Room Reserve\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-15 22:36+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: th\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: core/models/booking.py:31 core/models/booking.py:32
+msgid "booking control"
+msgstr "การควบคุมการจองห้อง"
+
+#: core/models/booking.py:53
+msgid "Scheduled"
+msgstr "จองไว้แล้ว"
+
+#: core/models/booking.py:54 core/templates/core/partials/slot_cell.html:26
+msgid "In use"
+msgstr "กำลังใช้งาน"
+
+#: core/models/booking.py:55
+msgid "Completed"
+msgstr "ใช้เสร็จแล้ว"
+
+#: core/models/booking.py:56 core/models/sanctions.py:33
+msgid "No-show"
+msgstr "ไม่มาใช้ห้อง"
+
+#: core/models/booking.py:57 core/models/operations.py:69
+#: core/templates/core/staff/outbox.html:33
+msgid "Cancelled"
+msgstr "ยกเลิกแล้ว"
+
+#: core/models/booking.py:60
+msgid "Advance reservation"
+msgstr "การจองล่วงหน้า"
+
+#: core/models/booking.py:61
+msgid "Walk-in / use now"
+msgstr "เข้าใช้ทันที / ใช้ตอนนี้"
+
+#: core/models/booking.py:67
+msgid "Bangkok local date of slot_start."
+msgstr "วันที่ตามเวลาท้องถิ่นกรุงเทพฯ ของเวลาเริ่มช่วง"
+
+#: core/models/booking.py:71
+msgid "Check-in deadline for an advance reservation; null for walk-ins."
+msgstr "กำหนดเวลาลงชื่อเข้าใช้สำหรับการจองล่วงหน้า; ว่างสำหรับการเข้าใช้ทันที"
+
+#: core/models/booking.py:96
+msgid ""
+"Cancelled less than 60 minutes before the slot started (reporting only)."
+msgstr "ยกเลิกน้อยกว่า 60 นาทีก่อนเวลาเริ่ม (บันทึกเพื่อรายงานเท่านั้น)"
+
+#: core/models/booking.py:106
+msgid "Pending on-site intervention by staff."
+msgstr "รอเจ้าหน้าที่ตรวจสอบหน้างาน"
+
+#: core/models/booking.py:123
+msgid "The forfeited booking whose remaining time this walk-in took."
+msgstr "การจองที่ถูกสละสิทธิ์ ซึ่งเวลาที่เหลือถูกนำมาใช้โดยการเข้าใช้ทันทีนี้"
+
+#: core/models/booking.py:134
+msgid "booking"
+msgstr "การจอง"
+
+#: core/models/booking.py:135
+msgid "bookings"
+msgstr "การจอง"
+
+#: core/models/identity.py:22
+msgid "Piano"
+msgstr "เปียโน"
+#: core/models/identity.py:23
+#| msgid "Versions"
+msgid "Percussion"
+msgstr "เครื่องตี"
+#: core/models/identity.py:24
+msgid "Strings"
+msgstr "เครื่องสาย"
+#: core/models/identity.py:25
+msgid "Woodwind"
+msgstr "เครื่องลมไม้"
+#: core/models/identity.py:26
+msgid "Brass"
+msgstr "เครื่องทองเหลือง"
+#: core/models/identity.py:27
+msgid "Voice"
+msgstr "ขับร้อง"
+#: core/models/identity.py:28
+msgid "Guitar"
+msgstr "กีตาร์"
+#: core/models/identity.py:29
+msgid "Harp"
+msgstr "ฮาร์ป"
+#: core/models/identity.py:30
+msgid "Other"
+msgstr "อื่น ๆ"
+#: core/models/identity.py:31
+msgid "Not yet categorised"
+msgstr "ยังไม่จัดหมวดหมู่"
+#: core/models/identity.py:42 core/models/user.py:70
+msgid "institutional ID"
+msgstr "รหัสนิสิต"
+
+#: core/models/identity.py:43
+msgid "approved email"
+msgstr "อีเมลที่ได้รับอนุมัติ"
+
+#: core/models/identity.py:44 core/models/user.py:77
+msgid "Thai name"
+msgstr "ชื่อภาษาไทย"
+
+#: core/models/identity.py:45 core/models/user.py:78
+msgid "English name"
+msgstr "ชื่อภาษาอังกฤษ"
+
+#: core/models/identity.py:46
+msgid "programme"
+msgstr "หลักสูตร"
+
+#: core/models/identity.py:47
+msgid "instrument"
+msgstr "เครื่องดนตรี"
+
+#: core/models/identity.py:49
+msgid "instrument category"
+msgstr "หมวดหมู่เครื่องดนตรี"
+
+#: core/models/identity.py:53
+msgid "Canonical family derived from the instrument text; drives room audiences."
+msgstr "หมวดหมู่มาตรฐานที่ได้จากข้อความเครื่องดนตรี ใช้กำหนดว่าห้องใดจองได้โดยใคร"
+#: core/models/identity.py:55
+msgid "year"
+msgstr "ชั้นปี"
+
+#: core/models/identity.py:56 core/models/room.py:30
+msgid "active"
+msgstr "ใช้งานอยู่"
+
+#: core/models/identity.py:69
+msgid "eligible student"
+msgstr "นิสิตที่มีสิทธิ์"
+
+#: core/models/identity.py:70
+msgid "eligible students"
+msgstr "นิสิตที่มีสิทธิ์"
+
+#: core/models/identity.py:89
+msgid "Email verification"
+msgstr "การยืนยันอีเมล"
+
+#: core/models/identity.py:90
+msgid "Account activation"
+msgstr "การเปิดใช้งานบัญชี"
+
+#: core/models/identity.py:91
+msgid "Password reset"
+msgstr "การตั้งรหัสผ่านใหม่"
+
+#: core/models/identity.py:110
+msgid "invitation"
+msgstr "คำเชิญ"
+
+#: core/models/identity.py:111
+msgid "invitations"
+msgstr "คำเชิญ"
+
+#: core/models/operations.py:30
+msgid "Used for non-user actors such as the scheduler tick."
+msgstr "ใช้สำหรับผู้กระทำที่ไม่ใช่ผู้ใช้ เช่น รอบการทำงานของตัวจัดตาราง"
+
+#: core/models/operations.py:41
+msgid "audit event"
+msgstr "เหตุการณ์ตรวจสอบ"
+
+#: core/models/operations.py:42
+msgid "audit events"
+msgstr "เหตุการณ์ตรวจสอบ"
+
+#: core/models/operations.py:66 core/templates/core/staff/outbox.html:30
+msgid "Pending"
+msgstr "รอดำเนินการ"
+
+#: core/models/operations.py:67 core/templates/core/staff/outbox.html:31
+msgid "Sent"
+msgstr "ส่งแล้ว"
+
+#: core/models/operations.py:68 core/templates/core/staff/outbox.html:32
+msgid "Exhausted"
+msgstr "ส่งไม่สำเร็จ (เกินจำนวนครั้งที่กำหนด)"
+
+#: core/models/operations.py:91
+msgid "notification"
+msgstr "การแจ้งเตือน"
+
+#: core/models/operations.py:92
+msgid "notifications"
+msgstr "การแจ้งเตือน"
+
+#: core/models/operations.py:128
+msgid "operation request"
+msgstr "คำขอดำเนินการ"
+
+#: core/models/operations.py:129
+msgid "operation requests"
+msgstr "คำขอดำเนินการ"
+
+#: core/models/operations.py:158
+msgid "job heartbeat"
+msgstr "สัญญาณการทำงานของงาน"
+
+#: core/models/operations.py:159
+msgid "job heartbeats"
+msgstr "สัญญาณการทำงานของงาน"
+
+#: core/models/policy.py:36
+msgid "policy version"
+msgstr "เวอร์ชันนโยบาย"
+
+#: core/models/policy.py:37
+msgid "policy versions"
+msgstr "เวอร์ชันนโยบาย"
+
+#: core/models/policy.py:111
+msgid "Leave empty to cover every room."
+msgstr "เว้นว่างเพื่อให้ครอบคลุมทุกห้อง"
+
+#: core/models/policy.py:125
+msgid "service incident"
+msgstr "เหตุขัดข้องของระบบ"
+
+#: core/models/policy.py:126
+msgid "service incidents"
+msgstr "เหตุขัดข้องของระบบ"
+
+#: core/models/room.py:25 core/templates/core/staff/admin.html:47
+#| msgid "eligible student"
+msgid "Any eligible student"
+msgstr "นิสิตที่มีสิทธิ์ทุกคน"
+#: core/models/room.py:26
+msgid "Only the instrument categories listed"
+msgstr "เฉพาะหมวดหมู่เครื่องดนตรีที่ระบุ"
+#: core/models/room.py:28
+msgid "room number"
+msgstr "หมายเลขห้อง"
+
+#: core/models/room.py:29
+msgid "label"
+msgstr "ป้ายชื่อ"
+
+#: core/models/room.py:31
+msgid "Display order."
+msgstr "ลำดับการแสดงผล"
+
+#: core/models/room.py:33
+#| msgid "Room Reserve"
+msgid "who may reserve"
+msgstr "ผู้ที่จองได้"
+#: core/models/room.py:41
+msgid "room"
+msgstr "ห้อง"
+
+#: core/models/room.py:42
+msgid "rooms"
+msgstr "ห้อง"
+
+#: core/models/room.py:86
+msgid "room instrument category"
+msgstr "หมวดหมู่เครื่องดนตรีของห้อง"
+#: core/models/room.py:87
+msgid "room instrument categories"
+msgstr "หมวดหมู่เครื่องดนตรีของห้อง"
+#: core/models/room.py:113
+msgid "Leave empty to close every room."
+msgstr "เว้นว่างเพื่อปิดทุกห้อง"
+
+#: core/models/room.py:139
+msgid "closure"
+msgstr "การปิดห้อง"
+
+#: core/models/room.py:140
+msgid "closures"
+msgstr "การปิดห้อง"
+
+#: core/models/room.py:154 core/templates/core/staff/incidents.html:51
+msgid "all rooms"
+msgstr "ทุกห้อง"
+
+#: core/models/room.py:168
+msgid "Unchecked closes the whole day (holiday)."
+msgstr "หากไม่เลือก จะปิดทั้งวัน (วันหยุด)"
+
+#: core/models/room.py:174
+msgid "Exclusive end hour: the 20:00 close is stored as 20."
+msgstr "ชั่วโมงสิ้นสุดแบบไม่รวม: เวลาปิด 20:00 บันทึกเป็น 20"
+
+#: core/models/room.py:186
+msgid "calendar override"
+msgstr "การกำหนดวันเปิด-ปิดเป็นกรณีพิเศษ"
+
+#: core/models/room.py:187
+msgid "calendar overrides"
+msgstr "การกำหนดวันเปิด-ปิดเป็นกรณีพิเศษ"
+
+#: core/models/sanctions.py:34
+msgid "Recorded by staff"
+msgstr "บันทึกโดยเจ้าหน้าที่"
+
+#: core/models/sanctions.py:46
+msgid "When the violation happened: the check-in deadline for a no-show."
+msgstr "เวลาที่เกิดการฝ่าฝืน: กำหนดลงชื่อเข้าใช้สำหรับกรณีไม่มาใช้ห้อง"
+
+#: core/models/sanctions.py:49
+msgid "End of the rolling strike window, frozen at recording time."
+msgstr "วันสิ้นสุดช่วงนับคะแนนโทษแบบเลื่อน ตรึงไว้ ณ เวลาที่บันทึก"
+
+#: core/models/sanctions.py:78
+msgid "The automatic suspension this strike triggered; set at most once."
+msgstr "การระงับสิทธิ์อัตโนมัติที่คะแนนโทษนี้นำไปสู่; กำหนดได้ครั้งเดียว"
+
+#: core/models/sanctions.py:92
+msgid "violation"
+msgstr "การฝ่าฝืน"
+
+#: core/models/sanctions.py:93
+msgid "violations"
+msgstr "การฝ่าฝืน"
+
+#: core/models/sanctions.py:161
+msgid "Automatic (strike threshold)"
+msgstr "อัตโนมัติ (ถึงเกณฑ์คะแนนโทษ)"
+
+#: core/models/sanctions.py:162
+msgid "Staff decision"
+msgstr "คำวินิจฉัยของเจ้าหน้าที่"
+
+#: core/models/sanctions.py:169
+msgid ""
+"Required for automatic sanctions; null means an indefinite staff suspension."
+msgstr "จำเป็นสำหรับการลงโทษอัตโนมัติ; ค่าว่างหมายถึงการระงับสิทธิ์โดยเจ้าหน้าที่แบบไม่มีกำหนด"
+
+#: core/models/sanctions.py:196
+msgid "suspension"
+msgstr "การระงับสิทธิ์"
+
+#: core/models/sanctions.py:197
+msgid "suspensions"
+msgstr "การระงับสิทธิ์"
+
+#: core/models/user.py:23
+msgid "Institutional ID must not contain spaces."
+msgstr "รหัสนิสิตต้องไม่มีช่องว่าง"
+
+#: core/models/user.py:60 roomreserve/settings/base.py:112
+msgid "Thai"
+msgstr "ภาษาไทย"
+
+#: core/models/user.py:61 roomreserve/settings/base.py:112
+msgid "English"
+msgstr "ภาษาอังกฤษ"
+
+#: core/models/user.py:64
+msgid "Pending review"
+msgstr "รอการตรวจสอบ"
+
+#: core/models/user.py:65
+msgid "Approved"
+msgstr "อนุมัติแล้ว"
+
+#: core/models/user.py:66
+msgid "Rejected"
+msgstr "ไม่อนุมัติ"
+
+#: core/models/user.py:74
+msgid "Institutional login ID supplied by the faculty roster."
+msgstr "รหัสเข้าสู่ระบบที่คณะจัดหาให้ตามทะเบียนนิสิต"
+
+#: core/models/user.py:76
+msgid "institutional email"
+msgstr "อีเมลสถาบัน"
+
+#: core/models/user.py:80
+msgid "preferred language"
+msgstr "ภาษาที่ต้องการ"
+
+#: core/models/user.py:86
+msgid "email verified at"
+msgstr "ยืนยันอีเมลเมื่อ"
+
+#: core/models/user.py:89
+msgid "eligibility"
+msgstr "สิทธิ์การใช้งาน"
+
+#: core/models/user.py:107
+msgid "operational staff"
+msgstr "เจ้าหน้าที่ปฏิบัติงาน"
+
+#: core/models/user.py:109
+msgid "Members of the ten-account staff group; cannot grant superuser."
+msgstr "สมาชิกกลุ่มเจ้าหน้าที่ 10 บัญชี; ไม่สามารถให้สิทธิ์ผู้ดูแลระบบสูงสุดได้"
+
+#: core/models/user.py:118
+msgid "user"
+msgstr "ผู้ใช้"
+
+#: core/models/user.py:119
+msgid "users"
+msgstr "ผู้ใช้"
+
+#: core/services/errors.py:68
+msgid "Done."
+msgstr "เรียบร้อยแล้ว"
+
+#: core/services/errors.py:69
+msgid "The system is busy. Please try again in a moment."
+msgstr "ระบบกำลังทำงานหนัก กรุณาลองอีกครั้งในอีกสักครู่"
+
+#: core/services/errors.py:70
+msgid "That room and hour has just been taken."
+msgstr "ห้องและชั่วโมงนี้เพิ่งถูกจองไป"
+
+#: core/services/errors.py:71
+msgid "You already have a booking in this hour or an adjacent hour."
+msgstr "คุณมีการจองในชั่วโมงนี้หรือชั่วโมงที่ติดกันแล้ว"
+
+#: core/services/errors.py:72
+msgid "You have reached your limit of bookings for that day."
+msgstr "คุณจองครบจำนวนสูงสุดของวันนั้นแล้ว"
+
+#: core/services/errors.py:73
+msgid "That date is further ahead than booking allows."
+msgstr "วันที่นี้ไกลเกินกว่าที่ระบบอนุญาตให้จอง"
+
+#: core/services/errors.py:74
+msgid "That time has already started. Use “Use now” if the room is free."
+msgstr "เวลานั้นเริ่มไปแล้ว ใช้ “ใช้ตอนนี้” หากห้องว่าง"
+
+#: core/services/errors.py:75
+msgid "That hour has already finished."
+msgstr "ชั่วโมงนั้นผ่านไปแล้ว"
+
+#: core/services/errors.py:76
+msgid "That room is closed for the selected time."
+msgstr "ห้องนี้ปิดในเวลาที่เลือก"
+
+#: core/services/errors.py:78
+msgid "That room can only be reserved by piano and percussion students. Once the hour starts, anyone may use it if it is still free."
+msgstr "ห้องนี้จองล่วงหน้าได้เฉพาะนิสิตเปียโนและเครื่องตีเท่านั้น เมื่อเริ่มชั่วโมงแล้ว หากห้องยังว่าง ผู้ใช้อื่นสามารถเข้าใช้ได้"
+#: core/services/errors.py:81
+msgid "That is not a bookable hour."
+msgstr "ไม่ใช่ชั่วโมงที่สามารถจองได้"
+
+#: core/services/errors.py:83
+msgid ""
+"The hour changed while this page was open. Check the current slot and "
+"confirm again."
+msgstr "ชั่วโมงเปลี่ยนไประหว่างที่หน้านี้เปิดอยู่ กรุณาตรวจสอบช่วงเวลาปัจจุบันและยืนยันอีกครั้ง"
+
+#: core/services/errors.py:86
+msgid ""
+"You cannot use this room for the hour you missed. Another room is still "
+"possible."
+msgstr "คุณไม่สามารถใช้ห้องนี้ในชั่วโมงที่คุณไม่ได้เข้าใช้ได้ แต่ยังใช้ห้องอื่นได้"
+
+#: core/services/errors.py:88
+msgid "Your account is not eligible to book practice rooms."
+msgstr "บัญชีของคุณไม่มีสิทธิ์จองห้องซ้อม"
+
+#: core/services/errors.py:89
+msgid "Booking is suspended on this account."
+msgstr "บัญชีนี้ถูกระงับสิทธิ์การจอง"
+
+#: core/services/errors.py:90
+msgid "Your account is still waiting for staff approval."
+msgstr "บัญชีของคุณยังรอการอนุมัติจากเจ้าหน้าที่"
+
+#: core/services/errors.py:91 core/templates/core/grid.html:44
+msgid "Verify your email address before booking."
+msgstr "กรุณายืนยันอีเมลก่อนทำการจอง"
+
+#: core/services/errors.py:92
+msgid "This account is inactive. Please contact the department."
+msgstr "บัญชีนี้ถูกปิดการใช้งาน กรุณาติดต่อภาควิชา"
+
+#: core/services/errors.py:93
+msgid "That booking belongs to another account."
+msgstr "การจองนี้เป็นของบัญชีอื่น"
+
+#: core/services/errors.py:94
+msgid "That booking is for a different room."
+msgstr "การจองนี้เป็นของห้องอื่น"
+
+#: core/services/errors.py:95
+msgid "Check-in opens at the start of the hour."
+msgstr "ลงชื่อเข้าใช้ได้เมื่อถึงเวลาเริ่มชั่วโมง"
+
+#: core/services/errors.py:96
+msgid "The check-in window has closed for this booking."
+msgstr "หมดช่วงเวลาลงชื่อเข้าใช้สำหรับการจองนี้"
+
+#: core/services/errors.py:97
+msgid "This booking is already checked in."
+msgstr "การจองนี้ลงชื่อเข้าใช้แล้ว"
+
+#: core/services/errors.py:98
+msgid "That booking has already finished and cannot be changed."
+msgstr "การจองนี้สิ้นสุดแล้วและไม่สามารถแก้ไขได้"
+
+#: core/services/errors.py:99
+msgid "A booking cannot be cancelled after it has started."
+msgstr "ไม่สามารถยกเลิกการจองได้หลังจากเริ่มเวลาแล้ว"
+
+#: core/services/errors.py:100
+msgid "Another student still holds this room for the current hour."
+msgstr "นิสิตคนอื่นยังถือสิทธิ์ห้องนี้ในชั่วโมงปัจจุบัน"
+
+#: core/services/errors.py:101
+msgid "Those details are already registered. Please sign in instead."
+msgstr "ข้อมูลนี้ลงทะเบียนไว้แล้ว กรุณาเข้าสู่ระบบแทน"
+
+#: core/services/errors.py:102
+msgid "That link is not valid."
+msgstr "ลิงก์นี้ไม่ถูกต้อง"
+
+#: core/services/errors.py:103
+msgid "That link has expired. Request a new one."
+msgstr "ลิงก์นี้หมดอายุแล้ว กรุณาขอลิงก์ใหม่"
+
+#: core/services/errors.py:104
+msgid "That link has already been used. Request a new one."
+msgstr "ลิงก์นี้ถูกใช้ไปแล้ว กรุณาขอลิงก์ใหม่"
+
+#: core/services/errors.py:105
+msgid "Use your institutional email address."
+msgstr "กรุณาใช้อีเมลสถาบัน"
+
+#: core/services/errors.py:106
+msgid "Your details were not found on the department roster."
+msgstr "ไม่พบข้อมูลของคุณในทะเบียนของภาควิชา"
+
+#: core/services/errors.py:108
+msgid ""
+"This request conflicts with an earlier submission. Reload the page and try "
+"again."
+msgstr "คำขอนี้ขัดแย้งกับคำขอที่ส่งไปก่อนหน้า กรุณาโหลดหน้าใหม่และลองอีกครั้ง"
+
+#: core/services/errors.py:110
+msgid "Please check the form and try again."
+msgstr "กรุณาตรวจสอบข้อมูลและลองอีกครั้ง"
+
+#: core/services/errors.py:111
+msgid "That item could not be found."
+msgstr "ไม่พบรายการดังกล่าว"
+
+#: core/services/errors.py:112
+msgid "Too many attempts. Please wait a moment and try again."
+msgstr "พยายามหลายครั้งเกินไป กรุณารอสักครู่แล้วลองอีกครั้ง"
+
+#: core/services/errors.py:130
+msgid "That action could not be completed."
+msgstr "ไม่สามารถดำเนินการได้"
+
+#: core/services/notifications.py:40
+#: core/templates/core/email/email_verification.txt:1
+msgid "Confirm your Room Reserve email address"
+msgstr "ยืนยันอีเมลสำหรับระบบจองห้องซ้อม"
+
+#: core/services/notifications.py:41 core/templates/core/email/invitation.txt:1
+msgid "Your Room Reserve invitation"
+msgstr "คำเชิญใช้งานระบบจองห้องซ้อม"
+
+#: core/services/notifications.py:42
+#: core/templates/core/email/password_reset.txt:1
+msgid "Reset your Room Reserve password"
+msgstr "ตั้งรหัสผ่านใหม่สำหรับระบบจองห้องซ้อม"
+
+#: core/services/notifications.py:43
+#: core/templates/core/email/booking_confirmation.txt:1
+msgid "Practice room booked"
+msgstr "จองห้องซ้อมเรียบร้อย"
+
+#: core/services/notifications.py:44
+#: core/templates/core/email/booking_reminder.txt:1
+msgid "Reminder: your practice room booking"
+msgstr "แจ้งเตือน: การจองห้องซ้อมของคุณ"
+
+#: core/services/notifications.py:45
+#: core/templates/core/email/booking_cancelled.txt:1
+msgid "Practice room booking cancelled"
+msgstr "ยกเลิกการจองห้องซ้อม"
+
+#: core/services/notifications.py:46 core/templates/core/email/no_show.txt:1
+msgid "Missed practice room booking"
+msgstr "ไม่ได้เข้าใช้ห้องซ้อมตามที่จอง"
+
+#: core/services/notifications.py:47
+#: core/templates/core/email/sanction_applied.txt:1
+msgid "Booking suspension applied"
+msgstr "ระงับสิทธิ์การจองแล้ว"
+
+#: core/services/notifications.py:48
+#: core/templates/core/email/sanction_lifted.txt:1
+msgid "Booking suspension lifted"
+msgstr "ปลดระงับสิทธิ์การจองแล้ว"
+
+#: core/services/notifications.py:49
+#: core/templates/core/email/eligibility_decision.txt:1
+msgid "Your Room Reserve account decision"
+msgstr "ผลการพิจารณาบัญชีของคุณ"
+
+#: core/services/notifications.py:137
+msgid "Room Reserve notification"
+msgstr "การแจ้งเตือนจากระบบจองห้องซ้อม"
+
+#: core/templates/core/base.html:6 core/templates/core/base.html:19
+msgid "Room Reserve"
+msgstr "ระบบจองห้องซ้อม"
+
+#: core/templates/core/base.html:6
+msgid "Practice room booking"
+msgstr "ระบบจองห้องซ้อม"
+
+#: core/templates/core/base.html:14
+msgid "Skip to main content"
+msgstr "ข้ามไปยังเนื้อหาหลัก"
+
+#: core/templates/core/base.html:20
+msgid "Main navigation"
+msgstr "เมนูหลัก"
+
+#: core/templates/core/base.html:21 core/templates/core/grid.html:4
+msgid "Availability"
+msgstr "ตารางว่าง"
+
+#: core/templates/core/base.html:23
+#: core/templates/core/eligibility_status.html:32
+#: core/templates/core/my_bookings.html:4
+#: core/templates/core/my_bookings.html:7
+msgid "My bookings"
+msgstr "การจองของฉัน"
+
+#: core/templates/core/base.html:25 core/templates/core/staff/_base.html:6
+msgid "Staff"
+msgstr "เจ้าหน้าที่"
+
+#: core/templates/core/base.html:28 core/templates/core/rules.html:4
+msgid "Rules"
+msgstr "กฎการใช้งาน"
+
+#: core/templates/core/base.html:29
+#: core/templates/core/eligibility_status.html:33
+#: core/templates/core/help.html:4 core/templates/core/help.html:7
+msgid "Help"
+msgstr "ช่วยเหลือ"
+
+#: core/templates/core/base.html:30
+msgid "Privacy"
+msgstr "ความเป็นส่วนตัว"
+
+#: core/templates/core/base.html:38
+msgid "Language"
+msgstr "ภาษา"
+
+#: core/templates/core/base.html:43
+msgid "Switch"
+msgstr "เปลี่ยน"
+
+#: core/templates/core/base.html:50
+msgid "Sign out"
+msgstr "ออกจากระบบ"
+
+#: core/templates/core/base.html:53 core/templates/core/grid.html:52
+#: core/templates/core/login.html:4 core/templates/core/login.html:7
+#: core/templates/core/login.html:21 core/templates/core/register.html:33
+#: core/templates/core/register_done.html:16
+#: core/templates/core/token_problem.html:17
+msgid "Sign in"
+msgstr "เข้าสู่ระบบ"
+
+#: core/templates/core/base.html:54 core/templates/core/grid.html:54
+#: core/templates/core/login.html:27 core/templates/core/register.html:4
+#: core/templates/core/register.html:7
+msgid "Register"
+msgstr "ลงทะเบียน"
+
+#: core/templates/core/base.html:80
+#: core/templates/core/email/booking_cancelled.txt:16
+#: core/templates/core/email/booking_confirmation.txt:16
+#: core/templates/core/email/booking_reminder.txt:9
+#: core/templates/core/email/eligibility_decision.txt:11
+#: core/templates/core/email/email_verification.txt:10
+#: core/templates/core/email/invitation.txt:8
+#: core/templates/core/email/no_show.txt:10
+#: core/templates/core/email/password_reset.txt:8
+#: core/templates/core/email/sanction_applied.txt:14
+#: core/templates/core/email/sanction_lifted.txt:12
+#, python-format
+msgid "Contact %(name)s, %(phone)s, %(email)s"
+msgstr "ติดต่อ %(name)s %(phone)s %(email)s"
+
+#: core/templates/core/base.html:83
+msgid ""
+"Western Music Department, Faculty of Fine and Applied Arts, Chulalongkorn "
+"University"
+msgstr "ภาควิชาดนตรีตะวันตก คณะศิลปกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย"
+
+#: core/templates/core/base.html:87
+msgid ""
+"Dates use the Gregorian calendar (ค.ศ.). See the privacy notice for how data "
+"is handled."
+msgstr "วันที่ใช้ปฏิทินสากล (ค.ศ.) ดูประกาศความเป็นส่วนตัวสำหรับการจัดการข้อมูล"
+
+#: core/templates/core/book_confirm.html:4
+#: core/templates/core/book_confirm.html:7
+#: core/templates/core/book_confirm.html:32
+msgid "Confirm reservation"
+msgstr "ยืนยันการจอง"
+
+#: core/templates/core/book_confirm.html:15
+#: core/templates/core/book_stale.html:16
+#: core/templates/core/my_bookings.html:87
+#: core/templates/core/partials/grid_table.html:22
+#: core/templates/core/staff/closures.html:12
+#: core/templates/core/staff/stats.html:18
+#: core/templates/core/staff/today.html:25
+#: core/templates/core/use_now_confirm.html:21
+msgid "Room"
+msgstr "ห้อง"
+
+#: core/templates/core/book_confirm.html:16
+#: core/templates/core/my_bookings.html:85
+#: core/templates/core/staff/calendar.html:16
+msgid "Date"
+msgstr "วันที่"
+
+#: core/templates/core/book_confirm.html:17
+#: core/templates/core/my_bookings.html:86
+#: core/templates/core/staff/today.html:24
+msgid "Hour"
+msgstr "ชั่วโมง"
+
+#: core/templates/core/book_confirm.html:19
+msgid "Arrive by"
+msgstr "ต้องมาถึงภายใน"
+
+#: core/templates/core/book_confirm.html:22
+#: core/templates/core/use_now_confirm.html:24
+msgid "Bookings that day"
+msgstr "จำนวนการจองในวันนั้น"
+
+#: core/templates/core/book_confirm.html:26
+#, python-format
+msgid ""
+"Check in at the room between the start of the hour and %(minutes)s minutes "
+"past it. After that the room is released to other students and a strike is "
+"recorded."
+msgstr ""
+"ลงชื่อเข้าใช้ที่ห้องได้ตั้งแต่เวลาเริ่มชั่วโมงจนถึง %(minutes)s นาทีหลังเวลาเริ่ม "
+"หลังจากนั้นระบบจะปล่อยห้องให้นิสิตคนอื่นและบันทึกคะแนนโทษ"
+
+#: core/templates/core/book_confirm.html:33
+#: core/templates/core/my_bookings.html:65
+#: core/templates/core/staff/today.html:56
+#: core/templates/core/use_now_confirm.html:42
+msgid "Cancel"
+msgstr "ยกเลิก"
+
+#: core/templates/core/book_stale.html:4
+msgid "The hour has started"
+msgstr "ชั่วโมงนี้เริ่มแล้ว"
+
+#: core/templates/core/book_stale.html:8
+msgid "The hour has already started"
+msgstr "ชั่วโมงนี้เริ่มไปแล้ว"
+
+#: core/templates/core/book_stale.html:10
+msgid ""
+"The reservation you were confirming began while this page was open, so it "
+"was not created. A reservation is not the same as being present: if you are "
+"at the room now, confirm that separately."
+msgstr ""
+"การจองที่คุณกำลังยืนยันได้เริ่มไปแล้วระหว่างที่หน้านี้เปิดอยู่ จึงไม่ได้สร้างรายการจอง "
+"การจองไม่เหมือนกับการอยู่ที่ห้องจริง หากคุณอยู่ที่ห้องตอนนี้ กรุณายืนยันแยกต่างหาก"
+
+#: core/templates/core/book_stale.html:17 core/templates/core/room_qr.html:24
+#: core/templates/core/use_now_confirm.html:22
+msgid "Current hour"
+msgstr "ชั่วโมงปัจจุบัน"
+
+#: core/templates/core/book_stale.html:18
+msgid "Time left"
+msgstr "เวลาที่เหลือ"
+
+#: core/templates/core/book_stale.html:18
+#: core/templates/core/partials/slot_cell.html:13
+#: core/templates/core/room_qr.html:25
+#: core/templates/core/use_now_confirm.html:23
+msgid "min"
+msgstr "นาที"
+
+#: core/templates/core/book_stale.html:24 core/templates/core/room_qr.html:40
+msgid "Less than five minutes remain in this hour."
+msgstr "เหลือเวลาในชั่วโมงนี้น้อยกว่าห้านาที"
+
+#: core/templates/core/book_stale.html:30 core/templates/core/room_qr.html:46
+#: core/templates/core/use_now_confirm.html:41
+msgid "I am at this room / ยืนยันว่าฉันอยู่ที่ห้องนี้"
+msgstr "ฉันอยู่ที่ห้องนี้ / ยืนยันว่าฉันอยู่ที่ห้องนี้"
+
+#: core/templates/core/book_stale.html:34
+msgid ""
+"This room is not free for the current hour. Check the availability grid for "
+"another room."
+msgstr "ห้องนี้ไม่ว่างสำหรับชั่วโมงปัจจุบัน กรุณาดูตารางว่างเพื่อเลือกห้องอื่น"
+
+#: core/templates/core/book_stale.html:36
+msgid "Back to availability"
+msgstr "กลับไปที่ตารางว่าง"
+
+#: core/templates/core/eligibility_status.html:4
+#: core/templates/core/eligibility_status.html:7
+msgid "Account status"
+msgstr "สถานะบัญชี"
+
+#: core/templates/core/eligibility_status.html:11
+#: core/templates/core/login.html:13 core/templates/core/register.html:19
+#: core/templates/core/staff/invitations.html:24
+msgid "Institutional ID"
+msgstr "รหัสนิสิต"
+
+#: core/templates/core/eligibility_status.html:12
+#: core/templates/core/staff/invitations.html:28
+#: core/templates/core/staff/roster.html:47
+#: core/templates/core/staff/users.html:20
+msgid "Email"
+msgstr "อีเมล"
+
+#: core/templates/core/eligibility_status.html:13
+msgid "Email verified"
+msgstr "ยืนยันอีเมลแล้ว"
+
+#: core/templates/core/eligibility_status.html:13
+#: core/templates/core/staff/roster.html:70
+msgid "Yes"
+msgstr "ใช่"
+
+#: core/templates/core/eligibility_status.html:13
+#: core/templates/core/staff/roster.html:70
+msgid "No"
+msgstr "ไม่ใช่"
+
+#: core/templates/core/eligibility_status.html:14
+#: core/templates/core/staff/users.html:21
+msgid "Eligibility"
+msgstr "สิทธิ์การใช้งาน"
+
+#: core/templates/core/eligibility_status.html:18
+#, python-format
+msgid "Decision note: %(reason)s"
+msgstr "เหตุผลประกอบคำวินิจฉัย: %(reason)s"
+
+#: core/templates/core/eligibility_status.html:23
+#: core/templates/core/my_bookings.html:16
+#, python-format
+msgid "Booking is suspended until %(end)s."
+msgstr "ถูกระงับสิทธิ์การจองจนถึง %(end)s"
+
+#: core/templates/core/eligibility_status.html:26
+msgid ""
+"You can sign in, read your history and contact staff. Reserving, checking in "
+"and using a room are blocked until the suspension ends."
+msgstr ""
+"คุณยังเข้าสู่ระบบ ดูประวัติ และติดต่อเจ้าหน้าที่ได้ แต่การจอง การลงชื่อเข้าใช้ "
+"และการใช้ห้องจะถูกระงับจนกว่าจะสิ้นสุดการระงับสิทธิ์"
+
+#: core/templates/core/email/booking_cancelled.txt:3
+#: core/templates/core/email/booking_confirmation.txt:3
+#: core/templates/core/email/booking_reminder.txt:3
+#: core/templates/core/email/no_show.txt:3
+#, python-format
+msgid "Room %(room)s on %(date)s"
+msgstr "ห้อง %(room)s วันที่ %(date)s"
+
+#: core/templates/core/email/booking_cancelled.txt:4
+#: core/templates/core/email/sanction_applied.txt:10
+#: core/templates/core/email/sanction_lifted.txt:10
+#: core/templates/core/my_bookings.html:63
+#: core/templates/core/staff/admin.html:72
+#: core/templates/core/staff/audit.html:27
+#: core/templates/core/staff/calendar.html:29
+#: core/templates/core/staff/closures.html:50
+#: core/templates/core/staff/incidents.html:25
+#: core/templates/core/staff/today.html:41
+#: core/templates/core/staff/today.html:81
+#: core/templates/core/staff/today.html:105
+msgid "Reason"
+msgstr "เหตุผล"
+
+#: core/templates/core/email/booking_cancelled.txt:4
+#: core/templates/core/email/sanction_lifted.txt:10
+msgid "not given"
+msgstr "ไม่ระบุ"
+
+#: core/templates/core/email/booking_cancelled.txt:7
+msgid ""
+"This booking was cancelled because a suspension took effect. No additional "
+"penalty applies to the cancellation."
+msgstr "การจองนี้ถูกยกเลิกเนื่องจากมีการระงับสิทธิ์มีผลบังคับ ไม่มีการลงโทษเพิ่มเติมจากการยกเลิกนี้"
+
+#: core/templates/core/email/booking_cancelled.txt:9
+msgid "The room was closed during this period. No penalty applies."
+msgstr "ห้องถูกปิดในช่วงเวลานี้ ไม่มีการลงโทษ"
+
+#: core/templates/core/email/booking_cancelled.txt:11
+msgid "A service problem was recorded for this period. No penalty applies."
+msgstr "มีการบันทึกเหตุขัดข้องของระบบในช่วงเวลานี้ ไม่มีการลงโทษ"
+
+#: core/templates/core/email/booking_cancelled.txt:13
+msgid "The room was taken out of service. No penalty applies."
+msgstr "ห้องถูกนำออกจากให้บริการ ไม่มีการลงโทษ"
+
+#: core/templates/core/email/booking_confirmation.txt:6
+msgid "You confirmed you are at the room now."
+msgstr "คุณยืนยันว่าขณะนี้อยู่ที่ห้องแล้ว"
+
+#: core/templates/core/email/booking_confirmation.txt:7
+#, python-format
+msgid "Time remaining in this hour: %(minutes)s minutes."
+msgstr "เวลาที่เหลือในชั่วโมงนี้: %(minutes)s นาที"
+
+#: core/templates/core/email/booking_confirmation.txt:9
+#, python-format
+msgid "Check in at the room between the start of the hour and %(deadline)s."
+msgstr "ลงชื่อเข้าใช้ที่ห้องได้ตั้งแต่เวลาเริ่มชั่วโมงจนถึง %(deadline)s"
+
+#: core/templates/core/email/booking_confirmation.txt:10
+msgid ""
+"If you do not check in, the room is released to other students and a strike "
+"is recorded."
+msgstr "หากคุณไม่ลงชื่อเข้าใช้ ระบบจะปล่อยห้องให้นิสิตคนอื่นและบันทึกคะแนนโทษ"
+
+#: core/templates/core/email/booking_confirmation.txt:13
+msgid ""
+"The session ends at the end of the hour. There is no extra hour and no early "
+"self-checkout."
+msgstr "การใช้งานสิ้นสุดเมื่อหมดชั่วโมง ไม่มีการต่อเวลาและไม่สามารถเช็คเอาท์ก่อนกำหนดได้เอง"
+
+#: core/templates/core/email/booking_confirmation.txt:14
+#: core/templates/core/email/booking_reminder.txt:7
+msgid "Booking reference"
+msgstr "เลขอ้างอิงการจอง"
+
+#: core/templates/core/email/booking_reminder.txt:4
+#, python-format
+msgid "Check in by %(deadline)s or the room is released."
+msgstr "กรุณาลงชื่อเข้าใช้ภายใน %(deadline)s มิฉะนั้นระบบจะปล่อยห้องคืน"
+
+#: core/templates/core/email/booking_reminder.txt:6
+msgid "If you cannot attend, cancel from My bookings before the hour starts."
+msgstr "หากมาไม่ได้ กรุณายกเลิกจากเมนูการจองของฉันก่อนเวลาเริ่ม"
+
+#: core/templates/core/email/eligibility_decision.txt:4
+msgid "Your account is approved and you can book practice rooms."
+msgstr "บัญชีของคุณได้รับอนุมัติและสามารถจองห้องซ้อมได้"
+
+#: core/templates/core/email/eligibility_decision.txt:6
+msgid ""
+"Your account was not approved for booking. You can still sign in, read this "
+"message and contact the office."
+msgstr "บัญชีของคุณไม่ได้รับอนุมัติให้จองห้อง คุณยังเข้าสู่ระบบ อ่านข้อความนี้ และติดต่อสำนักงานได้"
+
+#: core/templates/core/email/eligibility_decision.txt:9
+msgid "Decision note"
+msgstr "เหตุผลประกอบคำวินิจฉัย"
+
+#: core/templates/core/email/email_verification.txt:3
+#, python-format
+msgid "Institutional ID: %(id)s"
+msgstr "รหัสนิสิต: %(id)s"
+
+#: core/templates/core/email/email_verification.txt:5
+msgid "Open this link to confirm your email address and choose a password:"
+msgstr "เปิดลิงก์นี้เพื่อยืนยันอีเมลและตั้งรหัสผ่าน:"
+
+#: core/templates/core/email/email_verification.txt:8
+msgid ""
+"The link is single use and expires. If you did not register, you can ignore "
+"this message."
+msgstr ""
+"ลิงก์นี้ใช้ได้ครั้งเดียวและมีวันหมดอายุ หากคุณไม่ได้ลงทะเบียนไว้ สามารถเพิกเฉยต่อข้อความนี้ได้"
+
+#: core/templates/core/email/invitation.txt:3
+msgid ""
+"The department has created an account for you. Open this link to choose your "
+"password:"
+msgstr "ภาควิชาได้สร้างบัญชีให้คุณ เปิดลิงก์นี้เพื่อตั้งรหัสผ่าน:"
+
+#: core/templates/core/email/invitation.txt:6
+msgid ""
+"The link is single use and expires. A newer invitation replaces this one."
+msgstr "ลิงก์นี้ใช้ได้ครั้งเดียวและมีวันหมดอายุ คำเชิญที่ใหม่กว่าจะแทนที่ลิงก์นี้"
+
+#: core/templates/core/email/no_show.txt:4
+msgid ""
+"The booking was not checked in before the deadline, so it was released for "
+"other students and one strike was recorded."
+msgstr ""
+"การจองนี้ไม่ได้ลงชื่อเข้าใช้ภายในกำหนด จึงถูกปล่อยให้นิสิตคนอื่นและบันทึกคะแนนโทษ 1 คะแนน"
+
+#: core/templates/core/email/no_show.txt:6
+msgid ""
+"You cannot use this same room and hour again for the released slot. Strikes "
+"expire after the rolling window."
+msgstr ""
+"คุณไม่สามารถใช้ห้องและชั่วโมงเดิมนี้ซ้ำสำหรับช่วงที่ถูกปล่อยคืนได้ "
+"คะแนนโทษจะหมดอายุเมื่อพ้นช่วงเวลาที่กำหนด"
+
+#: core/templates/core/email/no_show.txt:8
+msgid ""
+"If you believe this is wrong, for example because the service was "
+"unavailable, contact the office with the date and time so it can be reviewed."
+msgstr ""
+"หากคุณเห็นว่าไม่ถูกต้อง เช่น เพราะระบบขัดข้อง "
+"กรุณาติดต่อสำนักงานพร้อมวันที่และเวลาเพื่อให้ตรวจสอบ"
+
+#: core/templates/core/email/password_reset.txt:3
+msgid "Open this link to choose a new password:"
+msgstr "เปิดลิงก์นี้เพื่อตั้งรหัสผ่านใหม่:"
+
+#: core/templates/core/email/password_reset.txt:6
+msgid ""
+"The link is single use and expires shortly. If you did not ask for this, no "
+"action is needed and your current password still works."
+msgstr ""
+"ลิงก์นี้ใช้ได้ครั้งเดียวและจะหมดอายุในไม่ช้า หากคุณไม่ได้ขอไว้ ไม่ต้องดำเนินการใด ๆ "
+"และรหัสผ่านปัจจุบันยังใช้ได้"
+
+#: core/templates/core/email/sanction_applied.txt:1
+msgid "A strike behind your suspension was cancelled"
+msgstr "คะแนนโทษที่นำไปสู่การระงับสิทธิ์ถูกยกเลิก"
+
+#: core/templates/core/email/sanction_applied.txt:4
+msgid ""
+"Staff cancelled one of the strikes that led to this suspension. Whether the "
+"suspension is lifted is a separate decision, and staff will review it "
+"explicitly."
+msgstr ""
+"เจ้าหน้าที่ได้ยกเลิกคะแนนโทษที่นำไปสู่การระงับสิทธิ์นี้ "
+"การจะปลดการระงับสิทธิ์หรือไม่เป็นการตัดสินใจแยกต่างหาก ซึ่งเจ้าหน้าที่จะพิจารณาอย่างชัดเจน"
+
+#: core/templates/core/email/sanction_applied.txt:6
+#, python-format
+msgid "Suspension period: %(start)s to %(ends)s."
+msgstr "ระยะเวลาระงับสิทธิ์: %(start)s ถึง %(ends)s"
+
+#: core/templates/core/email/sanction_applied.txt:7
+msgid ""
+"Scheduled bookings were cancelled without extra penalty. A session already "
+"in use may finish."
+msgstr ""
+"การจองที่กำหนดไว้ถูกยกเลิกโดยไม่มีการลงโทษเพิ่มเติม "
+"ส่วนการใช้งานที่กำลังดำเนินอยู่สามารถใช้จนจบได้"
+
+#: core/templates/core/email/sanction_applied.txt:12
+msgid ""
+"You can still sign in, read your history and ask for help, but cannot "
+"reserve, check in or use a room while suspended."
+msgstr ""
+"คุณยังเข้าสู่ระบบ ดูประวัติ และขอความช่วยเหลือได้ แต่จะจอง ลงชื่อเข้าใช้ "
+"หรือใช้ห้องไม่ได้ในระหว่างถูกระงับสิทธิ์"
+
+#: core/templates/core/email/sanction_lifted.txt:4
+#, python-format
+msgid "The suspension ended at %(ends)s. You can book again."
+msgstr "การระงับสิทธิ์สิ้นสุดเมื่อ %(ends)s คุณสามารถจองได้อีกครั้ง"
+
+#: core/templates/core/email/sanction_lifted.txt:6
+#, python-format
+msgid "The suspension was lifted at %(lifted)s. You can book again."
+msgstr "การระงับสิทธิ์ถูกปลดเมื่อ %(lifted)s คุณสามารถจองได้อีกครั้ง"
+
+#: core/templates/core/email/sanction_lifted.txt:9
+msgid ""
+"Strikes already used for a suspension stay used, so they cannot cause a "
+"second suspension later."
+msgstr ""
+"คะแนนโทษที่ถูกใช้ไปแล้วสำหรับการระงับสิทธิ์จะยังคงถูกนับว่าใช้แล้ว "
+"จึงไม่สามารถนำไปสู่การระงับสิทธิ์ครั้งที่สองได้"
+
+#: core/templates/core/grid.html:9
+msgid "Practice room availability"
+msgstr "ตารางห้องซ้อมว่าง"
+
+#: core/templates/core/grid.html:11
+#, python-format
+msgid "Monday to Friday, %(open)s:00–%(close)s:00. Each booking is one hour."
+msgstr "วันจันทร์ถึงวันศุกร์ %(open)s:00–%(close)s:00 หนึ่งการจองใช้เวลา 1 ชั่วโมง"
+
+#: core/templates/core/grid.html:16
+msgid "Choose a date"
+msgstr "เลือกวันที่"
+
+#: core/templates/core/grid.html:18
+msgid "Previous day"
+msgstr "วันก่อนหน้า"
+
+#: core/templates/core/grid.html:21
+msgid "today"
+msgstr "วันนี้"
+
+#: core/templates/core/grid.html:24
+msgid "Next day"
+msgstr "วันถัดไป"
+
+#: core/templates/core/grid.html:42
+msgid "Your account is waiting for staff approval; you cannot book yet."
+msgstr "บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากเจ้าหน้าที่ ยังจองไม่ได้"
+
+#: core/templates/core/grid.html:46
+msgid "You can view availability and reserve free hours."
+msgstr "คุณสามารถดูตารางว่างและจองชั่วโมงที่ว่างได้"
+
+#: core/templates/core/grid.html:51
+msgid "Availability is public. Reserving or using a room needs an account."
+msgstr "ตารางว่างเปิดให้ทุกคนดู การจองหรือใช้ห้องต้องมีบัญชี"
+
+#: core/templates/core/grid.html:63
+msgid ""
+"This page refreshes every 30 seconds. A change still has to be accepted by "
+"the server, so availability is a snapshot rather than a guarantee."
+msgstr ""
+"หน้านี้รีเฟรชทุก 30 วินาที การเปลี่ยนแปลงยังต้องได้รับการยอมรับจากเซิร์ฟเวอร์ "
+"ตารางว่างจึงเป็นข้อมูล ณ ขณะหนึ่ง ไม่ใช่การรับประกัน"
+
+#: core/templates/core/help.html:10
+msgid "Booking a room later today or this week"
+msgstr "การจองห้องสำหรับวันนี้หรือสัปดาห์นี้"
+
+#: core/templates/core/help.html:11
+msgid ""
+"Open the availability page, choose a date, then choose Reserve on a free "
+"hour. The reservation exists immediately and appears under My bookings."
+msgstr ""
+"เปิดหน้าตารางว่าง เลือกวันที่ แล้วเลือก “จอง” ในชั่วโมงที่ว่าง "
+"การจองจะเกิดทันทีและแสดงในเมนูการจองของฉัน"
+
+#: core/templates/core/help.html:13
+msgid "Using a room right now"
+msgstr "การใช้ห้องในขณะนี้"
+
+#: core/templates/core/help.html:14
+msgid ""
+"If the current hour is free, choose Use now. The session runs to the end of "
+"the hour. If you had booked this hour, check in instead."
+msgstr ""
+"หากชั่วโมงปัจจุบันว่าง ให้เลือก “ใช้ตอนนี้” การใช้งานจะสิ้นสุดเมื่อหมดชั่วโมง "
+"หากคุณได้จองชั่วโมงนี้ไว้แล้ว ให้ลงชื่อเข้าใช้แทน"
+
+#: core/templates/core/help.html:16
+msgid "Checking in"
+msgstr "การลงชื่อเข้าใช้"
+
+#: core/templates/core/help.html:17
+#, python-format
+msgid ""
+"Check-in is available from the start of the hour until %(minutes)s minutes "
+"past it. Checking in means you confirm you are at the room. A reserved hour "
+"that is not checked in is released for other students and a strike is "
+"recorded."
+msgstr ""
+"ลงชื่อเข้าใช้ได้ตั้งแต่เวลาเริ่มชั่วโมงจนถึง %(minutes)s นาทีหลังเวลาเริ่ม "
+"การลงชื่อเข้าใช้หมายถึงคุณยืนยันว่าอยู่ที่ห้อง "
+"ชั่วโมงที่จองไว้แต่ไม่ลงชื่อเข้าใช้จะถูกปล่อยให้นิสิตคนอื่นและบันทึกคะแนนโทษ"
+
+#: core/templates/core/help.html:19
+msgid "Cancelling"
+msgstr "การยกเลิก"
+
+#: core/templates/core/help.html:20
+msgid ""
+"Cancel from My bookings before the hour starts. Cancelling gives the hour "
+"back and does not count against your daily limit. Cancelling within an hour "
+"of the start is recorded for reporting only."
+msgstr ""
+"ยกเลิกจากเมนูการจองของฉันก่อนเวลาเริ่ม การยกเลิกจะคืนชั่วโมงนั้นและไม่นับรวมในโควตาต่อวัน "
+"การยกเลิกภายในหนึ่งชั่วโมงก่อนเวลาเริ่มจะถูกบันทึกไว้เพื่อรายงานเท่านั้น"
+
+#: core/templates/core/help.html:22
+msgid "Why can I not book?"
+msgstr "ทำไมฉันจึงจองไม่ได้"
+
+#: core/templates/core/help.html:24 core/templates/core/my_bookings.html:22
+msgid "Your email address is not verified yet."
+msgstr "อีเมลของคุณยังไม่ได้รับการยืนยัน"
+
+#: core/templates/core/help.html:25
+msgid ""
+"Your account is waiting for staff approval, or was not matched to the roster."
+msgstr "บัญชีของคุณรอการอนุมัติจากเจ้าหน้าที่ หรือไม่ตรงกับทะเบียนนิสิต"
+
+#: core/templates/core/help.html:26
+msgid "You have reached the daily limit."
+msgstr "คุณจองครบจำนวนสูงสุดต่อวันแล้ว"
+
+#: core/templates/core/help.html:27
+msgid "You already hold this hour or an adjacent hour."
+msgstr "คุณมีการจองในชั่วโมงนี้หรือชั่วโมงที่ติดกันแล้ว"
+
+#: core/templates/core/help.html:28
+msgid "The room is closed, or the hour has already started."
+msgstr "ห้องปิด หรือชั่วโมงนั้นเริ่มไปแล้ว"
+
+#: core/templates/core/help.html:29
+msgid "Booking is suspended on your account."
+msgstr "บัญชีของคุณถูกระงับสิทธิ์การจอง"
+
+#: core/templates/core/help.html:32
+msgid "Something went wrong"
+msgstr "เกิดข้อผิดพลาด"
+
+#: core/templates/core/help.html:33
+msgid ""
+"If a booking, close or anything else goes wrong during a service problem, "
+"staff can record the incident and remove any strike that should not apply. "
+"Contact the office with the date and time."
+msgstr ""
+"หากการจอง การปิดห้อง หรือเรื่องอื่น ๆ ผิดพลาดในช่วงที่ระบบขัดข้อง "
+"เจ้าหน้าที่สามารถบันทึกเหตุขัดข้องและยกเลิกคะแนนโทษที่ไม่ควรมีได้ "
+"กรุณาติดต่อสำนักงานพร้อมวันที่และเวลา"
+
+#: core/templates/core/help.html:37 core/templates/core/privacy.html:34
+#: core/templates/core/rules.html:46
+msgid "Contact"
+msgstr "ติดต่อ"
+
+#: core/templates/core/help.html:39 core/templates/core/privacy.html:36
+#: core/templates/core/rules.html:48
+#, python-format
+msgid "%(name)s, %(phone)s, %(email)s"
+msgstr "%(name)s %(phone)s %(email)s"
+
+#: core/templates/core/login.html:18 core/templates/core/set_password.html:26
+msgid "Password"
+msgstr "รหัสผ่าน"
+
+#: core/templates/core/login.html:25
+msgid "Forgot your password?"
+msgstr "ลืมรหัสผ่าน?"
+
+#: core/templates/core/my_bookings.html:11
+#, python-format
+msgid "Bookings counted for today: %(used)s of %(total)s."
+msgstr "จำนวนการจองที่นับสำหรับวันนี้: %(used)s จาก %(total)s"
+
+#: core/templates/core/my_bookings.html:18
+msgid "Contact staff"
+msgstr "ติดต่อเจ้าหน้าที่"
+
+#: core/templates/core/my_bookings.html:20
+msgid "Waiting for staff approval."
+msgstr "รอการอนุมัติจากเจ้าหน้าที่"
+
+#: core/templates/core/my_bookings.html:24
+msgid "Your account can book rooms."
+msgstr "บัญชีของคุณสามารถจองห้องได้"
+
+#: core/templates/core/my_bookings.html:29
+#: core/templates/core/staff/quota_lookup.html:10
+msgid "Upcoming"
+msgstr "กำลังจะมาถึง"
+
+#: core/templates/core/my_bookings.html:39
+msgid "In use now"
+msgstr "กำลังใช้งานอยู่"
+
+#: core/templates/core/my_bookings.html:39
+msgid "ends"
+msgstr "สิ้นสุด"
+
+#: core/templates/core/my_bookings.html:41
+msgid "Reserved"
+msgstr "จองไว้แล้ว"
+
+#: core/templates/core/my_bookings.html:43
+#, python-format
+msgid "check in by %(deadline)s"
+msgstr "ลงชื่อเข้าใช้ภายใน %(deadline)s"
+
+#: core/templates/core/my_bookings.html:56
+#: core/templates/core/staff/today.html:43
+msgid "Check in"
+msgstr "ลงชื่อเข้าใช้"
+
+#: core/templates/core/my_bookings.html:64
+msgid "Reason (optional)"
+msgstr "เหตุผล (ไม่บังคับ)"
+
+#: core/templates/core/my_bookings.html:68
+msgid "Room page"
+msgstr "หน้าห้อง"
+
+#: core/templates/core/my_bookings.html:75
+msgid "No upcoming bookings."
+msgstr "ไม่มีการจองที่กำลังจะมาถึง"
+
+#: core/templates/core/my_bookings.html:78
+msgid "History"
+msgstr "ประวัติ"
+
+#: core/templates/core/my_bookings.html:79
+msgid ""
+"The last 60 days are shown here. This display limit is not a deletion policy."
+msgstr "แสดงเฉพาะ 60 วันล่าสุด ขีดจำกัดการแสดงผลนี้ไม่ใช่นโยบายการลบข้อมูล"
+
+#: core/templates/core/my_bookings.html:88 core/templates/core/room_qr.html:26
+#: core/templates/core/staff/outbox.html:27
+#: core/templates/core/staff/outbox.html:45
+#: core/templates/core/staff/today.html:27
+msgid "Status"
+msgstr "สถานะ"
+
+#: core/templates/core/my_bookings.html:89
+#: core/templates/core/staff/policy.html:37
+#: core/templates/core/staff/users.html:45
+msgid "Note"
+msgstr "หมายเหตุ"
+
+#: core/templates/core/my_bookings.html:100
+msgid "Late cancellation (recorded for reporting)"
+msgstr "ยกเลิกกระชั้นชิด (บันทึกไว้เพื่อรายงาน)"
+
+#: core/templates/core/my_bookings.html:109
+msgid "No past bookings in the last 60 days."
+msgstr "ไม่มีการจองที่ผ่านมาใน 60 วันล่าสุด"
+
+#: core/templates/core/my_bookings.html:112
+msgid "Strikes and sanctions"
+msgstr "คะแนนโทษและการลงโทษ"
+
+#: core/templates/core/my_bookings.html:115
+#, python-format
+msgid ""
+"Strikes counting toward the next suspension: %(count)s of %(threshold)s "
+"within %(window)s days."
+msgstr ""
+"คะแนนโทษที่นับสำหรับการระงับสิทธิ์ครั้งถัดไป: %(count)s จาก %(threshold)s ภายใน "
+"%(window)s วัน"
+
+#: core/templates/core/my_bookings.html:118
+#, python-format
+msgid ""
+"Total violations on record: %(total)s, of which %(consumed)s have already "
+"been used for a suspension. A strike can only cause one suspension."
+msgstr ""
+"จำนวนการฝ่าฝืนทั้งหมดที่บันทึกไว้: %(total)s โดย %(consumed)s ถูกใช้สำหรับการระงับสิทธิ์แล้ว "
+"คะแนนโทษหนึ่งคะแนนนำไปสู่การระงับสิทธิ์ได้เพียงครั้งเดียว"
+
+#: core/templates/core/my_bookings.html:124
+#, python-format
+msgid "Suspension from %(start)s"
+msgstr "ระงับสิทธิ์ตั้งแต่ %(start)s"
+
+#: core/templates/core/my_bookings.html:127
+msgid ""
+"One of the strikes behind this was voided; staff are reviewing whether to "
+"lift it."
+msgstr ""
+"คะแนนโทษที่มีส่วนทำให้เกิดการระงับสิทธิ์นี้ถูกยกเลิกไปหนึ่งคะแนน "
+"เจ้าหน้าที่กำลังพิจารณาว่าจะปลดการระงับสิทธิ์หรือไม่"
+
+#: core/templates/core/my_bookings.html:134
+msgid ""
+"If you believe a strike is wrong, contact the department office with the "
+"date and time so it can be reviewed."
+msgstr ""
+"หากคุณเห็นว่าคะแนนโทษไม่ถูกต้อง กรุณาติดต่อสำนักงานภาควิชาพร้อมวันที่และเวลาเพื่อให้ตรวจสอบ"
+
+#: core/templates/core/partials/grid_table.html:11
+msgid "This date is closed. No rooms can be booked."
+msgstr "วันนี้ปิด ไม่สามารถจองห้องได้"
+
+#: core/templates/core/partials/grid_table.html:19
+msgid "Availability by room and hour"
+msgstr "ตารางว่างรายห้องและรายชั่วโมง"
+
+#: core/templates/core/partials/slot_cell.html:6
+#, python-format
+msgid "Reserve %(room)s at %(time)s"
+msgstr "จอง %(room)s เวลา %(time)s"
+
+#: core/templates/core/partials/slot_cell.html:7
+msgid "Reserve"
+msgstr "จอง"
+
+#: core/templates/core/partials/slot_cell.html:12
+#, python-format
+msgid "Use %(room)s now from %(time)s"
+msgstr "ใช้ %(room)s ตอนนี้ตั้งแต่ %(time)s"
+
+#: core/templates/core/partials/slot_cell.html:13
+msgid "Use now"
+msgstr "ใช้ตอนนี้"
+
+#: core/templates/core/partials/slot_cell.html:16
+msgid "Free"
+msgstr "ว่าง"
+
+#: core/templates/core/partials/slot_cell.html:18
+msgid "Finished"
+msgstr "สิ้นสุดแล้ว"
+
+#: core/templates/core/partials/slot_cell.html:22
+msgid "Closed"
+msgstr "ปิด"
+
+#: core/templates/core/partials/slot_cell.html:26
+msgid "Yours"
+msgstr "ของคุณ"
+
+#: core/templates/core/partials/slot_cell.html:29
+#: core/templates/core/staff/invitations.html:59
+msgid "Used"
+msgstr "ใช้งานแล้ว"
+
+#: core/templates/core/partials/slot_cell.html:31
+msgid "Booked"
+msgstr "ถูกจองแล้ว"
+
+#: core/templates/core/partials/slot_cell.html:33
+msgid "Too far ahead"
+msgstr "ไกลเกินไป"
+
+#: core/templates/core/partials/slot_cell.html:38
+msgid "This room is kept for piano and percussion students to reserve. Once the hour starts, anyone may use it if it is still free."
+msgstr "ห้องนี้สงวนไว้ให้นิสิตเปียโนและเครื่องตีจอง เมื่อเริ่มชั่วโมงแล้ว หากยังว่าง ผู้ใช้อื่นสามารถเข้าใช้ได้"
+#: core/templates/core/partials/slot_cell.html:39
+msgid "Piano & percussion only"
+msgstr "เปียโน"
+#: core/templates/core/password_reset.html:4
+#: core/templates/core/register_done.html:17
+#: core/templates/core/token_problem.html:18
+msgid "Reset password"
+msgstr "ตั้งรหัสผ่านใหม่"
+
+#: core/templates/core/password_reset.html:7
+msgid "Reset your password"
+msgstr "ตั้งรหัสผ่านใหม่"
+
+#: core/templates/core/password_reset.html:9
+msgid ""
+"Enter your institutional email address. If it belongs to an account, we will "
+"send a reset link."
+msgstr "กรอกอีเมลสถาบันของคุณ หากตรงกับบัญชีที่มีอยู่ เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้"
+
+#: core/templates/core/password_reset.html:14
+#: core/templates/core/register.html:24
+msgid "Institutional email"
+msgstr "อีเมลสถาบัน"
+
+#: core/templates/core/password_reset.html:17
+msgid "Send reset link"
+msgstr "ส่งลิงก์ตั้งรหัสผ่านใหม่"
+
+#: core/templates/core/password_reset_confirm.html:4
+#: core/templates/core/password_reset_confirm.html:7
+msgid "Choose a new password"
+msgstr "ตั้งรหัสผ่านใหม่"
+
+#: core/templates/core/password_reset_confirm.html:9
+#: core/templates/core/set_password.html:13
+#, python-format
+msgid "Account: %(id)s"
+msgstr "บัญชี: %(id)s"
+
+#: core/templates/core/password_reset_confirm.html:19
+msgid "New password"
+msgstr "รหัสผ่านใหม่"
+
+#: core/templates/core/password_reset_confirm.html:23
+msgid "Repeat new password"
+msgstr "ยืนยันรหัสผ่านใหม่"
+
+#: core/templates/core/password_reset_confirm.html:26
+#: core/templates/core/set_password.html:38
+msgid "Save password"
+msgstr "บันทึกรหัสผ่าน"
+
+#: core/templates/core/password_reset_done.html:4
+#: core/templates/core/password_reset_done.html:8
+#: core/templates/core/register_done.html:4
+#: core/templates/core/register_done.html:8
+msgid "Check your email"
+msgstr "ตรวจสอบอีเมลของคุณ"
+
+#: core/templates/core/password_reset_done.html:10
+msgid ""
+"If that address belongs to an account, a reset link is on its way. The link "
+"expires shortly and can be used once."
+msgstr ""
+"หากอีเมลนั้นตรงกับบัญชีที่มีอยู่ ลิงก์ตั้งรหัสผ่านใหม่กำลังถูกส่งไป "
+"ลิงก์จะหมดอายุในไม่ช้าและใช้ได้ครั้งเดียว"
+
+#: core/templates/core/password_reset_done.html:12
+msgid "Back to sign in"
+msgstr "กลับไปหน้าเข้าสู่ระบบ"
+
+#: core/templates/core/privacy.html:4 core/templates/core/privacy.html:7
+msgid "Privacy notice"
+msgstr "ประกาศความเป็นส่วนตัว"
+
+#: core/templates/core/privacy.html:9
+msgid ""
+"Draft. The faculty must approve the data-handling basis, this notice and the "
+"retention periods before the system is used for real. This page is not a "
+"claim of legal compliance."
+msgstr ""
+"ฉบับร่าง คณะต้องอนุมัติฐานการประมวลผลข้อมูล ประกาศฉบับนี้ และระยะเวลาจัดเก็บ "
+"ก่อนนำระบบไปใช้จริง หน้านี้ไม่ใช่การรับรองว่าถูกต้องตามกฎหมาย"
+
+#: core/templates/core/privacy.html:13
+msgid "What is collected"
+msgstr "ข้อมูลที่จัดเก็บ"
+
+#: core/templates/core/privacy.html:15
+msgid "Your institutional ID, institutional email address and name."
+msgstr "รหัสนิสิต อีเมลสถาบัน และชื่อของคุณ"
+
+#: core/templates/core/privacy.html:16
+msgid "Your bookings, check-ins, cancellations and whether a room was used."
+msgstr "การจอง การลงชื่อเข้าใช้ การยกเลิก และการใช้ห้องของคุณ"
+
+#: core/templates/core/privacy.html:17
+msgid ""
+"Violations, strikes and suspensions, with the reason and the staff member "
+"who recorded them."
+msgstr "การฝ่าฝืน คะแนนโทษ และการระงับสิทธิ์ พร้อมเหตุผลและเจ้าหน้าที่ผู้บันทึก"
+
+#: core/templates/core/privacy.html:18
+msgid ""
+"An audit trail of operational actions, including which account performed "
+"them."
+msgstr "บันทึกการตรวจสอบการดำเนินการต่าง ๆ รวมถึงบัญชีที่ดำเนินการ"
+
+#: core/templates/core/privacy.html:21
+msgid "What is not collected"
+msgstr "ข้อมูลที่ไม่จัดเก็บ"
+
+#: core/templates/core/privacy.html:23
+msgid "No location tracking and no device fingerprinting."
+msgstr "ไม่มีการติดตามตำแหน่งและไม่มีการเก็บลายนิ้วมืออุปกรณ์"
+
+#: core/templates/core/privacy.html:24
+msgid ""
+"A static QR code records an account action only; it is not treated as proof "
+"of physical presence."
+msgstr "QR code แบบคงที่จะบันทึกเฉพาะการดำเนินการผ่านบัญชี ไม่ถือเป็นหลักฐานว่าอยู่ในสถานที่จริง"
+
+#: core/templates/core/privacy.html:25
+msgid "The public availability page contains no student identities."
+msgstr "หน้าตารางว่างสาธารณะไม่มีข้อมูลระบุตัวตนของนิสิต"
+
+#: core/templates/core/privacy.html:28
+msgid "Retention"
+msgstr "ระยะเวลาจัดเก็บ"
+
+#: core/templates/core/privacy.html:29
+msgid ""
+"The proposed period for identifiable records is one academic year plus any "
+"documented dispute hold, with backups kept for 30 days. Nothing is deleted "
+"automatically under this unendorsed default. The 60-day history shown in the "
+"application is a display limit, not a deletion policy."
+msgstr ""
+"ระยะเวลาที่เสนอสำหรับข้อมูลที่ระบุตัวตนได้คือหนึ่งปีการศึกษา "
+"บวกกับระยะเวลาที่มีการโต้แย้งเป็นลายลักษณ์อักษร โดยสำรองข้อมูลเก็บไว้ 30 วัน "
+"ยังไม่มีการลบข้อมูลอัตโนมัติภายใต้ค่าเริ่มต้นที่ยังไม่ได้รับอนุมัตินี้ ประวัติ 60 "
+"วันที่แสดงในระบบเป็นขีดจำกัดการแสดงผล ไม่ใช่นโยบายการลบข้อมูล"
+
+#: core/templates/core/privacy.html:31
+msgid "Your options"
+msgstr "สิทธิ์ของคุณ"
+
+#: core/templates/core/privacy.html:32
+msgid ""
+"You can ask the department office to correct your details, to deactivate "
+"your account, or for a copy of the records held about you. Account "
+"deactivation keeps booking and sanction history so that room records stay "
+"accurate."
+msgstr ""
+"คุณสามารถขอให้สำนักงานภาควิชาแก้ไขข้อมูลของคุณ ปิดการใช้งานบัญชี "
+"หรือขอสำเนาข้อมูลที่จัดเก็บเกี่ยวกับคุณได้ "
+"การปิดการใช้งานบัญชีจะยังคงประวัติการจองและการลงโทษไว้ เพื่อให้ข้อมูลการใช้ห้องถูกต้อง"
+
+#: core/templates/core/register.html:9
+msgid ""
+"Use your institutional ID and institutional email address. You will receive "
+"a link to confirm the address, then choose a password. Membership of the "
+"department is checked against the roster; an email address alone does not "
+"establish it."
+msgstr ""
+"ใช้รหัสนิสิตและอีเมลสถาบันของคุณ คุณจะได้รับลิงก์เพื่อยืนยันอีเมล แล้วจึงตั้งรหัสผ่าน "
+"การเป็นสมาชิกภาควิชาจะตรวจสอบกับทะเบียนนิสิต อีเมลเพียงอย่างเดียวไม่ยืนยันการเป็นสมาชิก"
+
+#: core/templates/core/register.html:15
+msgid "Full name"
+msgstr "ชื่อ-นามสกุล"
+
+#: core/templates/core/register.html:27
+#, python-format
+msgid "Must end with %(domain)s"
+msgstr "ต้องลงท้ายด้วย %(domain)s"
+
+#: core/templates/core/register.html:29
+msgid "Create account"
+msgstr "สร้างบัญชี"
+
+#: core/templates/core/register.html:33
+msgid "Already registered?"
+msgstr "ลงทะเบียนไว้แล้ว?"
+
+#: core/templates/core/register_done.html:10
+msgid ""
+"If those details can be registered, we have sent a confirmation link to the "
+"address you gave. The link expires shortly, and opening it lets you choose a "
+"password."
+msgstr ""
+"หากข้อมูลนี้ลงทะเบียนได้ เราได้ส่งลิงก์ยืนยันไปยังอีเมลที่คุณให้ไว้แล้ว ลิงก์จะหมดอายุในไม่ช้า "
+"และเมื่อเปิดจะสามารถตั้งรหัสผ่านได้"
+
+#: core/templates/core/register_done.html:13
+msgid "If you already have an account, sign in or reset your password instead."
+msgstr "หากคุณมีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบหรือตั้งรหัสผ่านใหม่"
+
+#: core/templates/core/room_qr.html:8
+msgid "This is the page the printed QR code points to."
+msgstr "หน้านี้คือหน้าที่ QR code ที่พิมพ์ไว้เชื่อมไปถึง"
+
+#: core/templates/core/room_qr.html:12
+msgid "Piano and percussion students may reserve this room in advance. If the hour is still free once it has started, anyone may use it — the button below does exactly that."
+msgstr "เปียโน"
+#: core/templates/core/room_qr.html:18
+msgid ""
+"Booking is suspended on this account, so this room cannot be used now. You "
+"can still read your history."
+msgstr "บัญชีนี้ถูกระงับสิทธิ์การจอง จึงไม่สามารถใช้ห้องนี้ได้ในขณะนี้ คุณยังดูประวัติของตนเองได้"
+
+#: core/templates/core/room_qr.html:25
+#: core/templates/core/use_now_confirm.html:23
+msgid "Time remaining"
+msgstr "เวลาที่เหลือ"
+
+#: core/templates/core/room_qr.html:34
+#, python-format
+msgid "Check in for this booking (by %(deadline)s)"
+msgstr "ลงชื่อเข้าใช้สำหรับการจองนี้ (ภายใน %(deadline)s)"
+
+#: core/templates/core/room_qr.html:49
+msgid "This room is checked in and in use."
+msgstr "ห้องนี้ลงชื่อเข้าใช้และกำลังใช้งานอยู่"
+
+#: core/templates/core/room_qr.html:51
+msgid "This room is not available for the current hour."
+msgstr "ห้องนี้ไม่ว่างสำหรับชั่วโมงปัจจุบัน"
+
+#: core/templates/core/room_qr.html:52
+#: core/templates/core/use_now_confirm.html:54
+msgid "See which rooms are free"
+msgstr "ดูว่าห้องใดว่าง"
+
+#: core/templates/core/room_qr.html:57
+msgid ""
+"A static QR code shows that an account action happened; it cannot prove you "
+"are physically in the room. Staff may spot check during the pilot."
+msgstr ""
+"QR code แบบคงที่แสดงว่ามีการดำเนินการผ่านบัญชี แต่ไม่สามารถยืนยันว่าคุณอยู่ในห้องจริง "
+"เจ้าหน้าที่อาจตรวจสอบเป็นครั้งคราวในช่วงทดลองใช้"
+
+#: core/templates/core/rules.html:7
+msgid "Practice room rules"
+msgstr "กฎการใช้ห้องซ้อม"
+
+#: core/templates/core/rules.html:9
+msgid ""
+"This is a summary of the department's practice room regulation. The "
+"application policy below is set by the department and is not part of the "
+"regulation itself."
+msgstr ""
+"นี่คือสรุประเบียบการใช้ห้องซ้อมของภาควิชา นโยบายการใช้งานด้านล่างกำหนดโดยภาควิชา "
+"และไม่ใช่ส่วนหนึ่งของระเบียบดังกล่าว"
+
+#: core/templates/core/rules.html:13
+msgid "From the regulation"
+msgstr "จากระเบียบที่เกี่ยวข้อง"
+
+#: core/templates/core/rules.html:15
+msgid "One booking is one hour."
+msgstr "หนึ่งการจองใช้เวลา 1 ชั่วโมง"
+
+#: core/templates/core/rules.html:16
+#, python-format
+msgid ""
+"A person may hold at most %(quota)s bookings in a day, across all rooms."
+msgstr "แต่ละคนจองได้ไม่เกิน %(quota)s รายการต่อวัน รวมทุกห้อง"
+
+#: core/templates/core/rules.html:17
+msgid "Use the room at the booked time and finish on time."
+msgstr "ใช้ห้องตามเวลาที่จองและเสร็จตรงเวลา"
+
+#: core/templates/core/rules.html:18
+msgid ""
+"Do not book on behalf of someone else and do not reserve a room you will not "
+"use."
+msgstr "อย่าจองแทนผู้อื่น และอย่าจองห้องที่คุณจะไม่ใช้งาน"
+
+#: core/templates/core/rules.html:19
+#, python-format
+msgid ""
+"Arrive within %(minutes)s minutes of the start. After that the booking is "
+"forfeited and other students may take the remaining time."
+msgstr ""
+"กรุณามาถึงภายใน %(minutes)s นาทีหลังเวลาเริ่ม หลังจากนั้นการจองจะถูกสละสิทธิ์ "
+"และนิสิตคนอื่นอาจใช้เวลาที่เหลือได้"
+
+#: core/templates/core/rules.html:20
+msgid "Cancel promptly when you cannot attend."
+msgstr "กรุณายกเลิกทันทีเมื่อมาไม่ได้"
+
+#: core/templates/core/rules.html:21
+msgid ""
+"Musical practice includes instruments, voice and ensemble. Unrelated "
+"activities are not allowed."
+msgstr ""
+"การซ้อมดนตรีรวมถึงเครื่องดนตรี การขับร้อง และการซ้อมรวมวง ไม่อนุญาตกิจกรรมที่ไม่เกี่ยวข้อง"
+
+#: core/templates/core/rules.html:22
+msgid ""
+"Clean up, return equipment, do not remove equipment without permission, and "
+"report damage."
+msgstr "เก็บกวาด คืนอุปกรณ์ อย่านำอุปกรณ์ออกโดยไม่ได้รับอนุญาต และแจ้งความเสียหาย"
+
+#: core/templates/core/rules.html:23
+msgid ""
+"No food. Drinks are allowed in securely covered containers, handled with "
+"care."
+msgstr "ห้ามนำอาหารเข้ามา อนุญาตเครื่องดื่มในภาชนะที่มีฝาปิดมิดชิด และต้องระมัดระวัง"
+
+#: core/templates/core/rules.html:24
+msgid "Respect others and avoid overstaying or disturbing nearby rooms."
+msgstr "เคารพผู้อื่น อย่าใช้เกินเวลา และอย่ารบกวนห้องข้างเคียง"
+
+#: core/templates/core/rules.html:25
+msgid "Repeat violations or damage may lead to warnings and suspension."
+msgstr "การฝ่าฝืนซ้ำหรือความเสียหายอาจนำไปสู่การตักเตือนและการระงับสิทธิ์"
+
+#: core/templates/core/rules.html:30
+msgid "Application policy (set by the department)"
+msgstr "นโยบายการใช้งาน (กำหนดโดยภาควิชา)"
+
+#: core/templates/core/rules.html:32
+#, python-format
+msgid "Bookings open %(days)s days ahead, including today."
+msgstr "เปิดให้จองล่วงหน้า %(days)s วัน รวมวันนี้"
+
+#: core/templates/core/rules.html:33
+#, python-format
+msgid ""
+"Check-in opens at the start of the hour and closes exactly %(minutes)s "
+"minutes later."
+msgstr "ลงชื่อเข้าใช้ได้ตั้งแต่เวลาเริ่มชั่วโมง และปิดลงชื่อเข้าใช้เมื่อครบ %(minutes)s นาที"
+
+#: core/templates/core/rules.html:34
+msgid ""
+"A free room can be used immediately for the remainder of the current hour, "
+"and always ends at the hour boundary."
+msgstr "ห้องที่ว่างสามารถใช้ได้ทันทีสำหรับเวลาที่เหลือของชั่วโมงปัจจุบัน และสิ้นสุดเมื่อหมดชั่วโมงเสมอ"
+
+#: core/templates/core/rules.html:35
+msgid ""
+"You cannot hold two rooms in the same hour, or bookings in adjacent hours."
+msgstr "คุณไม่สามารถถือสิทธิ์สองห้องในชั่วโมงเดียวกัน หรือจองในชั่วโมงที่ติดกันได้"
+
+#: core/templates/core/rules.html:36
+#, python-format
+msgid ""
+"%(threshold)s unconsumed strikes within %(window)s days cause one suspension "
+"of %(days)s days."
+msgstr ""
+"คะแนนโทษที่ยังไม่ถูกใช้ %(threshold)s คะแนนภายใน %(window)s วัน จะทำให้ถูกระงับสิทธิ์ "
+"%(days)s วัน หนึ่งครั้ง"
+
+#: core/templates/core/rules.html:37
+msgid ""
+"A strike can only cause one suspension; a suspension does not extend itself."
+msgstr "คะแนนโทษหนึ่งคะแนนนำไปสู่การระงับสิทธิ์ได้เพียงครั้งเดียว และการระงับสิทธิ์ไม่ต่ออายุเอง"
+
+#: core/templates/core/rules.html:38
+msgid ""
+"Scheduled bookings are cancelled without extra penalty when a suspension "
+"starts; a session already in use may finish."
+msgstr ""
+"เมื่อเริ่มระงับสิทธิ์ การจองที่กำหนดไว้จะถูกยกเลิกโดยไม่มีการลงโทษเพิ่มเติม "
+"ส่วนการใช้งานที่กำลังดำเนินอยู่สามารถใช้จนจบได้"
+
+#: core/templates/core/rules.html:41
+msgid ""
+"These numeric thresholds are the department's operational defaults, not "
+"figures stated in the regulation."
+msgstr "ตัวเลขเกณฑ์เหล่านี้เป็นค่าเริ่มต้นการดำเนินงานของภาควิชา ไม่ใช่ตัวเลขที่ระบุในระเบียบ"
+
+#: core/templates/core/set_password.html:4
+#: core/templates/core/set_password.html:7
+msgid "Choose a password"
+msgstr "ตั้งรหัสผ่าน"
+
+#: core/templates/core/set_password.html:9
+msgid ""
+"Your email address is confirmed by this link. Choose a password to finish "
+"setting up the account."
+msgstr "ลิงก์นี้ยืนยันอีเมลของคุณแล้ว กรุณาตั้งรหัสผ่านเพื่อตั้งค่าบัญชีให้เสร็จสมบูรณ์"
+
+#: core/templates/core/set_password.html:30
+msgid ""
+"At least 10 characters. Avoid common passwords and anything similar to your "
+"name or ID."
+msgstr "อย่างน้อย 10 ตัวอักษร หลีกเลี่ยงรหัสผ่านที่ใช้กันทั่วไป และรหัสที่คล้ายชื่อหรือรหัสนิสิตของคุณ"
+
+#: core/templates/core/set_password.html:34
+msgid "Repeat password"
+msgstr "ยืนยันรหัสผ่าน"
+
+#: core/templates/core/staff/_base.html:9
+msgid "Staff sections"
+msgstr "ส่วนงานเจ้าหน้าที่"
+
+#: core/templates/core/staff/_base.html:10
+msgid "Today"
+msgstr "วันนี้"
+
+#: core/templates/core/staff/_base.html:11
+#: core/templates/core/staff/users.html:4
+msgid "Users"
+msgstr "ผู้ใช้"
+
+#: core/templates/core/staff/_base.html:12
+#: core/templates/core/staff/closures.html:4
+msgid "Closures"
+msgstr "การปิดห้อง"
+
+#: core/templates/core/staff/_base.html:13
+msgid "Calendar"
+msgstr "ปฏิทิน"
+
+#: core/templates/core/staff/_base.html:14
+msgid "Incidents"
+msgstr "เหตุขัดข้อง"
+
+#: core/templates/core/staff/_base.html:15
+#: core/templates/core/staff/roster.html:4
+msgid "Roster"
+msgstr "ทะเบียนนิสิต"
+
+#: core/templates/core/staff/_base.html:16
+#: core/templates/core/staff/invitations.html:4
+msgid "Invitations"
+msgstr "คำเชิญ"
+
+#: core/templates/core/staff/_base.html:17
+#: core/templates/core/staff/outbox.html:4
+msgid "Mail queue"
+msgstr "คิวอีเมล"
+
+#: core/templates/core/staff/_base.html:18
+msgid "Audit"
+msgstr "บันทึกการตรวจสอบ"
+
+#: core/templates/core/staff/_base.html:19
+#: core/templates/core/staff/stats.html:4
+msgid "Statistics"
+msgstr "สถิติ"
+
+#: core/templates/core/staff/_base.html:20
+msgid "Posters"
+msgstr "ป้ายติดห้อง"
+
+#: core/templates/core/staff/_base.html:21
+#: core/templates/core/staff/policy.html:4
+msgid "Policy"
+msgstr "นโยบาย"
+
+#: core/templates/core/staff/_base.html:22
+#: core/templates/core/staff/admin.html:4
+msgid "Configuration"
+msgstr "การตั้งค่า"
+
+#: core/templates/core/staff/admin.html:9
+msgid ""
+"This page shows configuration you can act on. Direct editing of lifecycle, "
+"deadline, ownership and sanction fields is intentionally not offered here: "
+"every operational change goes through a service so the lock, the audit trail "
+"and the rule checks all apply."
+msgstr ""
+"หน้านี้แสดงการตั้งค่าที่คุณดำเนินการได้ การแก้ไขฟิลด์สถานะ กำหนดเวลา เจ้าของ "
+"และการลงโทษโดยตรงไม่ได้จัดให้มีในหน้านี้โดยเจตนา เพราะการเปลี่ยนแปลงทุกอย่างต้องผ่านบริการ "
+"เพื่อให้การล็อก บันทึกการตรวจสอบ และการตรวจสอบกฎมีผลครบถ้วน"
+
+#: core/templates/core/staff/admin.html:12
+msgid "Accounts"
+msgstr "บัญชี"
+
+#: core/templates/core/staff/admin.html:13
+msgid "Bookings"
+msgstr "การจอง"
+
+#: core/templates/core/staff/admin.html:14
+msgid "Violations"
+msgstr "การฝ่าฝืน"
+
+#: core/templates/core/staff/admin.html:15
+msgid "Suspensions"
+msgstr "การระงับสิทธิ์"
+
+#: core/templates/core/staff/admin.html:19
+msgid "As maintainer you also have the Django admin at"
+msgstr "ในฐานะผู้ดูแลระบบคุณยังเข้าถึง Django admin ได้ที่"
+
+#: core/templates/core/staff/admin.html:25
+#: core/templates/core/staff/incidents.html:50
+msgid "Rooms"
+msgstr "ห้อง"
+
+#: core/templates/core/staff/admin.html:29
+msgid "out of service"
+msgstr "นอกให้บริการ"
+
+#: core/templates/core/staff/admin.html:32
+#| msgid "Reserved"
+msgid "Reserved for"
+msgstr "สงวนไว้สำหรับ"
+#: core/templates/core/staff/admin.html:36
+msgid "nobody (no categories configured)"
+msgstr "ไม่มีผู้ใด (ยังไม่ได้กำหนดหมวดหมู่)"
+#: core/templates/core/staff/admin.html:42
+#| msgid "Room Reserve"
+msgid "Who may reserve"
+msgstr "ผู้ที่จองได้"
+#: core/templates/core/staff/admin.html:51
+msgid "Only these instrument categories"
+msgstr "เฉพาะหมวดหมู่เครื่องดนตรีเหล่านี้"
+#: core/templates/core/staff/admin.html:63
+msgid "Anyone may still walk in once an hour has started and the room is free."
+msgstr "เมื่อเริ่มชั่วโมงแล้วและห้องว่าง ผู้ใช้ทุกคนยังเข้าใช้ได้"
+#: core/templates/core/staff/admin.html:65
+msgid "Save audience"
+msgstr "บันทึกผู้ที่จองได้"
+#: core/templates/core/staff/admin.html:73
+msgid "Take out of service"
+msgstr "นำออกจากให้บริการ"
+
+#: core/templates/core/staff/admin.html:80
+#| msgid ""
+#| "Taking a room out of service cancels its scheduled bookings without "
+#| "penalty and flags any session in use for review."
+msgid "Taking a room out of service cancels its scheduled bookings without penalty and flags any session in use for review. Changing who may reserve a room never cancels a booking that already exists."
+msgstr "การนำห้องออกจากให้บริการจะยกเลิกการจองที่กำหนดไว้โดยไม่มีการลงโทษ และตั้งค่าการใช้งานที่กำลังดำเนินอยู่เพื่อทบทวน การเปลี่ยนผู้ที่จองได้จะไม่ยกเลิกการจองที่มีอยู่แล้ว"
+#: core/templates/core/staff/audit.html:4
+msgid "Audit trail"
+msgstr "บันทึกการตรวจสอบ"
+
+#: core/templates/core/staff/audit.html:9
+msgid "Action contains"
+msgstr "การกระทำมีคำว่า"
+
+#: core/templates/core/staff/audit.html:13
+msgid "Entity type contains"
+msgstr "ประเภทรายการมีคำว่า"
+
+#: core/templates/core/staff/audit.html:16
+#: core/templates/core/staff/outbox.html:36
+msgid "Filter"
+msgstr "กรอง"
+
+#: core/templates/core/staff/audit.html:22
+msgid "When"
+msgstr "เมื่อ"
+
+#: core/templates/core/staff/audit.html:23
+msgid "Who"
+msgstr "ผู้ดำเนินการ"
+
+#: core/templates/core/staff/audit.html:24
+msgid "Action"
+msgstr "การกระทำ"
+
+#: core/templates/core/staff/audit.html:25
+msgid "Entity"
+msgstr "รายการ"
+
+#: core/templates/core/staff/audit.html:26
+msgid "Changes"
+msgstr "การเปลี่ยนแปลง"
+
+#: core/templates/core/staff/audit.html:44
+msgid ""
+"The trail is append-only. Passwords, tokens and secrets are never recorded."
+msgstr "บันทึกนี้เพิ่มได้เท่านั้น ไม่สามารถแก้ไขหรือลบ รหัสผ่าน โทเค็น และข้อมูลลับจะไม่ถูกบันทึก"
+
+#: core/templates/core/staff/calendar.html:4
+msgid "Calendar overrides"
+msgstr "การกำหนดวันเปิด-ปิดเป็นกรณีพิเศษ"
+
+#: core/templates/core/staff/calendar.html:8
+msgid "Set a date override"
+msgstr "กำหนดวันเปิด-ปิดเป็นกรณีพิเศษ"
+
+#: core/templates/core/staff/calendar.html:10
+msgid ""
+"An override replaces the weekly timetable for one date. An explicit closure "
+"always wins over an override, and the fixed hourly slot geometry cannot be "
+"changed."
+msgstr ""
+"การกำหนดพิเศษจะแทนตารางประจำสัปดาห์สำหรับวันใดวันหนึ่ง "
+"การปิดห้องแบบระบุชัดเจนมีผลเหนือการกำหนดพิเศษเสมอ และโครงสร้างชั่วโมงคงที่เปลี่ยนแปลงไม่ได้"
+
+#: core/templates/core/staff/calendar.html:20
+msgid "Open from"
+msgstr "เปิดตั้งแต่"
+
+#: core/templates/core/staff/calendar.html:24
+msgid "Close at (exclusive)"
+msgstr "ปิดเมื่อถึง (ไม่รวมชั่วโมงนี้)"
+
+#: core/templates/core/staff/calendar.html:27
+msgid "Open this date"
+msgstr "เปิดในวันนี้"
+
+#: core/templates/core/staff/calendar.html:32
+msgid "Save override"
+msgstr "บันทึกการกำหนด"
+
+#: core/templates/core/staff/calendar.html:37
+msgid "Existing overrides"
+msgstr "รายการที่กำหนดไว้"
+
+#: core/templates/core/staff/calendar.html:43
+msgid "None yet."
+msgstr "ยังไม่มี"
+
+#: core/templates/core/staff/closures.html:8
+msgid "Preview affected sessions"
+msgstr "ดูตัวอย่างรายการที่ได้รับผลกระทบ"
+
+#: core/templates/core/staff/closures.html:9
+msgid ""
+"Nothing is changed by a preview. Confirming rechecks the same range under "
+"the shared lock, so a session booked in between is still caught."
+msgstr ""
+"การดูตัวอย่างไม่เปลี่ยนแปลงข้อมูลใด ๆ การยืนยันจะตรวจสอบช่วงเวลาเดิมซ้ำภายใต้ล็อกร่วม "
+"ดังนั้นรายการที่จองเข้ามาในระหว่างนั้นจะยังถูกตรวจพบ"
+
+#: core/templates/core/staff/closures.html:14
+msgid "All rooms"
+msgstr "ทุกห้อง"
+
+#: core/templates/core/staff/closures.html:21
+#: core/templates/core/staff/incidents.html:17
+msgid "From"
+msgstr "จาก"
+
+#: core/templates/core/staff/closures.html:25
+#: core/templates/core/staff/incidents.html:21
+msgid "To"
+msgstr "ถึง"
+
+#: core/templates/core/staff/closures.html:28
+msgid "Preview"
+msgstr "ดูตัวอย่าง"
+
+#: core/templates/core/staff/closures.html:34
+#, python-format
+msgid "Scheduled bookings affected: %(count)s"
+msgstr "การจองที่ได้รับผลกระทบ: %(count)s"
+
+#: core/templates/core/staff/closures.html:36
+#, python-format
+msgid "In use right now: %(count)s"
+msgstr "กำลังใช้งานอยู่ขณะนี้: %(count)s"
+
+#: core/templates/core/staff/closures.html:40
+msgid ""
+"Sessions are in progress in this range. Confirm only after deciding what "
+"those students should do; they will be flagged for on-site follow-up."
+msgstr ""
+"มีการใช้งานห้องอยู่ในช่วงเวลานี้ กรุณายืนยันหลังจากตัดสินใจแล้วว่าจะให้นิสิตเหล่านั้นทำอย่างไร "
+"รายการเหล่านี้จะถูกตั้งค่าให้ติดตามผลหน้างาน"
+
+#: core/templates/core/staff/closures.html:56
+msgid ""
+"I acknowledge that sessions are in progress and will be flagged for on-site "
+"follow-up."
+msgstr "ข้าพเจ้ารับทราบว่ามีการใช้งานห้องอยู่ และรายการเหล่านี้จะถูกตั้งค่าให้ติดตามผลหน้างาน"
+
+#: core/templates/core/staff/closures.html:59
+msgid "Confirm closure and cancel affected bookings"
+msgstr "ยืนยันการปิดห้องและยกเลิกการจองที่ได้รับผลกระทบ"
+
+#: core/templates/core/staff/closures.html:66
+msgid "Current and upcoming closures"
+msgstr "การปิดห้องที่ใช้อยู่และกำลังจะมาถึง"
+
+#: core/templates/core/staff/closures.html:74
+msgid "Reopen reason"
+msgstr "เหตุผลการเปิดใช้งานอีกครั้ง"
+
+#: core/templates/core/staff/closures.html:75
+msgid "Reopen"
+msgstr "เปิดใช้งานอีกครั้ง"
+
+#: core/templates/core/staff/closures.html:81
+msgid "No closures in effect."
+msgstr "ไม่มีการปิดห้องที่บังคับใช้"
+
+#: core/templates/core/staff/closures.html:84
+msgid ""
+"Reopening does not restore cancelled bookings and does not make a completed "
+"slot reusable."
+msgstr ""
+"การเปิดใช้งานอีกครั้งไม่คืนการจองที่ถูกยกเลิก และไม่ทำให้ช่วงเวลาที่ใช้เสร็จแล้วกลับมาใช้ซ้ำได้"
+
+#: core/templates/core/staff/incidents.html:4
+msgid "Service incidents"
+msgstr "เหตุขัดข้องของระบบ"
+
+#: core/templates/core/staff/incidents.html:8
+msgid "Record an incident"
+msgstr "บันทึกเหตุขัดข้อง"
+
+#: core/templates/core/staff/incidents.html:10
+msgid ""
+"While an incident covers a period, no-shows are not recorded automatically "
+"for it, and affected scheduled bookings can be cancelled without penalty."
+msgstr ""
+"ในช่วงเวลาที่มีเหตุขัดข้อง ระบบจะไม่บันทึกการไม่มาใช้ห้องโดยอัตโนมัติ "
+"และการจองที่ได้รับผลกระทบสามารถยกเลิกได้โดยไม่มีการลงโทษ"
+
+#: core/templates/core/staff/incidents.html:30
+msgid "Rooms (leave all unticked to cover every room)"
+msgstr "ห้อง (ไม่เลือกห้องใดเลยเพื่อครอบคลุมทุกห้อง)"
+
+#: core/templates/core/staff/incidents.html:37
+msgid "Cancel affected scheduled bookings without penalty"
+msgstr "ยกเลิกการจองที่ได้รับผลกระทบโดยไม่ลงโทษ"
+
+#: core/templates/core/staff/incidents.html:38
+msgid "Record incident"
+msgstr "บันทึกเหตุขัดข้อง"
+
+#: core/templates/core/staff/incidents.html:43
+msgid "Recorded incidents"
+msgstr "เหตุขัดข้องที่บันทึกไว้"
+
+#: core/templates/core/staff/incidents.html:56
+msgid "Why are these strikes void?"
+msgstr "เหตุใดจึงยกเลิกคะแนนโทษเหล่านี้"
+
+#: core/templates/core/staff/incidents.html:57
+msgid "Void affected strikes"
+msgstr "ยกเลิกคะแนนโทษที่ได้รับผลกระทบ"
+
+#: core/templates/core/staff/incidents.html:64
+msgid "No incidents recorded."
+msgstr "ไม่มีการบันทึกเหตุขัดข้อง"
+
+#: core/templates/core/staff/invitations.html:9
+#, python-format
+msgid "Activation link for %(id)s:"
+msgstr "ลิงก์เปิดใช้งานสำหรับ %(id)s:"
+
+#: core/templates/core/staff/invitations.html:11
+msgid "Shown once. The link is also emailed, and is never written to logs."
+msgstr "แสดงเพียงครั้งเดียว ลิงก์จะถูกส่งทางอีเมลด้วย และจะไม่ถูกบันทึกใน log"
+
+#: core/templates/core/staff/invitations.html:16
+msgid "Invite an account"
+msgstr "เชิญบัญชี"
+
+#: core/templates/core/staff/invitations.html:18
+msgid ""
+"Staff identities are supplied by the department owner. This cannot grant "
+"superuser, and re-inviting never resets an existing password."
+msgstr ""
+"บัญชีเจ้าหน้าที่กำหนดโดยผู้ดูแลภาควิชา การเชิญนี้ไม่สามารถให้สิทธิ์ผู้ดูแลระบบสูงสุดได้ "
+"และการเชิญซ้ำจะไม่รีเซ็ตรหัสผ่านที่มีอยู่"
+
+#: core/templates/core/staff/invitations.html:32
+#: core/templates/core/staff/roster.html:48
+#: core/templates/core/staff/users.html:19
+msgid "Name"
+msgstr "ชื่อ"
+
+#: core/templates/core/staff/invitations.html:35
+msgid "Operational staff"
+msgstr "เจ้าหน้าที่ปฏิบัติงาน"
+
+#: core/templates/core/staff/invitations.html:36
+msgid "Send invitation"
+msgstr "ส่งคำเชิญ"
+
+#: core/templates/core/staff/invitations.html:41
+msgid "Issued invitations"
+msgstr "คำเชิญที่ออกแล้ว"
+
+#: core/templates/core/staff/invitations.html:45
+msgid "Account"
+msgstr "บัญชี"
+
+#: core/templates/core/staff/invitations.html:46
+msgid "Purpose"
+msgstr "วัตถุประสงค์"
+
+#: core/templates/core/staff/invitations.html:47
+msgid "Generation"
+msgstr "ครั้งที่ออก"
+
+#: core/templates/core/staff/invitations.html:48
+msgid "Expires"
+msgstr "หมดอายุเมื่อ"
+
+#: core/templates/core/staff/invitations.html:49
+msgid "State"
+msgstr "สถานะ"
+
+#: core/templates/core/staff/invitations.html:60
+msgid "Superseded"
+msgstr "ถูกแทนที่แล้ว"
+
+#: core/templates/core/staff/invitations.html:61
+msgid "Expired"
+msgstr "หมดอายุ"
+
+#: core/templates/core/staff/invitations.html:62
+#: core/templates/core/staff/roster.html:51
+msgid "Active"
+msgstr "ใช้งานได้"
+
+#: core/templates/core/staff/outbox.html:9
+#, python-format
+msgid ""
+"Pending %(pending)s, sent %(sent)s, exhausted %(exhausted)s, cancelled "
+"%(cancelled)s."
+msgstr ""
+"รอดำเนินการ %(pending)s ส่งแล้ว %(sent)s ส่งไม่สำเร็จ %(exhausted)s ยกเลิก "
+"%(cancelled)s"
+
+#: core/templates/core/staff/outbox.html:13
+#, python-format
+msgid "Oldest queued message is %(age)s seconds old."
+msgstr "ข้อความในคิวที่เก่าที่สุดรอมา %(age)s วินาที"
+
+#: core/templates/core/staff/outbox.html:18
+msgid "Deliver queued mail now"
+msgstr "ส่งอีเมลในคิวทันที"
+
+#: core/templates/core/staff/outbox.html:21
+msgid ""
+"Delivery is at least once: if the mail provider accepts a message and this "
+"process dies before recording it, the retry can deliver a duplicate. Booking "
+"outcomes are committed records and never depend on mail."
+msgstr ""
+"การส่งเป็นแบบอย่างน้อยหนึ่งครั้ง "
+"หากผู้ให้บริการอีเมลรับข้อความแล้วแต่กระบวนการนี้หยุดทำงานก่อนบันทึก การลองใหม่จะส่งซ้ำได้ "
+"ผลของการจองเป็นบันทึกที่ยืนยันแล้วและไม่ขึ้นกับอีเมล"
+
+#: core/templates/core/staff/outbox.html:29
+msgid "All"
+msgstr "ทั้งหมด"
+
+#: core/templates/core/staff/outbox.html:42
+msgid "Created"
+msgstr "สร้างเมื่อ"
+
+#: core/templates/core/staff/outbox.html:43
+msgid "Kind"
+msgstr "ประเภท"
+
+#: core/templates/core/staff/outbox.html:44
+msgid "Recipient"
+msgstr "ผู้รับ"
+
+#: core/templates/core/staff/outbox.html:46
+msgid "Attempts"
+msgstr "จำนวนครั้งที่พยายาม"
+
+#: core/templates/core/staff/outbox.html:47
+msgid "Last error"
+msgstr "ข้อผิดพลาดล่าสุด"
+
+#: core/templates/core/staff/policy.html:8
+#, python-format
+msgid "Active policy version %(version)s"
+msgstr "นโยบายที่ใช้อยู่ เวอร์ชัน %(version)s"
+
+#: core/templates/core/staff/policy.html:10
+#: core/templates/core/staff/policy.html:29
+msgid "Horizon (days)"
+msgstr "ล่วงหน้า (วัน)"
+
+#: core/templates/core/staff/policy.html:11
+#: core/templates/core/staff/policy.html:30
+msgid "Daily quota"
+msgstr "โควตาต่อวัน"
+
+#: core/templates/core/staff/policy.html:12
+msgid "Check-in grace (minutes)"
+msgstr "เวลาผ่อนผันการลงชื่อเข้าใช้ (นาที)"
+
+#: core/templates/core/staff/policy.html:13
+#: core/templates/core/staff/policy.html:32
+msgid "Strike window (days)"
+msgstr "ช่วงนับคะแนนโทษ (วัน)"
+
+#: core/templates/core/staff/policy.html:14
+msgid "Strike threshold"
+msgstr "เกณฑ์คะแนนโทษ"
+
+#: core/templates/core/staff/policy.html:15
+#: core/templates/core/staff/policy.html:34
+msgid "Suspension (days)"
+msgstr "ระยะระงับสิทธิ์ (วัน)"
+
+#: core/templates/core/staff/policy.html:16
+msgid "Reminder lead (minutes)"
+msgstr "แจ้งเตือนล่วงหน้า (นาที)"
+
+#: core/templates/core/staff/policy.html:17
+#: core/templates/core/staff/policy.html:36
+msgid "Email domain"
+msgstr "โดเมนอีเมล"
+
+#: core/templates/core/staff/policy.html:20
+msgid ""
+"Existing bookings keep the values stored on the row, so a change here cannot "
+"retroactively invalidate a check-in that was already permitted. Recorded "
+"strikes keep the expiry they were given. The fixed hourly slot geometry "
+"cannot be edited."
+msgstr ""
+"การจองที่มีอยู่จะใช้ค่าที่บันทึกไว้ในแต่ละรายการ "
+"การเปลี่ยนแปลงในหน้านี้จึงไม่ทำให้การลงชื่อเข้าใช้ที่ได้รับอนุญาตไปแล้วเป็นโมฆะย้อนหลัง "
+"คะแนนโทษที่บันทึกไว้จะคงวันหมดอายุเดิม และโครงสร้างชั่วโมงคงที่แก้ไขไม่ได้"
+
+#: core/templates/core/staff/policy.html:25
+msgid "Create a new version"
+msgstr "สร้างเวอร์ชันใหม่"
+
+#: core/templates/core/staff/policy.html:31
+msgid "Grace (min)"
+msgstr "ผ่อนผัน (นาที)"
+
+#: core/templates/core/staff/policy.html:33
+msgid "Threshold"
+msgstr "เกณฑ์"
+
+#: core/templates/core/staff/policy.html:35
+msgid "Reminder lead (min)"
+msgstr "แจ้งเตือนล่วงหน้า (นาที)"
+
+#: core/templates/core/staff/policy.html:38
+msgid "Create version"
+msgstr "สร้างเวอร์ชัน"
+
+#: core/templates/core/staff/policy.html:43
+msgid "Versions"
+msgstr "เวอร์ชัน"
+
+#: core/templates/core/staff/poster_sheet.html:6
+msgid "Room Reserve posters"
+msgstr "ป้ายประชาสัมพันธ์ระบบจองห้องซ้อม"
+
+#: core/templates/core/staff/poster_sheet.html:19
+msgid "Western Music Department"
+msgstr "ภาควิชาดนตรีตะวันตก"
+
+#: core/templates/core/staff/poster_sheet.html:21
+msgid "Scan to check in or use this room"
+msgstr "สแกนเพื่อลงชื่อเข้าใช้หรือใช้ห้องนี้"
+
+#: core/templates/core/staff/poster_sheet.html:24
+#, python-format
+msgid "QR code for %(room)s"
+msgstr "QR code สำหรับ %(room)s"
+
+#: core/templates/core/staff/poster_sheet.html:27
+#, python-format
+msgid "Open Monday to Friday, %(open)s:00–%(close)s:00"
+msgstr "เปิดวันจันทร์ถึงวันศุกร์ %(open)s:00–%(close)s:00"
+
+#: core/templates/core/staff/poster_sheet.html:29
+#, python-format
+msgid ""
+"If you booked this hour, check in within %(minutes)s minutes of the start."
+msgstr "หากคุณจองชั่วโมงนี้ไว้ กรุณาลงชื่อเข้าใช้ภายใน %(minutes)s นาทีหลังเวลาเริ่ม"
+
+#: core/templates/core/staff/poster_sheet.html:30
+msgid "If the hour is free, confirm you are here to use it now."
+msgstr "หากชั่วโมงนี้ว่าง ยืนยันว่าคุณอยู่ที่นี่เพื่อใช้ห้องตอนนี้"
+
+#: core/templates/core/staff/poster_sheet.html:31
+msgid "The session ends at the hour boundary."
+msgstr "การใช้งานสิ้นสุดเมื่อหมดชั่วโมง"
+
+#: core/templates/core/staff/poster_sheet.html:36
+msgid "Piano and percussion students may reserve this room in advance. Once an hour has started, anyone may use it if it is still free."
+msgstr "เปียโน"
+#: core/templates/core/staff/poster_sheet.html:40
+#, python-format
+msgid "Problems? %(name)s, %(phone)s, %(email)s"
+msgstr "มีปัญหา? %(name)s %(phone)s %(email)s"
+
+#: core/templates/core/staff/poster_sheet.html:45
+msgid ""
+"Scanning shows that an account action happened. It does not prove you are in "
+"the room, and staff may spot check."
+msgstr ""
+"การสแกนแสดงว่ามีการดำเนินการผ่านบัญชี แต่ไม่ได้ยืนยันว่าคุณอยู่ในห้อง "
+"และเจ้าหน้าที่อาจตรวจสอบเป็นครั้งคราว"
+
+#: core/templates/core/staff/posters.html:4
+msgid "QR posters"
+msgstr "ป้าย QR"
+
+#: core/templates/core/staff/posters.html:9
+#, python-format
+msgid ""
+"One A4 poster per active room, each carrying the room label, its short URL, "
+"instructions and the support contact. Print at 100%% and fix to the matching "
+"door."
+msgstr ""
+"ป้าย A4 หนึ่งแผ่นต่อห้องที่เปิดใช้งาน โดยมีชื่อห้อง ลิงก์ย่อ คำแนะนำ และช่องทางติดต่อฝ่ายสนับสนุน "
+"พิมพ์ที่ 100%% แล้วติดที่ประตูห้องที่ตรงกัน"
+
+#: core/templates/core/staff/posters.html:11
+msgid "Open the printable sheet"
+msgstr "เปิดแผ่นสำหรับพิมพ์"
+
+#: core/templates/core/staff/posters.html:15
+msgid "Room targets"
+msgstr "ลิงก์ปลายทางของแต่ละห้อง"
+
+#: core/templates/core/staff/posters.html:22
+msgid ""
+"That a QR code encodes the right URL can be checked here. Whether the "
+"printed sheet is legible and hung on the correct door is a physical check "
+"made during deployment, not something this page can prove."
+msgstr ""
+"หน้านี้ตรวจสอบได้ว่า QR code เข้ารหัส URL ที่ถูกต้อง "
+"แต่การที่แผ่นที่พิมพ์มีความชัดเจนและติดที่ประตูห้องที่ถูกต้องเป็นการตรวจสอบทางกายภาพในขั้นติดตั้งใช้งาน "
+"ซึ่งหน้านี้พิสูจน์ไม่ได้"
+
+#: core/templates/core/staff/quota_lookup.html:4
+msgid "Quota detail"
+msgstr "รายละเอียดโควตา"
+
+#: core/templates/core/staff/quota_lookup.html:9
+#, python-format
+msgid "Bookings counted today: %(used)s of %(total)s."
+msgstr "จำนวนการจองที่นับสำหรับวันนี้: %(used)s จาก %(total)s"
+
+#: core/templates/core/staff/quota_lookup.html:18
+msgid "None."
+msgstr "ไม่มี"
+
+#: core/templates/core/staff/roster.html:8
+msgid "Import the roster"
+msgstr "นำเข้าทะเบียนนิสิต"
+
+#: core/templates/core/staff/roster.html:10
+msgid ""
+"CSV columns: institutional_id, email (both required), then optionally "
+"name_th, name_en, program, instrument, year. Imports are all-or-nothing: a "
+"contradiction with an existing entry aborts the whole file rather than "
+"overwriting it."
+msgstr ""
+"คอลัมน์ CSV: institutional_id, email (จำเป็นทั้งคู่) จากนั้นเป็น name_th, name_en, "
+"program, instrument, year ตามต้องการ การนำเข้าเป็นแบบทั้งหมดหรือไม่นำเข้าเลย "
+"หากขัดแย้งกับรายการที่มีอยู่ ระบบจะยกเลิกทั้งไฟล์แทนการเขียนทับ"
+
+#: core/templates/core/staff/roster.html:15
+msgid "CSV file"
+msgstr "ไฟล์ CSV"
+
+#: core/templates/core/staff/roster.html:19
+msgid "Batch label"
+msgstr "ป้ายชื่อรอบนำเข้า"
+
+#: core/templates/core/staff/roster.html:22
+msgid "Dry run (validate only)"
+msgstr "ตรวจสอบเท่านั้น (ไม่บันทึก)"
+
+#: core/templates/core/staff/roster.html:23
+msgid "Import"
+msgstr "นำเข้า"
+
+#: core/templates/core/staff/roster.html:31
+msgid "line"
+msgstr "บรรทัด"
+
+#: core/templates/core/staff/roster.html:40
+#, python-format
+msgid "Roster entries (%(active)s active of %(total)s)"
+msgstr "รายการในทะเบียน (%(active)s จาก %(total)s รายการที่ใช้งานอยู่)"
+
+#: core/templates/core/staff/roster.html:41
+msgid "Export CSV"
+msgstr "ส่งออก CSV"
+
+#: core/templates/core/staff/roster.html:46
+#: core/templates/core/staff/users.html:18
+msgid "ID"
+msgstr "รหัส"
+
+#: core/templates/core/staff/roster.html:49
+#| msgid "instrument"
+msgid "Instrument"
+msgstr "เครื่องดนตรี"
+#: core/templates/core/staff/roster.html:50
+msgid "Programme"
+msgstr "หลักสูตร"
+
+#: core/templates/core/staff/roster.html:64
+msgid "no category — cannot use instrument-specific rooms"
+msgstr "ยังไม่จัดหมวดหมู่ — ใช้ห้องเฉพาะเครื่องดนตรีไม่ได้"
+#: core/templates/core/staff/stats.html:8
+#, python-format
+msgid "Counts cover bookings since %(since)s."
+msgstr "ข้อมูลนับรวมการจองตั้งแต่ %(since)s"
+
+#: core/templates/core/staff/stats.html:9
+msgid "Download CSV"
+msgstr "ดาวน์โหลด CSV"
+
+#: core/templates/core/staff/stats.html:11
+msgid ""
+"Exported cells that begin with a formula character are neutralised so a "
+"spreadsheet cannot execute them."
+msgstr ""
+"เซลล์ที่ส่งออกซึ่งขึ้นต้นด้วยอักขระสูตรจะถูกทำให้ปลอดภัย เพื่อไม่ให้โปรแกรมตารางคำนวณประมวลผลได้"
+
+#: core/templates/core/staff/today.html:4
+#, python-format
+msgid "Today, %(local_date)s"
+msgstr "วันนี้ %(local_date)s"
+
+#: core/templates/core/staff/today.html:9
+#, python-format
+msgid ""
+"The scheduler heartbeat is stale (last run %(at)s). Background "
+"reconciliation and mail are not running. Bookings made through the site are "
+"still reconciled on request."
+msgstr ""
+"สัญญาณการทำงานของตัวจัดตารางหยุดนิ่ง (ทำงานครั้งล่าสุด %(at)s) "
+"การกระทบยอดเบื้องหลังและการส่งอีเมลไม่ได้ทำงานอยู่ "
+"การจองที่ทำผ่านเว็บไซต์ยังได้รับการกระทบยอดเมื่อมีคำขอ"
+
+#: core/templates/core/staff/today.html:14
+#, python-format
+msgid ""
+"The oldest queued message is %(age)s seconds old. Check the mail provider."
+msgstr "ข้อความในคิวที่เก่าที่สุดรอมา %(age)s วินาที กรุณาตรวจสอบผู้ให้บริการอีเมล"
+
+#: core/templates/core/staff/today.html:19
+msgid "Bookings today"
+msgstr "การจองวันนี้"
+
+#: core/templates/core/staff/today.html:26
+msgid "Student"
+msgstr "นิสิต"
+
+#: core/templates/core/staff/today.html:28
+#: core/templates/core/staff/users.html:23
+msgid "Actions"
+msgstr "การดำเนินการ"
+
+#: core/templates/core/staff/today.html:36
+msgid "review needed"
+msgstr "ต้องตรวจสอบ"
+
+#: core/templates/core/staff/today.html:42
+msgid "Attendance verified how?"
+msgstr "ยืนยันการเข้าใช้อย่างไร"
+
+#: core/templates/core/staff/today.html:48
+msgid "Evacuation reason"
+msgstr "เหตุผลการอพยพ"
+
+#: core/templates/core/staff/today.html:49
+msgid "End early"
+msgstr "สิ้นสุดก่อนกำหนด"
+
+#: core/templates/core/staff/today.html:55
+msgid "Cancellation reason"
+msgstr "เหตุผลการยกเลิก"
+
+#: core/templates/core/staff/today.html:66
+msgid "No bookings for today."
+msgstr "ไม่มีการจองสำหรับวันนี้"
+
+#: core/templates/core/staff/today.html:71
+msgid "Waiting for approval"
+msgstr "รอการอนุมัติ"
+
+#: core/templates/core/staff/today.html:77
+msgid "email not verified"
+msgstr "ยังไม่ยืนยันอีเมล"
+
+#: core/templates/core/staff/today.html:82
+msgid "Reason (required)"
+msgstr "เหตุผล (จำเป็น)"
+
+#: core/templates/core/staff/today.html:83
+msgid "Approve"
+msgstr "อนุมัติ"
+
+#: core/templates/core/staff/today.html:84
+msgid "Reject"
+msgstr "ไม่อนุมัติ"
+
+#: core/templates/core/staff/today.html:90
+msgid "Nothing waiting."
+msgstr "ไม่มีรายการรอ"
+
+#: core/templates/core/staff/today.html:96
+msgid "Active sanctions"
+msgstr "การลงโทษที่บังคับใช้"
+
+#: core/templates/core/staff/today.html:102
+#: core/templates/core/staff/users.html:35
+msgid "until"
+msgstr "ถึง"
+
+#: core/templates/core/staff/today.html:102
+#: core/templates/core/staff/users.html:35
+msgid "indefinite"
+msgstr "ไม่มีกำหนด"
+
+#: core/templates/core/staff/today.html:106
+msgid "Lift"
+msgstr "ปลด"
+
+#: core/templates/core/staff/today.html:112
+msgid "No active suspensions."
+msgstr "ไม่มีการระงับสิทธิ์ที่บังคับใช้"
+
+#: core/templates/core/staff/today.html:117
+msgid "On-site reviews pending"
+msgstr "รอการตรวจสอบหน้างาน"
+
+#: core/templates/core/staff/today.html:126
+msgid "What was confirmed on site?"
+msgstr "ยืนยันอะไรที่หน้างาน"
+
+#: core/templates/core/staff/today.html:127
+msgid "Resolve"
+msgstr "แก้ไขให้เสร็จ"
+
+#: core/templates/core/staff/today.html:133
+msgid "Nothing pending."
+msgstr "ไม่มีรายการค้าง"
+
+#: core/templates/core/staff/today.html:138
+msgid "Open incidents"
+msgstr "เหตุขัดข้องที่เปิดอยู่"
+
+#: core/templates/core/staff/today.html:146
+msgid "No open incidents."
+msgstr "ไม่มีเหตุขัดข้องที่เปิดอยู่"
+
+#: core/templates/core/staff/today.html:151
+msgid "Failed mail"
+msgstr "อีเมลที่ส่งไม่สำเร็จ"
+
+#: core/templates/core/staff/today.html:159
+msgid "No failed messages."
+msgstr "ไม่มีข้อความที่ส่งไม่สำเร็จ"
+
+#: core/templates/core/staff/users.html:9
+msgid "Search by ID, email or name"
+msgstr "ค้นหาด้วยรหัส อีเมล หรือชื่อ"
+
+#: core/templates/core/staff/users.html:12
+msgid "Search"
+msgstr "ค้นหา"
+
+#: core/templates/core/staff/users.html:22
+msgid "Sanction"
+msgstr "การลงโทษ"
+
+#: core/templates/core/staff/users.html:31
+msgid "inactive"
+msgstr "ปิดการใช้งาน"
+
+#: core/templates/core/staff/users.html:40
+msgid "Manage"
+msgstr "จัดการ"
+
+#: core/templates/core/staff/users.html:46
+msgid "Violation note"
+msgstr "บันทึกการฝ่าฝืน"
+
+#: core/templates/core/staff/users.html:47
+msgid "counts as strike"
+msgstr "นับเป็นคะแนนโทษ"
+
+#: core/templates/core/staff/users.html:48
+msgid "Record violation"
+msgstr "บันทึกการฝ่าฝืน"
+
+#: core/templates/core/staff/users.html:54
+msgid "Suspension reason"
+msgstr "เหตุผลการระงับสิทธิ์"
+
+#: core/templates/core/staff/users.html:55
+msgid "until (blank = indefinite)"
+msgstr "ถึง (เว้นว่าง = ไม่มีกำหนด)"
+
+#: core/templates/core/staff/users.html:57
+msgid "Suspend"
+msgstr "ระงับสิทธิ์"
+
+#: core/templates/core/staff/users.html:64
+msgid "Adjustment reason"
+msgstr "เหตุผลการปรับ"
+
+#: core/templates/core/staff/users.html:66
+msgid "Adjust end"
+msgstr "ปรับวันสิ้นสุด"
+
+#: core/templates/core/staff/users.html:71
+msgid "Lift reason"
+msgstr "เหตุผลการปลด"
+
+#: core/templates/core/staff/users.html:72
+msgid "Lift suspension"
+msgstr "ปลดการระงับสิทธิ์"
+
+#: core/templates/core/staff/users.html:79
+msgid "Deactivation reason"
+msgstr "เหตุผลการปิดการใช้งาน"
+
+#: core/templates/core/staff/users.html:80
+msgid "Deactivate account"
+msgstr "ปิดการใช้งานบัญชี"
+
+#: core/templates/core/staff/users.html:87
+msgid "Strikes on record"
+msgstr "คะแนนโทษที่บันทึกไว้"
+
+#: core/templates/core/staff/users.html:93
+msgid "already used for a suspension"
+msgstr "ถูกใช้ไปแล้วกับการระงับสิทธิ์หนึ่งครั้ง"
+
+#: core/templates/core/staff/users.html:98
+#: core/templates/core/staff/users.html:99
+msgid "Why is this strike wrong?"
+msgstr "เหตุใดคะแนนโทษนี้จึงไม่ถูกต้อง"
+
+#: core/templates/core/staff/users.html:100
+msgid "Void strike"
+msgstr "ยกเลิกคะแนนโทษ"
+
+#: core/templates/core/staff/users.html:106
+msgid "No strikes on record."
+msgstr "ยังไม่มีคะแนนโทษที่บันทึกไว้"
+
+#: core/templates/core/staff/users.html:111
+msgid "Staff cannot grant superuser, change secrets or bypass booking rules."
+msgstr "เจ้าหน้าที่ไม่สามารถให้สิทธิ์ผู้ดูแลระบบสูงสุด เปลี่ยนรหัสลับ หรือข้ามกฎการจองได้"
+
+#: core/templates/core/token_problem.html:4
+msgid "Link problem"
+msgstr "ปัญหาลิงก์"
+
+#: core/templates/core/token_problem.html:9
+msgid "This invitation cannot be used"
+msgstr "ไม่สามารถใช้คำเชิญนี้ได้"
+
+#: core/templates/core/token_problem.html:9
+msgid "This link cannot be used"
+msgstr "ไม่สามารถใช้ลิงก์นี้ได้"
+
+#: core/templates/core/token_problem.html:13
+msgid ""
+"Links are single use and expire. If you need a new one, ask the department "
+"office, or register again with the same details."
+msgstr ""
+"ลิงก์ใช้ได้ครั้งเดียวและมีวันหมดอายุ หากต้องการลิงก์ใหม่ กรุณาติดต่อสำนักงานภาควิชา "
+"หรือลงทะเบียนใหม่ด้วยข้อมูลเดิม"
+
+#: core/templates/core/token_problem.html:16
+msgid "Register again"
+msgstr "ลงทะเบียนใหม่"
+
+#: core/templates/core/use_now_confirm.html:4
+#: core/templates/core/use_now_confirm.html:7
+msgid "Use this room now"
+msgstr "ใช้ห้องนี้ตอนนี้"
+
+#: core/templates/core/use_now_confirm.html:15
+msgid ""
+"Booking is suspended on this account. You can still read your history and "
+"ask staff for help."
+msgstr "บัญชีนี้ถูกระงับสิทธิ์การจอง คุณยังดูประวัติของตนเองและขอความช่วยเหลือจากเจ้าหน้าที่ได้"
+
+#: core/templates/core/use_now_confirm.html:29
+msgid ""
+"Less than five minutes remain in this hour. The session will still end at "
+"the hour boundary."
+msgstr "เหลือเวลาในชั่วโมงนี้น้อยกว่าห้านาที การใช้งานจะยังสิ้นสุดเมื่อหมดชั่วโมง"
+
+#: core/templates/core/use_now_confirm.html:34
+msgid ""
+"The session ends at the end of the current hour. There is no extra hour and "
+"no early self-checkout. This page confirms an account action; it cannot "
+"prove you are physically in the room, and staff may spot check."
+msgstr ""
+"การใช้งานสิ้นสุดเมื่อหมดชั่วโมงปัจจุบัน ไม่มีการต่อเวลาและไม่สามารถเช็คเอาท์ก่อนกำหนดได้เอง "
+"หน้านี้ยืนยันการดำเนินการผ่านบัญชี ไม่สามารถพิสูจน์ว่าคุณอยู่ในห้องจริง "
+"และเจ้าหน้าที่อาจตรวจสอบเป็นครั้งคราว"
+
+#: core/templates/core/use_now_confirm.html:47
+msgid "How to ask for a review"
+msgstr "วิธีขอให้ทบทวน"
+
+#: core/templates/core/use_now_confirm.html:52
+msgid ""
+"This room cannot be started for the current hour. Check the availability "
+"grid for another room."
+msgstr "ห้องนี้ไม่สามารถเริ่มใช้งานในชั่วโมงปัจจุบันได้ กรุณาดูตารางห้องว่างเพื่อเลือกห้องอื่น"

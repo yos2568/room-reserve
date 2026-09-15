@@ -13,8 +13,6 @@ The V3 acceptance examples must be executable:
 
 from __future__ import annotations
 
-from datetime import timedelta
-
 import pytest
 
 from core.models import Booking, Violation
@@ -249,7 +247,9 @@ def test_use_now_blocked_for_ineligible_accounts(db, rooms):
 def test_use_now_respects_quota(db, student, rooms):
     today = DAY.date()
     # Two prior charged bookings on the same date.
-    factories.make_booking(student, rooms[0], slot_start=slots.slot_start_for(today, 9), status=Booking.Status.COMPLETED)
+    factories.make_booking(
+        student, rooms[0], slot_start=slots.slot_start_for(today, 9), status=Booking.Status.COMPLETED
+    )
     factories.make_booking(student, rooms[1], slot_start=slots.slot_start_for(today, 13))
 
     with clock.frozen_clock(at(15, 20)):

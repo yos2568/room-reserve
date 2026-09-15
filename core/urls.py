@@ -92,6 +92,11 @@ urlpatterns = [
         views.staff.create_policy_version,
         name="staff_create_policy_version",
     ),
+    path(
+        "staff/rooms/<int:pk>/audience/",
+        views.staff.set_room_audience,
+        name="staff_set_room_audience",
+    ),
     path("staff/rooms/<int:pk>/deactivate/", views.staff.deactivate_room, name="staff_deactivate_room"),
     path("staff/quota/", views.staff.quota_lookup, name="staff_quota_lookup"),
     path("staff/admin/", views.staff.admin_home, name="staff_admin"),

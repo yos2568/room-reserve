@@ -41,12 +41,16 @@ def enqueue(
     payload: dict | None = None,
     due_at=None,
     language: str | None = None,
-) -> Notification:
+) -> tuple[Notification, bool]:
     """Insert one outbox row. Repeated calls with the same key are a no-op.
 
     Must be called inside the same transaction as the state change it describes,
     so that a rolled-back booking never sends mail and a committed booking always
     has its event queued.
+
+    Returns ``(notification, created)``. ``created`` is False when an earlier
+    call already queued this key, which is what lets a repeated reminder pass
+    report how much new work it actually produced.
     """
     now = timezone.now()
     notification, created = Notification.objects.get_or_create(
@@ -62,7 +66,7 @@ def enqueue(
     )
     if not created:
         logger.debug("Outbox event %s already queued; skipping.", dedupe_key)
-    return notification
+    return notification, created
 
 
 def claim_due(now, limit: int | None = None, lease_seconds: int | None = None) -> list[Notification]:
@@ -98,9 +102,7 @@ def mark_sent(notification: Notification, now=None) -> None:
     notification.lease_until = None
     notification.lease_token = None
     notification.last_error = ""
-    notification.save(
-        update_fields=["status", "sent_at", "lease_until", "lease_token", "last_error"]
-    )
+    notification.save(update_fields=["status", "sent_at", "lease_until", "lease_token", "last_error"])
 
 
 def mark_failed(notification: Notification, error: object, now=None) -> None:
@@ -112,9 +114,7 @@ def mark_failed(notification: Notification, error: object, now=None) -> None:
         notification.status = Notification.Status.EXHAUSTED
         notification.lease_until = None
         notification.lease_token = None
-        notification.save(
-            update_fields=["status", "last_error", "lease_until", "lease_token"]
-        )
+        notification.save(update_fields=["status", "last_error", "lease_until", "lease_token"])
         logger.warning(
             "Outbox event %s exhausted after %s attempts: %s",
             notification.dedupe_key,
@@ -129,9 +129,7 @@ def mark_failed(notification: Notification, error: object, now=None) -> None:
     notification.next_attempt_at = now + timedelta(minutes=delay)
     notification.lease_until = None
     notification.lease_token = None
-    notification.save(
-        update_fields=["next_attempt_at", "last_error", "lease_until", "lease_token"]
-    )
+    notification.save(update_fields=["next_attempt_at", "last_error", "lease_until", "lease_token"])
 
 
 def cancel(notification: Notification, reason: str = "") -> None:
@@ -144,8 +142,4 @@ def cancel(notification: Notification, reason: str = "") -> None:
 
 def oldest_actionable(now):
     """Oldest still-pending outbox row, used by the age monitoring check."""
-    return (
-        Notification.objects.filter(status=Notification.Status.PENDING)
-        .order_by("next_attempt_at")
-        .first()
-    )
+    return Notification.objects.filter(status=Notification.Status.PENDING).order_by("next_attempt_at").first()

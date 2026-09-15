@@ -11,7 +11,7 @@ from core.models.booking import (
     BookingControl,
     advance_deadline,
 )
-from core.models.identity import EligibleStudent, Invitation
+from core.models.identity import EligibleStudent, InstrumentCategory, Invitation
 from core.models.operations import (
     AuditEvent,
     JobHeartbeat,
@@ -19,7 +19,7 @@ from core.models.operations import (
     OperationRequest,
 )
 from core.models.policy import PolicyVersion, ServiceIncident
-from core.models.room import CalendarOverride, Closure, Room
+from core.models.room import CalendarOverride, Closure, Room, RoomAllowedCategory
 from core.models.sanctions import Suspension, Violation
 from core.models.user import User
 
@@ -32,12 +32,14 @@ __all__ = [
     "CalendarOverride",
     "Closure",
     "EligibleStudent",
+    "InstrumentCategory",
     "Invitation",
     "JobHeartbeat",
     "Notification",
     "OperationRequest",
     "PolicyVersion",
     "Room",
+    "RoomAllowedCategory",
     "ServiceIncident",
     "Suspension",
     "User",

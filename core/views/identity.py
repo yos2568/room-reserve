@@ -19,6 +19,23 @@ from core.services.policy import current_policy
 from ._helpers import now, safe_next_url
 
 
+def _password_form_context(*, token: str, purpose: str, account=None, errors=None) -> dict:
+    """The context every "choose a password" form needs.
+
+    ``errors`` carries the password validators' own messages, which Django ships
+    translated. A rejected password re-renders this form rather than a "link
+    problem" page: the link is still perfectly good, and saying otherwise sends
+    the student to ask for a replacement they do not need.
+    """
+    return {
+        "token": token,
+        "purpose": purpose,
+        "account": account,
+        "errors": list(errors or []),
+        "policy": current_policy(),
+    }
+
+
 @require_http_methods(["GET", "POST"])
 def register(request):
     """Self-registration: ID + institutional email + name."""
@@ -33,9 +50,7 @@ def register(request):
 
         try:
             ratelimit.guard_registration(request)
-            identity_service.start_registration(
-                institutional_id=institutional_id, email=email, name=name
-            )
+            identity_service.start_registration(institutional_id=institutional_id, email=email, name=name)
         except OperationRejected as exc:
             outcome = exc.outcome
             # Never reveal whether a field matched the roster or an account: show
@@ -94,31 +109,28 @@ def verify_email(request, token: str):
             },
         )
 
-    # POST: redeem the token and set the password in one step.
+    # POST: redeem the token and set the password in one step. The link is single
+    # use, so exactly one service call consumes it.
     password = request.POST.get("password") or ""
     confirm = request.POST.get("password_confirm") or ""
+    invitation = identity_service.find_invitation(token, Invitation.Purpose.EMAIL_VERIFICATION)
+    form = _password_form_context(
+        token=token,
+        purpose=Invitation.Purpose.EMAIL_VERIFICATION,
+        account=getattr(invitation, "user", None),
+    )
+
     if password != confirm:
         messages.error(request, "รหัสผ่านทั้งสองช่องไม่ตรงกัน / The two passwords do not match.")
-        return render(
-            request,
-            "core/set_password.html",
-            {
-                "token": token,
-                "purpose": Invitation.Purpose.EMAIL_VERIFICATION,
-                "policy": current_policy(),
-            },
-            status=400,
-        )
+        return render(request, "core/set_password.html", form, status=400)
 
     try:
-        user, _ = identity_service.verify_email(token)
-        identity_service.set_initial_password(
-            user=user,
-            password=password,
-            raw_token=token,
-            purpose=Invitation.Purpose.EMAIL_VERIFICATION,
-        )
+        identity_service.complete_registration(raw_token=token, password=password)
     except OperationRejected as exc:
+        if exc.outcome.code == Code.INVALID_INPUT:
+            # A weak password is a form error, not a problem with the link.
+            form["errors"] = exc.outcome.data.get("errors", [])
+            return render(request, "core/set_password.html", form, status=400)
         return render(
             request,
             "core/token_problem.html",
@@ -160,18 +172,15 @@ def accept_invitation(request, token: str):
         )
 
     password = request.POST.get("password") or ""
+    form = _password_form_context(
+        token=token,
+        purpose=Invitation.Purpose.ACCOUNT_ACTIVATION,
+        account=getattr(invitation, "user", None),
+    )
+
     if password != (request.POST.get("password_confirm") or ""):
         messages.error(request, "รหัสผ่านทั้งสองช่องไม่ตรงกัน / The two passwords do not match.")
-        return render(
-            request,
-            "core/set_password.html",
-            {
-                "token": token,
-                "purpose": Invitation.Purpose.ACCOUNT_ACTIVATION,
-                "policy": current_policy(),
-            },
-            status=400,
-        )
+        return render(request, "core/set_password.html", form, status=400)
 
     try:
         invitation = identity_service.assert_redeemable(invitation, Invitation.Purpose.ACCOUNT_ACTIVATION)
@@ -182,6 +191,9 @@ def accept_invitation(request, token: str):
             purpose=Invitation.Purpose.ACCOUNT_ACTIVATION,
         )
     except OperationRejected as exc:
+        if exc.outcome.code == Code.INVALID_INPUT:
+            form["errors"] = exc.outcome.data.get("errors", [])
+            return render(request, "core/set_password.html", form, status=400)
         return render(
             request,
             "core/token_problem.html",
@@ -300,14 +312,15 @@ def password_reset_confirm(request, token: str):
         )
 
     password = request.POST.get("password") or ""
+    reset_form = {
+        "token": token,
+        "account": getattr(invitation, "user", None),
+        "errors": [],
+    }
+
     if password != (request.POST.get("password_confirm") or ""):
         messages.error(request, "รหัสผ่านทั้งสองช่องไม่ตรงกัน / The two passwords do not match.")
-        return render(
-            request,
-            "core/password_reset_confirm.html",
-            {"token": token},
-            status=400,
-        )
+        return render(request, "core/password_reset_confirm.html", reset_form, status=400)
 
     try:
         invitation = identity_service.assert_redeemable(invitation, Invitation.Purpose.PASSWORD_RESET)
@@ -318,6 +331,9 @@ def password_reset_confirm(request, token: str):
             purpose=Invitation.Purpose.PASSWORD_RESET,
         )
     except OperationRejected as exc:
+        if exc.outcome.code == Code.INVALID_INPUT:
+            reset_form["errors"] = exc.outcome.data.get("errors", [])
+            return render(request, "core/password_reset_confirm.html", reset_form, status=400)
         return render(
             request,
             "core/token_problem.html",

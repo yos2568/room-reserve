@@ -23,10 +23,49 @@
 
   <section class="card mt-4">
     <h2 class="text-base font-semibold">{% trans "Rooms" %}</h2>
-    <ul class="mt-2 space-y-2 text-sm">
+    <ul class="mt-2 space-y-3 text-sm">
       {% for room in rooms %}
         <li>
           {{ room }}{% if not room.is_active %} · <span class="text-red-800">{% trans "out of service" %}</span>{% endif %}
+          {% if room.is_restricted %}
+            · <span class="text-violet-800">
+              {% trans "Reserved for" %}:
+              {% if room.allowed_category_values %}
+                {% for row in room.allowed_categories.all %}{{ row.get_category_display }}{% if not forloop.last %}, {% endif %}{% endfor %}
+              {% else %}
+                {% trans "nobody (no categories configured)" %}
+              {% endif %}
+            </span>
+          {% endif %}
+
+          <details class="mt-1">
+            <summary class="cursor-pointer">{% trans "Who may reserve" %}</summary>
+            <form method="post" action="{% url 'core:staff_set_room_audience' pk=room.pk %}" class="mt-2 space-y-1">
+              {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+              <label class="flex items-center gap-2">
+                <input type="radio" name="reservation_scope" value="EVERYONE" {% if not room.is_restricted %}checked{% endif %}>
+                {% trans "Any eligible student" %}
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="radio" name="reservation_scope" value="LISTED" {% if room.is_restricted %}checked{% endif %}>
+                {% trans "Only these instrument categories" %}
+              </label>
+              <div class="flex flex-wrap gap-x-3 gap-y-1 ps-5 text-xs">
+                {% for value, label in instrument_categories %}
+                  <label class="flex items-center gap-1">
+                    <input type="checkbox" name="categories" value="{{ value }}"
+                           {% if value in room.allowed_category_values %}checked{% endif %}>
+                    {{ label }}
+                  </label>
+                {% endfor %}
+              </div>
+              <p class="text-xs text-slate-700">
+                {% trans "Anyone may still walk in once an hour has started and the room is free." %}
+              </p>
+              <button class="btn-secondary" type="submit">{% trans "Save audience" %}</button>
+            </form>
+          </details>
+
           {% if room.is_active %}
             <form method="post" action="{% url 'core:staff_deactivate_room' pk=room.pk %}" class="mt-1 flex flex-wrap items-center gap-1">
               {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
@@ -38,7 +77,7 @@
       {% endfor %}
     </ul>
     <p class="mt-2 text-xs text-slate-700">
-      {% blocktrans %}Taking a room out of service cancels its scheduled bookings without penalty and flags any session in use for review.{% endblocktrans %}
+      {% blocktrans %}Taking a room out of service cancels its scheduled bookings without penalty and flags any session in use for review. Changing who may reserve a room never cancels a booking that already exists.{% endblocktrans %}
     </p>
   </section>
 {% endblock %}

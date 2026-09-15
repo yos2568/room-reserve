@@ -35,7 +35,11 @@ COPY . .
 COPY --from=css /build/core/static/css/tailwind.css ./core/static/css/tailwind.css
 
 # Collect static at build time so the image is immutable and self-contained.
-RUN SECRET_KEY=build-only DJANGO_ALLOWED_HOSTS=localhost \
+# The variable names are the ones roomreserve/settings/prod.py reads with
+# required=True; they must stay in step with that file or the build stops here
+# with "DJANGO_SECRET_KEY is required but was not set". These are throwaway
+# build-time values, never deployed secrets.
+RUN DJANGO_SECRET_KEY=build-only DJANGO_ALLOWED_HOSTS=localhost \
     DJANGO_CSRF_TRUSTED_ORIGINS=https://localhost \
     POSTGRES_PASSWORD=build-only EMAIL_HOST=localhost EMAIL_HOST_USER=x \
     EMAIL_HOST_PASSWORD=x DEFAULT_FROM_EMAIL=build@localhost.test \
