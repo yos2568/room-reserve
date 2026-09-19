@@ -49,6 +49,16 @@ docker compose ps
 docker compose logs --tail=100 web scheduler
 ```
 
+The production environment must set `MAINTAINER_ALLOWED_IPS` to the
+maintainer's fixed address or VPN CIDR. The technical admin at `/maintainer/`
+is refused from every other network and is available only to an active
+superuser. `STAFF_ALLOWED_IPS` is optional for deployments that keep staff
+operations behind a campus network or VPN; leave it empty only when individual
+staff accounts and the application login are the intended boundary. Never use
+`0.0.0.0/0` as an allowlist. The production Caddy site must preserve the
+`X-Real-IP` header override shown in `deploy/Caddyfile` so these checks cannot
+be bypassed with a client-supplied forwarded header.
+
 Migrations run **once as a release step**, never on worker startup:
 
 ```bash

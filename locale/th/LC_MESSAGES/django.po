@@ -593,8 +593,9 @@ msgstr "ช่วงเช็คอินปิดที่ %(deadline)s ห้�
 msgid "Scan at the room to check in"
 msgstr "สแกนที่ห้องเพื่อเช็คอิน"
 
-msgid "Opens between {{ start }} and {{ deadline }}. Scanning confirms a declaration, not proven presence — staff may spot check."
-msgstr "ใช้ได้ระหว่าง {{ start }} ถึง {{ deadline }} การสแกนเป็นการยืนยันตัวตนเท่านั้น ไม่ใช่การพิสูจน์ว่าอยู่ในห้อง — เจ้าหน้าที่อาจตรวจสอบพัก"
+#, python-format
+msgid "Opens between %(start)s and %(deadline)s. Scanning confirms a declaration, not proven presence — staff may spot check."
+msgstr "ใช้ได้ระหว่าง %(start)s ถึง %(deadline)s การสแกนเป็นการแจ้งยืนยันว่าอยู่ที่ห้อง ไม่ใช่หลักฐานพิสูจน์การอยู่ในห้อง — เจ้าหน้าที่อาจสุ่มตรวจสอบ"
 
 msgid "Scan the QR code below at the room, or open this link, to check in:"
 msgstr "สแกน QR ด้านล่างที่ห้อง หรือเปิดลิงก์นี้ เพื่อเช็คอิน"

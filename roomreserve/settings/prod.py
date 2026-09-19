@@ -26,6 +26,14 @@ if not CSRF_TRUSTED_ORIGINS:
 
     raise ImproperlyConfigured("DJANGO_CSRF_TRUSTED_ORIGINS must list the https origins in production.")
 
+MAINTAINER_ALLOWED_IPS = env_list("MAINTAINER_ALLOWED_IPS")
+if not MAINTAINER_ALLOWED_IPS:
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured(
+        "MAINTAINER_ALLOWED_IPS must contain at least one maintainer IP or CIDR in production."
+    )
+
 # PostgreSQL credentials must be supplied; the base default is development-only.
 POSTGRES_PASSWORD = env_str("POSTGRES_PASSWORD", required=True)
 DATABASES["default"]["PASSWORD"] = POSTGRES_PASSWORD

@@ -43,7 +43,14 @@ from core.services.errors import OperationOutcome
 from core.services.policy import current_policy
 from core.services.quota import quota_used
 
-from ._helpers import add_outcome_message, now, operation_key, run_view_operation, staff_required
+from ._helpers import (
+    add_outcome_message,
+    now,
+    operation_key,
+    redirect_back,
+    run_view_operation,
+    staff_required,
+)
 
 
 def _success(**data) -> OperationOutcome:
@@ -149,7 +156,7 @@ def decide_eligibility(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_today")
+    return redirect_back(request, "core:staff_today")
 
 
 @staff_required
@@ -163,7 +170,7 @@ def assisted_check_in(request, pk: int):
             request,
             "ต้องระบุเหตุผลและยืนยันการมาใช้งานจริง / A reason is required and attendance must be verified.",
         )
-        return redirect(request.POST.get("next") or "core:staff_today")
+        return redirect_back(request, "core:staff_today")
 
     outcome = run_view_operation(
         request=request,
@@ -175,7 +182,7 @@ def assisted_check_in(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_today")
+    return redirect_back(request, "core:staff_today")
 
 
 @staff_required
@@ -185,7 +192,7 @@ def cancel_booking(request, pk: int):
     reason = (request.POST.get("reason") or "").strip()
     if not reason:
         messages.error(request, "ต้องระบุเหตุผล / A reason is required.")
-        return redirect(request.POST.get("next") or "core:staff_today")
+        return redirect_back(request, "core:staff_today")
 
     outcome = run_view_operation(
         request=request,
@@ -195,7 +202,7 @@ def cancel_booking(request, pk: int):
         body=lambda ctx: _success(**cancel_service(ctx, booking=booking, reason=reason, staff_action=True)),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_today")
+    return redirect_back(request, "core:staff_today")
 
 
 @staff_required
@@ -214,7 +221,7 @@ def complete_early(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_today")
+    return redirect_back(request, "core:staff_today")
 
 
 @staff_required
@@ -231,7 +238,7 @@ def resolve_review(request, pk: int):
         body=lambda ctx: _success(booking_id=maintenance.resolve_review(ctx, booking=booking, note=note).pk),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_today")
+    return redirect_back(request, "core:staff_today")
 
 
 # --- Users, violations and sanctions ------------------------------------------
@@ -262,6 +269,7 @@ def users(request):
     rows = [
         {
             "user": user,
+            "active_roster_entries": [entry for entry in user.roster_entries.all() if entry.is_active],
             "suspension": suspensions.get(user.pk),
             "violations": strikes.get(user.pk, []),
         }
@@ -305,7 +313,7 @@ def set_declared_category(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_users")
+    return redirect_back(request, "core:staff_users")
 
 
 @staff_required
@@ -327,7 +335,7 @@ def record_violation(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_users")
+    return redirect_back(request, "core:staff_users")
 
 
 @staff_required
@@ -350,7 +358,7 @@ def void_violation(request, pk: int):
             "Voiding this strike opened a review of the linked sanction.",
         )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_users")
+    return redirect_back(request, "core:staff_users")
 
 
 @staff_required
@@ -370,7 +378,7 @@ def manual_suspension(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_users")
+    return redirect_back(request, "core:staff_users")
 
 
 @staff_required
@@ -392,7 +400,7 @@ def adjust_suspension(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_users")
+    return redirect_back(request, "core:staff_users")
 
 
 @staff_required
@@ -411,7 +419,7 @@ def lift_suspension(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_users")
+    return redirect_back(request, "core:staff_users")
 
 
 @staff_required
@@ -428,7 +436,7 @@ def deactivate_account(request, pk: int):
         body=lambda ctx: _success(**maintenance.deactivate_account(ctx, user=user, reason=reason)),
     )
     add_outcome_message(request, outcome)
-    return redirect(request.POST.get("next") or "core:staff_users")
+    return redirect_back(request, "core:staff_users")
 
 
 # --- Closures ------------------------------------------------------------------

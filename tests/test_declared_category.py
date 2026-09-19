@@ -165,3 +165,16 @@ def test_staff_can_clear_declared_category(frozen, staff_user, student):
 def test_staff_view_rejects_unknown_category(frozen, staff_user, student):
     with pytest.raises(OperationRejected):
         identity_service.set_declared_category(user=student, declared_category="TUBA", actor=staff_user)
+
+
+@pytest.mark.parametrize("active", [False, True])
+def test_staff_instrument_display_matches_active_roster_precedence(frozen, staff_user, client, active):
+    student = factories.make_user(declared_category="PIANO")
+    factories.make_roster_entry(student, instrument="ไวโอลิน", is_active=active)
+    client.force_login(staff_user)
+    response = client.get("/en/staff/users/", {"q": student.username})
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert ("(roster)" in html) is active
+    assert ("(declared)" in html) is not active
+    assert instruments.category_for_user(student) == ("STRINGS" if active else "PIANO")

@@ -13,12 +13,12 @@ from datetime import timedelta
 
 import pytest
 from django.core.cache import cache
-from django.test import Client
+from django.test import Client, override_settings
 from django.urls import reverse
 
 from core.models import User, Violation
 from core.services import csvio, identity, maintenance, slots
-from core.services.errors import Code
+from core.services.errors import Code, OperationRejected
 from core.services.protocol import run_operation
 from tests import factories, helpers
 
@@ -160,8 +160,37 @@ def test_operational_staff_cannot_reach_the_maintainer_admin(frozen, staff_user)
     client.force_login(staff_user)
 
     response = client.get(MAINTAINER_URL)
-    assert response.status_code == 302, "the admin is not a staff surface"
-    assert "login" in response["Location"]
+    assert response.status_code == 403, "the admin is reserved for the maintainer superuser"
+
+
+def test_maintainer_admin_requires_the_allowlisted_network(frozen):
+    maintainer = User.objects.create_superuser(
+        username="66002000006", email="maintainer2@student.chula.ac.th", password=PASSWORD
+    )
+    client = Client()
+    client.force_login(maintainer)
+
+    with override_settings(MAINTAINER_ALLOWED_IPS=["203.0.113.10/32"]):
+        response = client.get(MAINTAINER_URL, REMOTE_ADDR="198.51.100.20")
+
+    assert response.status_code == 403
+
+
+def test_staff_next_cannot_redirect_off_host(frozen, staff_user, student):
+    client = Client()
+    client.force_login(staff_user)
+
+    response = client.post(
+        reverse("core:staff_record_violation", args=[student.pk]),
+        {
+            "user": student.pk,
+            "note": "reviewed by staff",
+            "next": "https://evil.example/phish",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response["Location"] == reverse("core:staff_users")
 
 
 def test_a_student_posting_to_a_staff_action_changes_nothing(frozen, student, other_student):
@@ -338,6 +367,42 @@ def test_correct_credentials_are_not_blocked_by_another_accounts_attempts(frozen
         {"institutional_id": other_student.username, "password": PASSWORD},
     )
     assert response.status_code == 302
+
+
+def test_registration_is_limited_per_identity_and_email(frozen):
+    from django.test import RequestFactory
+
+    from core.services import ratelimit
+
+    request = RequestFactory().post("/th/register/")
+    for _ in range(ratelimit.REGISTRATION_LIMIT):
+        ratelimit.guard_registration(
+            request,
+            identifier="66009990001",
+            email="same@student.chula.ac.th",
+        )
+
+    with pytest.raises(OperationRejected) as excinfo:
+        ratelimit.guard_registration(
+            request,
+            identifier="66009990001",
+            email="same@student.chula.ac.th",
+        )
+
+    assert excinfo.value.outcome.code == Code.RATE_LIMITED
+
+
+def test_rate_limit_ignores_untrusted_forwarded_for_header():
+    from django.test import RequestFactory
+
+    from core.services.ratelimit import client_address
+
+    request = RequestFactory().get(
+        "/th/login/",
+        HTTP_X_FORWARDED_FOR="203.0.113.99",
+    )
+
+    assert client_address(request) == "127.0.0.1"
 
 
 # --- Export safety -------------------------------------------------------------

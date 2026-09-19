@@ -139,23 +139,29 @@ def revalidate(notification: Notification, now) -> dict:
     return payload
 
 
+def _render_context(notification: Notification, context: dict) -> dict:
+    """Shared email fields; called inside the notification's language override."""
+    enriched = dict(context)
+    enriched.setdefault("site_base_url", settings.SITE_BASE_URL.rstrip("/"))
+    enriched.setdefault(
+        "support_contact",
+        {
+            "name": settings.SUPPORT_CONTACT_NAME,
+            "phone": settings.SUPPORT_CONTACT_PHONE,
+            "email": settings.SUPPORT_CONTACT_EMAIL,
+        },
+    )
+    enriched.setdefault("recipient", notification.recipient)
+    if enriched.get("checkin_token"):
+        enriched["checkin_path"] = reverse("core:checkin_qr", args=[enriched["checkin_token"]])
+    return enriched
+
+
 def render(notification: Notification, context: dict) -> tuple[str, str]:
     language = notification.language or "th"
     with translation.override(language):
         subject = str(_SUBJECTS.get(notification.kind, _("Room Reserve notification")))
-        enriched = dict(context)
-        enriched.setdefault("site_base_url", settings.SITE_BASE_URL.rstrip("/"))
-        enriched.setdefault(
-            "support_contact",
-            {
-                "name": settings.SUPPORT_CONTACT_NAME,
-                "phone": settings.SUPPORT_CONTACT_PHONE,
-                "email": settings.SUPPORT_CONTACT_EMAIL,
-            },
-        )
-        enriched.setdefault("recipient", notification.recipient)
-        if enriched.get("checkin_token"):
-            enriched["checkin_path"] = reverse("core:checkin_qr", args=[enriched["checkin_token"]])
+        enriched = _render_context(notification, context)
         body = render_to_string(f"core/email/{notification.kind}.txt", enriched)
     return subject, body
 
@@ -171,10 +177,8 @@ def render_html(notification: Notification, context: dict) -> str | None:
         return None
     language = notification.language or "th"
     with translation.override(language):
-        enriched = dict(context)
-        site_base_url = enriched.setdefault("site_base_url", settings.SITE_BASE_URL.rstrip("/"))
-        enriched["checkin_path"] = reverse("core:checkin_qr", args=[enriched["checkin_token"]])
-        enriched["qr_data_uri"] = posters.qr_data_uri(site_base_url + enriched["checkin_path"])
+        enriched = _render_context(notification, context)
+        enriched["qr_data_uri"] = posters.qr_data_uri(enriched["site_base_url"] + enriched["checkin_path"])
         return render_to_string(f"core/email/{notification.kind}.html", enriched)
 
 

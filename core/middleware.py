@@ -10,7 +10,11 @@ from __future__ import annotations
 import uuid
 from threading import local
 
+from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.utils.cache import patch_vary_headers
+
+from core.security import client_ip_allowed
 
 _state = local()
 
@@ -80,3 +84,24 @@ class PersonalResponseCacheMiddleware:
 
         patch_vary_headers(response, ("Cookie",))
         return response
+
+
+class MaintainerAccessMiddleware:
+    """Restrict the technical admin to an active superuser and trusted network."""
+
+    PATH_PREFIX = "/maintainer/"
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path_info.startswith(self.PATH_PREFIX):
+            if not client_ip_allowed(request, settings.MAINTAINER_ALLOWED_IPS):
+                raise PermissionDenied("Maintainer access is not available from this network.")
+            # Anonymous users may reach Django's login form. Once authenticated,
+            # only the designated maintainer account may use the admin surface.
+            if request.user.is_authenticated and (
+                not request.user.is_active or not request.user.is_superuser
+            ):
+                raise PermissionDenied("Maintainer access required.")
+        return self.get_response(request)

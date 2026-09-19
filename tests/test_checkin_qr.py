@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import pytest
 from django.urls import reverse
+from django.utils import translation
 
 from core.models import Booking, Notification, User
 from core.services import clock, notifications, slots
@@ -75,7 +76,8 @@ def test_confirmation_email_contains_link_and_qr(frozen, student, rooms):
     subject, text = notifications.render(notification, context)
     html = notifications.render_html(notification, context)
 
-    path = reverse("core:checkin_qr", args=[booking.checkin_token])
+    with translation.override(notification.language or "th"):
+        path = reverse("core:checkin_qr", args=[booking.checkin_token])
     assert path in text
     assert html is not None
     assert path in html
@@ -90,6 +92,47 @@ def test_other_kinds_get_no_html(frozen, student, rooms):
 
     context = notifications.revalidate(notification, clock.now())
     assert notifications.render_html(notification, context) is None
+
+
+def test_html_confirmation_preserves_support_details(frozen, student, rooms, settings):
+    settings.SUPPORT_CONTACT_NAME = "Practice Office"
+    settings.SUPPORT_CONTACT_PHONE = "02-123-4567"
+    settings.SUPPORT_CONTACT_EMAIL = "support@example.invalid"
+    outcome = helpers.advance_booking(student, rooms[0], slots.slot_start_for(TOMORROW, 13))
+    notification = Notification.objects.get(dedupe_key=f"booking_confirmation:{outcome.data['booking_id']}")
+    context = notifications.revalidate(notification, clock.now())
+    _, plain = notifications.render(notification, context)
+    html = notifications.render_html(notification, context)
+    for value in (
+        settings.SUPPORT_CONTACT_NAME,
+        settings.SUPPORT_CONTACT_PHONE,
+        settings.SUPPORT_CONTACT_EMAIL,
+    ):
+        assert value in plain
+        assert value in html
+
+
+@pytest.mark.parametrize(
+    "kind", [notifications.KIND_BOOKING_CONFIRMATION, notifications.KIND_BOOKING_REMINDER]
+)
+def test_thai_qr_window_is_translated_and_interpolated(frozen, student, rooms, kind):
+    booking = factories.make_booking(student, rooms[0], day=TOMORROW, hour=13)
+    notification = notification_stub(
+        student,
+        kind=kind,
+        payload={
+            "booking_id": booking.pk,
+            "slot_start": booking.slot_start.isoformat(),
+            "slot_end": booking.slot_end.isoformat(),
+            "deadline_local": "13:15",
+        },
+    )
+    notification.language = "th"
+    html = notifications.render_html(notification, notifications.revalidate(notification, clock.now()))
+    assert "ใช้ได้ระหว่าง 13:00 ถึง 13:15" in html
+    assert "Opens between" not in html
+    assert "{{ start }}" not in html
+    assert "%(start)s" not in html
 
 
 # --- The landing page -------------------------------------------------------------
@@ -181,7 +224,8 @@ def test_reminder_email_carries_link_and_qr(frozen, student, rooms):
     subject, text = notifications.render(notification, context)
     html = notifications.render_html(notification, context)
 
-    path = reverse("core:checkin_qr", args=[booking.checkin_token])
+    with translation.override(notification.language or "th"):
+        path = reverse("core:checkin_qr", args=[booking.checkin_token])
     assert path in text
     assert html is not None
     assert path in html

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -11,6 +12,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import resolve_url
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from core.security import client_ip_allowed
 from core.services import clock
 from core.services.errors import OperationOutcome, status_for
 from core.services.protocol import run_operation
@@ -38,8 +40,10 @@ def staff_required(view):
     @login_required
     def wrapper(request, *args, **kwargs):
         user = request.user
-        if not (user.is_operational_staff or user.is_superuser):
+        if not user.is_active or not (user.is_operational_staff or user.is_superuser):
             raise PermissionDenied("Operational staff access required.")
+        if not client_ip_allowed(request, settings.STAFF_ALLOWED_IPS):
+            raise PermissionDenied("Staff access is not available from this network.")
         return view(request, *args, **kwargs)
 
     return wrapper

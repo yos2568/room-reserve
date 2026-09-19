@@ -41,6 +41,7 @@ COPY --from=css /build/core/static/css/tailwind.css ./core/static/css/tailwind.c
 # build-time values, never deployed secrets.
 RUN DJANGO_SECRET_KEY=build-only DJANGO_ALLOWED_HOSTS=localhost \
     DJANGO_CSRF_TRUSTED_ORIGINS=https://localhost \
+    MAINTAINER_ALLOWED_IPS=127.0.0.1 \
     POSTGRES_PASSWORD=build-only EMAIL_HOST=localhost EMAIL_HOST_USER=x \
     EMAIL_HOST_PASSWORD=x DEFAULT_FROM_EMAIL=build@localhost.test \
     python manage.py collectstatic --noinput

@@ -13,7 +13,7 @@ from datetime import date
 
 import pytest
 
-from core.models import Room
+from core.models import Booking, CalendarOverride, Room, User
 from core.services import clock, slots, suggest
 from tests import factories
 
@@ -75,6 +75,56 @@ def test_free_now_only_exists_for_today(frozen, student, rooms):
 
     assert result.free_now == []
     assert result.hours  # the future date still shows bookable hours
+
+
+@pytest.mark.parametrize(
+    "hour,minute,expected", [(7, 59, False), (8, 0, True), (19, 59, True), (20, 0, False), (21, 10, False)]
+)
+def test_free_now_obeys_opening_interval(student, rooms, hour, minute, expected):
+    with clock.frozen_clock(factories.bangkok(2026, 9, 14, hour, minute)):
+        assert bool(suggest.suggestions(LATER_TODAY, clock.now(), user=student).free_now) is expected
+
+
+def test_free_now_obeys_shortened_day(frozen, student, rooms):
+    CalendarOverride.objects.create(local_date=LATER_TODAY, is_open=True, open_hour=12, close_hour=15)
+    assert suggest.suggestions(LATER_TODAY, clock.now(), user=student).free_now == []
+
+
+@pytest.mark.parametrize("hour", [9, 10, 11])
+def test_free_now_excludes_same_and_adjacent_bookings(frozen, student, rooms, hour):
+    factories.make_booking(student, rooms[0], day=LATER_TODAY, hour=hour, status=Booking.Status.COMPLETED)
+    assert suggest.suggestions(LATER_TODAY, clock.now(), user=student).free_now == []
+
+
+def test_free_now_excludes_only_the_viewers_forfeited_room(frozen, student, other_student, rooms):
+    factories.make_booking(student, rooms[0], day=LATER_TODAY, hour=10, status=Booking.Status.NO_SHOW)
+    mine = suggest.suggestions(LATER_TODAY, clock.now(), user=student)
+    theirs = suggest.suggestions(LATER_TODAY, clock.now(), user=other_student)
+    assert rooms[0].pk not in {card.room.pk for card in mine.free_now}
+    assert rooms[1].pk in {card.room.pk for card in mine.free_now}
+    assert rooms[0].pk in {card.room.pk for card in theirs.free_now}
+
+
+@pytest.mark.parametrize(
+    "account", [{"is_teacher": True}, {"eligibility": User.Eligibility.PENDING}, {"verified": False}]
+)
+def test_restricted_accounts_see_availability_without_booking_links(frozen, rooms, client, account):
+    client.force_login(factories.make_user(**account))
+    for path in ("/en/", "/en/availability/"):
+        response = client.get(path)
+        assert response.status_code == 200
+        html = response.content.decode()
+        assert "Bookable later today" in html
+        assert 'aria-label="Reserve ' not in html
+        assert 'aria-label="Use ' not in html
+        assert "to reserve or use a room." not in html
+
+
+def test_eligible_student_keeps_suggestion_actions(frozen, student, rooms, client):
+    client.force_login(student)
+    html = client.get("/en/").content.decode()
+    assert 'aria-label="Reserve ' in html
+    assert 'aria-label="Use ' in html
 
 
 # --- Bookable hours ----------------------------------------------------------------

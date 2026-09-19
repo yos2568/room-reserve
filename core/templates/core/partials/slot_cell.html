@@ -1,12 +1,14 @@
 {% load i18n %}
 {# One slot. Text labels carry the meaning so colour is never the only signal. #}
-{% if cell.can_reserve %}
+{% if cell.can_reserve and suggestions.can_act or cell.can_reserve and not user.is_authenticated %}
   <a class="btn-primary w-full !px-2 text-xs"
      href="{% url 'core:book_slot' room_id=cell.room.pk slot=cell.slot_key %}"
      aria-label="{% blocktrans with room=cell.room time=cell.local_start|date:'H:i' %}Reserve {{ room }} at {{ time }}{% endblocktrans %}">
     {% trans "Reserve" %}
   </a>
-{% elif cell.can_use_now %}
+{% elif cell.can_reserve %}
+  <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-700">{% trans "Free" %}</span>
+{% elif cell.can_use_now and suggestions.can_act or cell.can_use_now and not user.is_authenticated %}
   <a class="btn-primary w-full !px-2 text-xs {% if cell.is_short %}!bg-amber-600 hover:!bg-amber-700{% endif %}"
      href="{% url 'core:use_now' room_id=cell.room.pk slot=cell.slot_key %}"
      aria-label="{% blocktrans with room=cell.room time=cell.local_start|date:'H:i' %}Use {{ room }} now from {{ time }}{% endblocktrans %}">

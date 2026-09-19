@@ -121,20 +121,23 @@ def room_has_blocker(room: Room, slot_start) -> bool:
     ).exists()
 
 
-def _free_now(local_date, now) -> list:
+def _free_now(local_date, now, *, user) -> list:
     """Rooms walkable-into right now, longest remaining first.
 
     The walk-in rule ignores the reservation audience on purpose, so this list
-    is filtered by the calendar and occupancy alone. Anonymous visitors see the
-    same rooms; only the button is withheld by the template.
+    is filtered by the calendar, occupancy and the viewer's booking restrictions.
+    Anonymous visitors see public availability without action buttons.
     """
     today = clock.local_date(now)
     if local_date != today:
         return []
-    if calendar.day_hours(today) is None:
+    hours = calendar.day_hours(today)
+    if hours is None or not hours[0] <= clock.local_time(now).hour < hours[1]:
         return []
 
     slot_start = slots.floor_to_slot(now)
+    if slot_start in _viewer_conflicts(user):
+        return []
     slot_end = slots.slot_end_for(slot_start)
     remaining = slots.remaining_minutes(now, slot_end)
     if remaining <= 0:
@@ -145,10 +148,17 @@ def _free_now(local_date, now) -> list:
             "room_id", flat=True
         )
     )
+    forfeited = set()
+    if user is not None and getattr(user, "pk", None):
+        forfeited = set(
+            Booking.objects.filter(
+                user=user, slot_start=slot_start, status=Booking.Status.NO_SHOW
+            ).values_list("room_id", flat=True)
+        )
 
     cards = []
     for room in Room.objects.filter(is_active=True).order_by("position", "number"):
-        if room.pk in occupied:
+        if room.pk in occupied or room.pk in forfeited:
             continue
         if calendar.is_slot_closed(slot_start, room):
             continue
@@ -207,7 +217,7 @@ def suggestions(local_date, now, *, user) -> Suggestions:
     # quota is per account, and there is no account to count.
     exhausted = remaining_quota is not None and remaining_quota <= 0
     return Suggestions(
-        free_now=[] if exhausted else _free_now(local_date, now),
+        free_now=[] if exhausted else _free_now(local_date, now, user=user),
         hours=[] if exhausted else _hour_groups(local_date, now, user=user),
         can_act=_viewer_can_act(user, now),
         quota_remaining=max(0, remaining_quota or 0),

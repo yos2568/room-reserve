@@ -32,7 +32,7 @@
             <td class="p-2">{{ row.user.get_eligibility_display }}{% if not row.user.is_active %} · <span class="text-red-800">{% trans "inactive" %}</span>{% endif %}{% if row.user.is_teacher %} · <span class="font-medium text-brand-700">{% trans "teacher" %}</span>{% endif %}{% if row.user.is_operational_staff %} · <span class="font-medium">{% trans "staff" %}</span>{% endif %}</td>
             <td class="p-2">
               {# Roster category (authoritative) or the registration declaration (D-30). #}
-              {% with linked=row.user.roster_entries.all %}
+              {% with linked=row.active_roster_entries %}
                 {% if linked %}
                   {% for entry in linked %}{% if entry.is_active %}<span class="text-xs font-medium text-brand-700">{{ entry.get_instrument_category_display }}</span> <span class="text-xs text-slate-500">({% trans "roster" %})</span>{% endif %}{% endfor %}
                 {% elif row.user.declared_category %}

@@ -52,11 +52,15 @@
             <ul class="flex flex-wrap gap-1.5">
               {% for room in group.rooms %}
                 <li>
+                  {% if suggestions.can_act %}
                   <a class="chip"
                      href="{% url 'core:book_slot' room_id=room.pk slot=group.slot_key %}"
                      aria-label="{% blocktrans with room=room time=group.slot_start|date:'H:i' %}Reserve {{ room }} at {{ time }}{% endblocktrans %}">
                     {{ room }}
                   </a>
+                  {% else %}
+                    <span class="inline-flex rounded-full border border-slate-300 px-3 py-1 text-xs">{{ room }}</span>
+                  {% endif %}
                 </li>
               {% endfor %}
             </ul>
@@ -66,10 +70,12 @@
     </div>
   {% endif %}
 
-  {% if suggestions.free_now and not suggestions.can_act %}
+  {% if not user.is_authenticated %}
+  {% if suggestions.free_now or suggestions.hours %}
     <p class="text-xs text-slate-600">
       <a class="underline" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
       {% trans "to reserve or use a room." %}
     </p>
+  {% endif %}
   {% endif %}
 </section>

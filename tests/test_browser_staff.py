@@ -18,7 +18,7 @@ import pytest
 from playwright.sync_api import expect
 
 from core.models import Booking, Closure, Suspension, Violation
-from core.services import sanctions
+from core.services import sanctions, slots
 from tests import browserlib, factories
 from tests.browserlib import FACTORY_PASSWORD, grid_cell, sign_in, sign_out, visit
 
@@ -146,8 +146,11 @@ def test_a_lifted_suspension_restores_booking(
     be_student(page, base, student)
     visit(page, base, "")
     cell = grid_cell(page, rooms[0], 12)
-    expect(cell.locator("a")).to_have_count(1, timeout=10_000)
-    cell.locator("a").first.click()
+    expect(cell.locator("a")).to_have_count(0, timeout=10_000)
+    # Hidden controls are not the security boundary: a saved URL must still
+    # reject a suspended account when its confirmation is submitted.
+    slot_key = slots.encode_slot(slots.slot_start_for(TODAY, 12))
+    visit(page, base, f"book/{rooms[0].pk}/{slot_key}/")
     page.locator("form[action*='/confirm/'] button[type=submit]").click()
     expect(page.locator("[role=alert]").first).to_be_visible()
     assert Booking.objects.filter(user=student).count() == 0

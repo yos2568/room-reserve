@@ -53,7 +53,7 @@ def register(request):
         declared_category = (request.POST.get("declared_category") or "").strip()
 
         try:
-            ratelimit.guard_registration(request)
+            ratelimit.guard_registration(request, identifier=institutional_id, email=email)
             identity_service.start_registration(
                 institutional_id=institutional_id,
                 email=email,
@@ -86,7 +86,12 @@ def register(request):
                 "name": name,
                 "declared_category": declared_category,
             }
-            return render(request, "core/register.html", context, status=400)
+            return render(
+                request,
+                "core/register.html",
+                context,
+                status=outcome.http_status if outcome.code == Code.RATE_LIMITED else 400,
+            )
 
         return redirect("core:register_done")
 
@@ -297,7 +302,7 @@ def password_reset(request):
     if request.method == "POST":
         email = (request.POST.get("email") or "").strip()
         try:
-            ratelimit.guard_registration(request)
+            ratelimit.guard_registration(request, email=email)
         except OperationRejected:
             # Same generic outcome: a limited address learns nothing extra.
             return redirect("core:password_reset_done")

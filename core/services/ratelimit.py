@@ -12,6 +12,7 @@ so the limit is shared across gunicorn workers rather than per process.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 
 from django.core.cache import cache
@@ -33,7 +34,9 @@ REGISTRATION_WINDOW = 3600
 
 
 def _key(scope: str, value: str) -> str:
-    return f"ratelimit:{scope}:{value}"
+    # DatabaseCache can persist keys; do not make it a second PII store.
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()
+    return f"ratelimit:{scope}:{digest}"
 
 
 def hit(scope: str, value: str, *, limit: int, window: int) -> bool:
@@ -51,15 +54,13 @@ def hit(scope: str, value: str, *, limit: int, window: int) -> bool:
 
 
 def client_address(request) -> str:
-    """The client address, trusting a forwarded header only from a proxy.
+    """The client address supplied by the trusted Caddy reverse proxy.
 
-    ``REMOTE_ADDR`` is the honest default; the deployment terminates TLS at Caddy
-    and sets the forwarded header there.
+    Caddy overwrites ``X-Real-IP`` with the connected client address. We do not
+    use ``X-Forwarded-For`` because an untrusted proxy may preserve a client-
+    supplied value and let an attacker rotate the address-based limit.
     """
-    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR", "unknown")
+    return (request.META.get("HTTP_X_REAL_IP") or request.META.get("REMOTE_ADDR") or "unknown").strip()
 
 
 def guard(request, *, identifier: str, identifier_limit: int = IDENTIFIER_LIMIT) -> None:
@@ -69,11 +70,31 @@ def guard(request, *, identifier: str, identifier_limit: int = IDENTIFIER_LIMIT)
         "ident", (identifier or "anonymous").strip().lower(), limit=identifier_limit, window=IDENTIFIER_WINDOW
     )
     if not (address_ok and identifier_ok):
-        logger.warning("Rate limit hit for identifier=%r", identifier)
+        logger.warning("Rate limit hit for login identifier")
         raise OperationRejected(Code.RATE_LIMITED, retry_after=IDENTIFIER_WINDOW)
 
 
-def guard_registration(request) -> None:
+def guard_registration(request, *, identifier: str | None = None, email: str | None = None) -> None:
+    """Throttle registration/reset without exposing raw identifiers in cache."""
     address_ok = hit("reghost", client_address(request), limit=ADDRESS_LIMIT, window=ADDRESS_WINDOW)
-    if not address_ok:
-        raise OperationRejected(Code.RATE_LIMITED)
+    checks = [address_ok]
+    if identifier:
+        checks.append(
+            hit(
+                "regid",
+                identifier.strip().lower(),
+                limit=REGISTRATION_LIMIT,
+                window=REGISTRATION_WINDOW,
+            )
+        )
+    if email:
+        checks.append(
+            hit(
+                "regemail",
+                email.strip().lower(),
+                limit=REGISTRATION_LIMIT,
+                window=REGISTRATION_WINDOW,
+            )
+        )
+    if not all(checks):
+        raise OperationRejected(Code.RATE_LIMITED, retry_after=REGISTRATION_WINDOW)
