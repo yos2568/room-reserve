@@ -166,19 +166,43 @@ REMINDER_LEAD_MINUTES = env_int("POLICY_REMINDER_LEAD_MINUTES", 30)
 SLOT_MINUTES = 60
 OPENING_SLOT_START_HOUR = 8
 LAST_SLOT_START_HOUR = 19
-ROOM_COUNT = 10
+# The practice rooms are the nine numbered stalls on floor 3 of the Arts
+# Building (ห้อง 1–9 on the department's floor plan). The two larger teaching
+# rooms at the back of the floor join them via ROOM_OVERRIDES, because they
+# carry building room numbers rather than stall numbers.
+ROOM_COUNT = 9
 
 # Per-room configuration applied by `manage.py seed_rooms`, keyed by room number.
-# V3 says "nine rooms"; the department added this tenth, larger room, which only
-# piano and percussion students may *reserve* — anyone may walk in once an hour
-# has started and the room is still free. Recorded as a deviation from V3 in
-# docs/decisions.md. Rooms not listed here are general.
+# V3 says "nine rooms"; the department added rooms 303 and 304 from the floor
+# plan, which is recorded as a deviation from V3 in docs/decisions.md (D-28).
+# Room 303 is kept for piano and percussion students to *reserve* — anyone may
+# walk in once an hour has started and the room is still free. Room 304 is a
+# general practice room outside its class hours (ROOM_WEEKLY_BLOCKS below).
 ROOM_OVERRIDES = {
-    "10": {
-        "label": "ห้องซ้อมใหญ่",
+    "303": {
+        "label": "ห้อง 303",
+        "position": 10,
         "reservation_scope": "LISTED",
         "categories": ("PIANO", "PERCUSSION"),
     },
+    "304": {
+        "label": "ห้อง 304 (ห้องบรรยาย 1)",
+        "position": 11,
+    },
+}
+
+# Recurring weekly hours a room is unavailable because a class meets in it: the
+# department's teaching timetable (ตารางห้อง อาคารศิลปกรรมชั้น3.pdf, ภาคการศึกษาต้น
+# 2569, page "A304 ห้องบรรยาย1"). Weekday is Monday=0; end_hour is exclusive.
+# The hours were read from the sheet's own column geometry (D-28) and should be
+# confirmed with the department. The timetable has no page for A303, so room 303
+# has no blocked hours. Blocked hours refuse reservations *and* walk-ins.
+ROOM_WEEKLY_BLOCKS = {
+    "304": [
+        {"weekday": 0, "start_hour": 10, "end_hour": 12, "reason": "COUNTERPOINT · อ.ดร.ปริญญา"},
+        {"weekday": 1, "start_hour": 12, "end_hour": 13, "reason": "SKILL-PIANO · ผศ.ดร.รามสูร"},
+        {"weekday": 3, "start_hour": 10, "end_hour": 12, "reason": "HARMONY · อ.ดร.ปริญญา"},
+    ],
 }
 
 INSTITUTION_EMAIL_DOMAIN = env_str("INSTITUTION_EMAIL_DOMAIN", "student.chula.ac.th")

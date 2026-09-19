@@ -27,7 +27,11 @@ def is_suspended(user, now) -> bool:
 
 
 def account_block_code(user) -> str | None:
-    """The reason a signed-in account may not book, or None when it may."""
+    """The reason a signed-in account may not book, or None when it may.
+
+    Faculty accounts (D-34) are always read-only today: the reason is stated
+    here so every mutation and every button agrees without special cases.
+    """
     if user is None or not getattr(user, "pk", None):
         return Code.NOT_ELIGIBLE
     if not user.is_active:
@@ -38,6 +42,8 @@ def account_block_code(user) -> str | None:
         return Code.PENDING_APPROVAL
     if user.eligibility != User.Eligibility.APPROVED:
         return Code.NOT_ELIGIBLE
+    if user.is_teacher:
+        return Code.TEACHER_READ_ONLY
     return None
 
 

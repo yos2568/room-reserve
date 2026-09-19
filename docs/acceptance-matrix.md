@@ -54,10 +54,13 @@ V3 is the sole product specification, so anything built that it does not describ
 recorded here rather than folded in silently. Both of these need the owner's
 decision on amending the specification text.
 
-**1. Ten rooms, not nine.** The department added a larger room that only piano and
-percussion students may reserve. V3 states nine rooms and A29 requires nine posters.
+**1. Eleven rooms, not nine.** The department's floor plan gives nine numbered
+stalls plus two larger rooms: room 303 (reserved to piano and percussion students,
+D-28) and room 304 (general, but blocked during its class hours by the teaching
+timetable, also D-28). V3 states nine rooms and A29 requires nine posters.
 The code, the acceptance assertions and the runbook now follow the data
-(`ROOM_COUNT`, one poster per active room) instead of the literal nine.
+(`ROOM_COUNT`, `ROOM_OVERRIDES`, one poster per active room) instead of the
+literal nine.
 
 V3 lines that need amending: `roomreserveapp.v3.md` §2 line 35 ("Nine upright-piano
 practice rooms"), §9 line 255 ("nine printable A4 QR posters"), §11 line 287
@@ -110,3 +113,17 @@ importer's opt-in) and
 arbitrary are derived: the poster legibility check computes printed millimetres per
 QR module rather than asserting a pixel size, and the graph-refresh check asserts a
 bounded request count rather than trusting that the loop terminates.
+
+**3. A suggestions dashboard, which V3 does not describe.** A "where to go next"
+panel above the grid ("Free right now", "Bookable later today") and
+"other rooms free at this hour" inside refusals — a deterministic ranking over
+the same grid states, never a recommendation model (D-29). Evidence:
+`tests/test_suggest.py`.
+
+**4. A self-declared instrument at registration, which V3 does not describe.** V3
+derives eligibility from the roster alone; because most roster rows cannot link
+(personal emails), registration now collects an instrument declaration that opens
+restricted rooms once the account is approved, with the roster overriding it and
+staff able to correct it (D-30, superseding part of D-22). Evidence:
+`tests/test_declared_category.py`.
+

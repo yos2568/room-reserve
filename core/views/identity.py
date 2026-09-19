@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from core.models import Invitation
+from core.models import InstrumentCategory, Invitation, User
 from core.services import identity as identity_service
 from core.services import ratelimit
 from core.services.eligibility import active_suspension
@@ -38,19 +38,28 @@ def _password_form_context(*, token: str, purpose: str, account=None, errors=Non
 
 @require_http_methods(["GET", "POST"])
 def register(request):
-    """Self-registration: ID + institutional email + name."""
+    """Self-registration: ID + institutional email + name + declared instrument."""
     if request.user.is_authenticated:
         return redirect("core:my_bookings")
 
-    context = {"operation_key": None, "outcome": None}
+    instrument_choices = [
+        (value, label) for value, label in InstrumentCategory.choices if value != InstrumentCategory.UNKNOWN
+    ]
+    context = {"operation_key": None, "outcome": None, "instrument_choices": instrument_choices}
     if request.method == "POST":
         institutional_id = (request.POST.get("institutional_id") or "").strip()
         email = (request.POST.get("email") or "").strip()
         name = (request.POST.get("name") or "").strip()
+        declared_category = (request.POST.get("declared_category") or "").strip()
 
         try:
             ratelimit.guard_registration(request)
-            identity_service.start_registration(institutional_id=institutional_id, email=email, name=name)
+            identity_service.start_registration(
+                institutional_id=institutional_id,
+                email=email,
+                name=name,
+                declared_category=declared_category,
+            )
         except OperationRejected as exc:
             outcome = exc.outcome
             # Never reveal whether a field matched the roster or an account: show
@@ -71,7 +80,12 @@ def register(request):
             else:
                 messages.error(request, outcome.message)
             context["outcome"] = outcome
-            context["form"] = {"institutional_id": institutional_id, "email": email, "name": name}
+            context["form"] = {
+                "institutional_id": institutional_id,
+                "email": email,
+                "name": name,
+                "declared_category": declared_category,
+            }
             return render(request, "core/register.html", context, status=400)
 
         return redirect("core:register_done")
@@ -222,12 +236,20 @@ def login_view(request):
             messages.error(request, exc.outcome.message)
             return render(request, "core/login.html", {}, status=429)
 
-        user = authenticate(request, username=institutional_id, password=password)
+        # One field, two identifiers: students sign in with their institutional
+        # ID, faculty with their email address (D-34). Resolving an email to its
+        # account keeps a single authenticate path and a single error message.
+        username_for_auth = institutional_id
+        if "@" in institutional_id:
+            matched = User.objects.filter(email__iexact=institutional_id).first()
+            username_for_auth = matched.username if matched is not None else institutional_id
+
+        user = authenticate(request, username=username_for_auth, password=password)
         if user is None:
             # One message for both a missing account and a wrong password.
             messages.error(
                 request,
-                "รหัสนิสิตหรือรหัสผ่านไม่ถูกต้อง / Incorrect institutional ID or password.",
+                "รหัสนิสิตหรือรหัสผ่านไม่ถูกต้อง / Incorrect ID, email or password.",
             )
             return render(
                 request,

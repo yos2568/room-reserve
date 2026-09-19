@@ -10,13 +10,18 @@ module.exports = {
     extend: {
       colors: {
         // Faculty palette: restrained, high contrast, not colour-only signalling.
+        // FAA identity (D-33): the crimson of the faculty logo and the
+        // entrance lattice, with a plaster-white paper tone.
         brand: {
-          50: "#eef4fb",
-          100: "#d7e6f6",
-          500: "#1f5f9e",
-          600: "#194e83",
-          700: "#143e69",
+          50: "#fbf2f2",
+          100: "#f5dfe0",
+          200: "#e8c0c3",
+          400: "#c9696f",
+          500: "#b23a42",
+          600: "#a02b33",
+          700: "#832229",
         },
+        paper: "#f6f5f1",
       },
       minWidth: {
         touch: "44px",

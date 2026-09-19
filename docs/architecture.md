@@ -70,8 +70,14 @@ instrument categories. The check lives in exactly one place,
 The grid reflects the same rule without duplicating it: a future slot the viewer may
 not reserve is `SlotState.RESTRICTED` rather than `BOOKABLE`, and the current free
 hour stays `FREE_NOW` for everyone. The viewer's category is resolved once per grid
-render, and `allowed_categories` is prefetched, so a tenth room costs one query
+render, and `allowed_categories` is prefetched, so a restricted room costs one query
 rather than one per cell.
+
+The teaching timetable rides the same rails as closures: a recurring `WeeklyBlock`
+on a room makes its hours `CLOSED` on the grid (with the course as the reason) and
+is refused by the one calendar gate both booking paths already call
+(`calendar.assert_slot_open`), so reservations and walk-ins cannot disagree about
+a class hour.
 
 A student's category is derived, never matched from free text: the roster's
 `instrument` column is what the department writes, and

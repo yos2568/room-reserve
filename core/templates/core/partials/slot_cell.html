@@ -17,9 +17,10 @@
 {% elif cell.state == "past" %}
   <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-600">{% trans "Finished" %}</span>
 {% elif cell.state == "closed" %}
+  {# Closed by policy, or by the teaching timetable — the label says which, because an unexplained gap reads as a fault. #}
   <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700"
-        {% if cell.closed_reason %}title="{{ cell.closed_reason }}"{% endif %}>
-    {% trans "Closed" %}
+        title="{% if cell.block_reason %}{{ cell.block_reason }}{% else %}{{ cell.closed_reason }}{% endif %}">
+    {% if cell.block_reason %}{% trans "Class" %}{% else %}{% trans "Closed" %}{% endif %}
   </span>
 {% elif cell.state == "in_use" or cell.state == "held" %}
   <span class="block w-full rounded bg-brand-100 px-2 py-2 text-center text-xs text-brand-700">
@@ -32,8 +33,7 @@
 {% elif cell.state == "outside_horizon" %}
   <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-500">{% trans "Too far ahead" %}</span>
 {% elif cell.state == "restricted" %}
-  {# Free, but only reservable by the instruments this room is kept for. The label
-     says which, because "unavailable" with no reason reads as a fault. #}
+  {# Free, but only reservable by the instruments this room is kept for. The label says which, because "unavailable" with no reason reads as a fault. #}
   <span class="block w-full rounded bg-violet-50 px-2 py-2 text-center text-xs text-violet-800"
         title="{% trans 'This room is kept for piano and percussion students to reserve. Once the hour starts, anyone may use it if it is still free.' %}">
     {% trans "Piano & percussion only" %}

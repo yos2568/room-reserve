@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET
 
 from core.models import Booking, Room
-from core.services import availability, clock, slots
+from core.services import availability, clock, slots, suggest
 from core.services.eligibility import active_suspension
 from core.services.policy import current_policy
 
@@ -57,6 +57,7 @@ def _grid_context(request, local_date: date) -> dict:
 
     return {
         "grid": grid,
+        "suggestions": suggest.suggestions(local_date, moment, user=user),
         "local_date": local_date,
         "days": days,
         "is_today": local_date == today,

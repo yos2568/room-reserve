@@ -242,7 +242,7 @@ def resolve_review(request, pk: int):
 def users(request):
     moment = now()
     query = (request.GET.get("q") or "").strip()
-    queryset = User.objects.all().order_by("username")
+    queryset = User.objects.prefetch_related("roster_entries").order_by("username")
     if query:
         queryset = queryset.filter(
             Q(username__icontains=query) | Q(email__icontains=query) | Q(name_th__icontains=query)
@@ -277,8 +277,35 @@ def users(request):
             "moment": moment,
             "policy": current_policy(),
             "operation_key": uuid.uuid4(),
+            "instrument_choices": [
+                (value, label)
+                for value, label in InstrumentCategory.choices
+                if value != InstrumentCategory.UNKNOWN
+            ],
         },
     )
+
+
+@staff_required
+@require_POST
+def set_declared_category(request, pk: int):
+    """Staff set or clear a student's declared instrument (D-30)."""
+    user = get_object_or_404(User, pk=pk)
+    declared = (request.POST.get("declared_category") or "").strip()
+
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_set_declared_category",
+        payload={"user": pk, "declared_category": declared},
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            user_id=identity_service.set_declared_category(
+                user=user, declared_category=declared, actor=ctx.actor
+            ).pk
+        ),
+    )
+    add_outcome_message(request, outcome)
+    return redirect(request.POST.get("next") or "core:staff_users")
 
 
 @staff_required
@@ -773,13 +800,14 @@ def create_invitation(request):
     email = (request.POST.get("email") or "").strip()
     name = (request.POST.get("name") or "").strip()
     staff = request.POST.get("staff") == "on"
+    teacher = request.POST.get("teacher") == "on"
 
     outcome = run_view_operation(
         request=request,
         operation="staff_create_invitation",
-        payload={"institutional_id": institutional_id, "email": email, "staff": staff},
+        payload={"institutional_id": institutional_id, "email": email, "staff": staff, "teacher": teacher},
         key=operation_key(request),
-        body=lambda ctx: _invite(ctx, institutional_id, email, name, staff),
+        body=lambda ctx: _invite(ctx, institutional_id, email, name, staff, teacher),
     )
 
     if outcome.ok:
@@ -792,9 +820,14 @@ def create_invitation(request):
     return redirect("core:staff_invitations")
 
 
-def _invite(ctx, institutional_id, email, name, staff):
+def _invite(ctx, institutional_id, email, name, staff, teacher=False):
     user, invitation, raw_token = identity_service.invite_account(
-        institutional_id=institutional_id, email=email, name=name, actor=ctx.actor, staff=staff
+        institutional_id=institutional_id,
+        email=email,
+        name=name,
+        actor=ctx.actor,
+        staff=staff,
+        teacher=teacher,
     )
     from django.urls import reverse
 

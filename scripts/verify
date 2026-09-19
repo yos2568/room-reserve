@@ -214,7 +214,18 @@ from core.services.policy import current_policy
 PUBLIC_ROUTES = ("/th/", "/en/", "/th/rules/", "/th/help/", "/th/privacy/", "/healthz/", "/readyz/")
 
 rooms = Room.objects.filter(is_active=True).count()
-assert rooms == settings.ROOM_COUNT, f"expected {settings.ROOM_COUNT} rooms, found {rooms}"
+expected_rooms = len(set(str(n) for n in range(1, settings.ROOM_COUNT + 1)) | set(settings.ROOM_OVERRIDES))
+assert rooms == expected_rooms, f"expected {expected_rooms} rooms, found {rooms}"
+
+# The teaching timetable: the recurring blocks configured for any room, taken
+# from the department sheet. Configuration a deployment can get wrong.
+# (No apostrophes in this block: bash holds it in a single-quoted string.)
+from core.models import WeeklyBlock
+
+expected_blocks = sum(len(entries) for entries in settings.ROOM_WEEKLY_BLOCKS.values())
+assert WeeklyBlock.objects.count() == expected_blocks, (
+    f"expected {expected_blocks} weekly blocks, found {WeeklyBlock.objects.count()}"
+)
 
 # The instrument-specific room: exactly one, and restricted to piano and
 # percussion. Configuration a deployment can get wrong, so it is checked here.

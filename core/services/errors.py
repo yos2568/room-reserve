@@ -27,6 +27,7 @@ class Code:
     SLOT_IN_PAST = "slot_in_past"
     SLOT_ELAPSED = "slot_elapsed"
     CLOSED = "closed"
+    CLASS_IN_SESSION = "class_in_session"
     ROOM_NOT_FOR_INSTRUMENT = "room_not_for_instrument"
     INVALID_SLOT = "invalid_slot"
     STALE_HOUR = "stale_hour"
@@ -38,6 +39,7 @@ class Code:
     PENDING_APPROVAL = "pending_approval"
     EMAIL_UNVERIFIED = "email_unverified"
     INACTIVE_ACCOUNT = "inactive_account"
+    TEACHER_READ_ONLY = "teacher_read_only"
 
     # Lifecycle
     NOT_OWNER = "not_owner"
@@ -74,6 +76,7 @@ _MESSAGES = {
     Code.SLOT_IN_PAST: _("That time has already started. Use “Use now” if the room is free."),
     Code.SLOT_ELAPSED: _("That hour has already finished."),
     Code.CLOSED: _("That room is closed for the selected time."),
+    Code.CLASS_IN_SESSION: _("A class meets in that room at that hour. Choose another hour or another room."),
     Code.ROOM_NOT_FOR_INSTRUMENT: _(
         "That room can only be reserved by piano and percussion students. Once the "
         "hour starts, anyone may use it if it is still free."
@@ -90,6 +93,9 @@ _MESSAGES = {
     Code.PENDING_APPROVAL: _("Your account is still waiting for staff approval."),
     Code.EMAIL_UNVERIFIED: _("Verify your email address before booking."),
     Code.INACTIVE_ACCOUNT: _("This account is inactive. Please contact the department."),
+    Code.TEACHER_READ_ONLY: _(
+        "Teacher accounts are read-only: they can view schedules but cannot reserve rooms."
+    ),
     Code.NOT_OWNER: _("That booking belongs to another account."),
     Code.WRONG_ROOM: _("That booking is for a different room."),
     Code.CHECK_IN_NOT_OPEN: _("Check-in opens at the start of the hour."),

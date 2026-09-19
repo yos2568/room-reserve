@@ -11,6 +11,7 @@ check that cannot be automated, and is reported as such.
 
 from __future__ import annotations
 
+import base64
 import io
 
 import segno
@@ -18,6 +19,18 @@ import segno
 # Printed at arm's length on a door: keep the modules large and the contrast high.
 QR_SCALE = 8
 QR_BORDER = 4
+
+# Inside an email, a compact code is plenty: it is read from a phone screen (D-31).
+QR_EMAIL_SCALE = 4
+QR_EMAIL_BORDER = 2
+
+
+def qr_data_uri(target: str, *, scale: int = QR_EMAIL_SCALE, border: int = QR_EMAIL_BORDER) -> str:
+    """An inline PNG data URI, small enough to embed in an HTML email (D-31)."""
+    qr = segno.make(target, error="m")
+    buffer = io.BytesIO()
+    qr.save(buffer, kind="png", scale=scale, border=border, dark="#000000", light="#ffffff")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
 def qr_png_bytes(target: str, *, scale: int = QR_SCALE, border: int = QR_BORDER) -> bytes:

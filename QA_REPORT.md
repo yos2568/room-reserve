@@ -270,12 +270,14 @@ spot-checking that a re-run used the same files.
    spelling is not in the alias table cannot reserve the room until somebody
    categorises it. The import reports those spellings and the staff roster screen
    flags them in amber, so the remedy is visible — but it is a manual step.
-6. **Ten rooms is a spec deviation.** V3 says nine, in five places, and A29 says
+6. **Eleven rooms is a spec deviation.** V3 says nine, in five places, and A29 says
    nine posters. Recorded in `docs/acceptance-matrix.md` under "Deviations from V3";
    the specification text still needs the owner's amendment.
-7. **The room's name is a proposal.** `ห้องซ้อมใหญ่` ("large practice room") is what
-   I put in `ROOM_OVERRIDES`; the department's actual name for it prints on the
-   poster and appears on the grid, and is a one-line change.
+7. **Resolved (19 Sep 2026): the room's name.** The placeholder `ห้องซ้อมใหญ่` is
+   retired (D-28): the restricted room is the real **room 303**, and **room 304**
+   (`ห้องบรรยาย 1`) joined as a general room blocked during its class hours. Room
+   304's blocked hours were derived from the teaching sheet's column geometry and
+   still need the department's confirmation.
 8. **Retention is unendorsed and unimplemented.** Nothing deletes automatically. The
    60-day history is a display limit, not a deletion policy.
 9. **No per-student data export** exists, though the specification describes one.

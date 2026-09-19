@@ -9,6 +9,7 @@ never silently turned into an attendance declaration.
 from __future__ import annotations
 
 import logging
+import secrets
 
 from django.db.models import Q
 
@@ -94,6 +95,10 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
         status=Booking.Status.SCHEDULED,
         source=Booking.Source.ADVANCE,
         policy_version=policy,
+        # Secret token for the QR check-in link carried by the confirmation
+        # email (D-31). Unguessable, unique per reservation, useless outside
+        # the check-in window and to anyone but the owner.
+        checkin_token=secrets.token_urlsafe(24),
     )
 
     ctx.audit(

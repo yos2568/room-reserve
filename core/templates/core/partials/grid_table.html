@@ -12,14 +12,16 @@
     </p>
   {% endif %}
 
+  {% include "core/partials/dashboard.html" %}
+
   {# --- Desktop / tablet: the full grid ------------------------------------- #}
   <div class="hidden md:block">
     <div class="table-wrap">
-      <table class="w-full border-collapse text-sm">
+      <table class="availability-table w-full border-collapse text-sm">
         <caption class="sr-only">{% trans "Availability by room and hour" %}</caption>
         <thead>
           <tr>
-            <th scope="col" class="sticky start-0 bg-slate-50 p-2 text-start">{% trans "Room" %}</th>
+            <th scope="col" class="sticky start-0 bg-slate-50/90 p-2 text-start backdrop-blur-sm">{% trans "Room" %}</th>
             {% for column in grid.columns %}
               <th scope="col" class="p-2 text-center font-medium">
                 {{ column|date:"H:i" }}

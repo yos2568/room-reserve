@@ -1,12 +1,50 @@
 # BUILD_STATUS — Room Reserve V3
 
-**Last updated:** 2026-09-15 (roster email correction path)
+**Last updated:** 2026-09-19 (the real floor: rooms 303 and 304)
 **Status:** `LOCAL_PASS_CANDIDATE` — every automated local check passes.
 Deployment and pilot are **BLOCKED** on missing external inputs.
 
-Superseded detail lives in `handoff15sep.md` (the previous checkpoint),
+Superseded detail lives in `handoff15sep26.md` (the previous checkpoint),
 `docs/acceptance-matrix.md` (A01–A30 → evidence, plus the **deviations from V3**)
 and `QA_REPORT.md` (what was run, with what result).
+
+## Added since the last checkpoint: the real floor and the teaching timetable
+
+The department's floor plan and teaching sheet replace the placeholder "tenth
+room" (D-28, which supersedes D-23):
+
+- **Eleven rooms**: stalls 1–9 (general), **room 303** (piano and percussion may
+  reserve; anyone may walk in) and **room 304** (`ห้องบรรยาย 1`, general). The
+  placeholder room 10 is deactivated by `seed_rooms`, never deleted.
+- **A recurring teaching timetable** (`WeeklyBlock`, configured in
+  `ROOM_WEEKLY_BLOCKS`, applied by `seed_rooms`): a class hour on 304 refuses
+  reservations *and* walk-ins, shows on the grid as "Class" with the course name,
+  and never cancels a booking that already exists. Currently Mon 10–12
+  (Counterpoint), Tue 12–13 (Skill-Piano), Thu 10–12 (Harmony) — read from the
+  sheet's column geometry, still to be confirmed with the department.
+- **A suggestions dashboard** (D-29): "Free right now" cards and "Bookable later
+  today" hour groups above the grid, plus "other rooms free at this hour" inside
+  booking refusals — a deterministic ranking over the same grid states, with an
+  explicit decision against AI/ probabilistic recommenders.
+- **FAA identity + faculty accounts** (D-33/D-34): the crimson palette and logo
+  of the faculty replace the generic blue; teachers are invited by staff, sign in
+  with email or ID, and are read-only (`TEACHER_READ_ONLY`) — widening later is
+  one gate.
+- **A visual refresh** (D-32) from GoogleChrome/modern-web-guidance patterns:
+  glass sticky header with scroll-state depth, scroll-driven card reveals,
+  `:user-invalid` fields, refined buttons/cards — plain CSS, progressive,
+  reduced-motion-gated. View transitions rejected (hung the no-JS guarantee).
+- **QR check-in from the confirmation email** (D-31): every advance reservation
+  carries a secret token; confirmation and reminder emails embed a scannable QR
+  whose landing page performs the normal, deliberate check-in — owner-only,
+  window-enforced, idempotent. Still a declaration, never proof of presence.
+- **A declared instrument at registration** (D-30): the register form asks for an
+  instrument family; a declared piano/percussion student can reserve room 303 as
+  soon as staff approve the account, a roster link overrides it, and staff can
+  set/clear it on the user screen (audited). Supersedes the roster-only rule for
+  the 57 students whose roster rows cannot yet link.
+- 26 new tests: `tests/test_suggest.py` (13) and `tests/test_declared_category.py`
+  (13); the Thai catalogue gained the new strings (and one wrong translation fixed).
 
 ## Phase
 
@@ -117,7 +155,7 @@ roster email item below, which is now a hard prerequisite for this feature.
 | 3 | **Clear the demo logins** | 100 synthetic students + 10 staff remain active and bookable. |
 | 4 | A30 p95 latency | Needs the intended deployment hardware. |
 | 5 | A27 `check --deploy`, rollback rehearsal, CI image push | Needs real hostnames/TLS, a previous image, registry credentials. |
-| 6 | A29 physical poster check | Printing and doors; and the poster for the tenth room must be printed too. |
+| 6 | A29 physical poster check | Printing and doors; the posters for rooms 303 and 304 must be printed too. |
 | 7 | Thai copy review | 592 entries; the new ones were translated here and still need a Thai speaker. |
 | 8 | Deployment, then pilot | Real SMTP, domain, TLS, backup destination, alerting, then ~10 students for two weeks. |
 

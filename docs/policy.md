@@ -26,15 +26,17 @@ cannot retroactively invalidate a check-in that already happened.
 | Automatic suspension | 7 days | `POLICY_AUTO_SUSPENSION_DAYS` |
 | Reminder lead | 30 minutes before the hour | `POLICY_REMINDER_LEAD_MINUTES` |
 | Institutional email | `student.chula.ac.th` | `INSTITUTION_EMAIL_DOMAIN` |
-| Rooms | 10 — nine general, one instrument-specific | `ROOM_COUNT`, `ROOM_OVERRIDES` |
+| Rooms | 11 — stalls 1–9, room 303 instrument-specific, room 304 general | `ROOM_COUNT`, `ROOM_OVERRIDES` |
+| Class hours on 304 | Mon 10–12, Tue 12–13, Thu 10–12 | `ROOM_WEEKLY_BLOCKS` |
 
 These numbers are the department's operational defaults. They are **not** figures
 stated in the regulation, and the Rules page says so.
 
 ## The instrument-specific room
 
-Room 10 (`ห้องซ้อมใหญ่`) is the larger room, and the department keeps it for piano
-and percussion practice. The rule is narrow on purpose:
+Room 303 (`ห้อง 303`) is one of the two larger rooms at the back of the floor, and
+the department keeps it for piano and percussion practice. The rule is narrow on
+purpose:
 
 - **Only piano and percussion students may reserve it in advance.** Everyone else
   sees the hour marked "Piano & percussion only" rather than a Reserve control —
@@ -54,13 +56,58 @@ without a developer. A room set to "only these instrument categories" with nothi
 selected lets **nobody** reserve it — an empty list is treated as a mistake, not as
 an invitation.
 
-**Who counts as a piano or percussion student** comes from the roster, not from
-their account: the roster row's instrument is mapped to a canonical category
-(`core/services/instruments.py`). A student whose instrument nobody has categorised
-cannot reserve the room, and the roster screen flags them so staff can fix it.
-Because the row is linked to an account only when the institutional ID *and* email
-match, a student whose roster email is wrong is in the same position — see the
-runbook on refreshing the roster.
+**Who counts as a piano or percussion student** comes from two sources, in order
+of authority (D-30):
+
+1. **The roster.** A linked roster row's instrument is mapped to a canonical
+   category (`core/services/instruments.py`) and always wins.
+2. **The student's declaration.** Registration asks for an instrument; a declared
+   category is honoured once staff have approved the account, and staff can change
+   or clear it on the user screen (audited).
+
+A student with neither sees the room's availability but cannot reserve it, and the
+roster screen flags rows whose instrument nobody has categorised.
+
+## Checking in with the emailed QR code
+
+A confirmation email carries a QR code for the reservation. Scanning it — from the
+phone, standing in the room — opens a one-booking page with a confirm button;
+pressing it performs the same check-in as the grid or the door poster. The link
+works only for the booking's owner, only during the check-in window, and only
+after the button. Like the printed poster, the code is a convenient way to
+*declare* presence, not a proof of it — staff may spot check.
+
+## The teaching timetable
+
+Rooms 303 and 304 are teaching rooms as well as practice rooms: classes meet in
+them every week (the department's sheet `ตารางห้อง อาคารศิลปกรรมชั้น3.pdf`). A class
+hour is blocked on the grid and labelled with the course, because an unexplained
+gap reads as a fault. Room 304's blocked hours are Monday 10:00–12:00
+(Counterpoint), Tuesday 12:00–13:00 (Skill-Piano) and Thursday 10:00–12:00
+(Harmony); the sheet has no page for 303, so it has none.
+
+- **A blocked hour refuses reservations and walk-ins**, like a closure, but
+  recurring: it comes back every week without anyone re-entering it.
+- **A booking already made is never cancelled** when a schedule changes, and it
+  still checks in — the same survivorship a room-audience change grants (D-26).
+- An explicit closure still wins over a class hour, exactly as it wins over the
+  weekly opening hours.
+
+The hours live in `ROOM_WEEKLY_BLOCKS` and are applied by `manage.py seed_rooms`;
+they are configuration, not code. There is no staff screen for them yet — a
+schedule change is a settings change and a seed run (see the runbook).
+
+## Suggestions
+
+Above the grid, the page answers "where should I go?" directly: **Free right now**
+lists the rooms a student could walk into for the rest of the current hour, and
+**Bookable later today** lists the next hours with the rooms still open in each —
+already filtered by the viewer's instrument eligibility and their own adjacent
+bookings. When a reservation is refused because the hour was just taken, the page
+names the rooms that would still accept it. These suggestions are a deterministic
+ranking of the same data the grid shows — never a recommendation model — so the
+panel and the table cannot disagree (D-29). At zero remaining quota nothing is
+suggested and the panel says the day's limit.
 
 ## Reserving
 

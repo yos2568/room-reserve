@@ -115,18 +115,25 @@ def is_recognised(text: str | None) -> bool:
 
 
 def category_for_user(user) -> str | None:
-    """The signed-in student's category, from their active roster entry.
+    """The signed-in student's category: roster first, self-declaration second.
 
-    ``None`` when the account has no linked roster row — which is the normal state
-    for a student approved by staff whose roster email never matched. A restricted
-    room cannot be reserved in that case, so the roster link is load-bearing here.
+    A linked roster row is authoritative — its derived category always wins. A
+    student with no roster link falls back to the instrument they declared at
+    registration (D-30), honoured only once staff have approved the account, so
+    a declaration never opens a restricted room by itself. ``None`` when neither
+    source has anything: the student sees the restricted room's availability but
+    cannot reserve it.
     """
     if user is None or not getattr(user, "pk", None):
         return None
     row = (
         EligibleStudent.objects.filter(account_id=user.pk, is_active=True).only("instrument_category").first()
     )
-    return row.instrument_category if row is not None else None
+    if row is not None:
+        return row.instrument_category
+    if user.declared_category and user.is_approved:
+        return user.declared_category
+    return None
 
 
 def unrecognised(values) -> list[str]:

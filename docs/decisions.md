@@ -175,6 +175,8 @@ a larger room that only piano and percussion students may reserve. The
 specification is not silently rewritten: the deviation is recorded here, in
 `docs/acceptance-matrix.md` under "Deviations from V3", and the affected V3 lines
 are listed for the owner to amend.
+*Superseded by D-28: the "tenth room" turned out to be room 303, joined by room
+304, and the placeholder name `ห้องซ้อมใหญ่` is retired.*
 
 **D-24 — No staff bypass.**
 Staff keep exactly the abilities they had. They cannot reserve the restricted room
@@ -221,6 +223,112 @@ address — a login identity is the student's, not something a spreadsheet corre
 rewrites — and it does not re-run eligibility, because withdrawing an approval over
 somebody else's clerical error penalises the wrong person. When a linked account no
 longer matches the corrected address, the action says so rather than acting on it.
+
+**D-28 — The real floor: stalls 1–9, room 303 restricted, room 304 general with
+class hours blocked.**
+The department's floor plan and teaching sheet (`ตารางห้อง อาคารศิลปกรรมชั้น3.pdf`,
+semester 1/2569) replace the placeholder "tenth room" (`ห้องซ้อมใหญ่`, D-23). The
+nine numbered stalls are the general rooms; room 303 — one of the two large rooms
+at the back of the floor — carries the piano-and-percussion reservation rule; room
+304 (`ห้องบรรยาย 1`) is a general practice room outside its class hours. The old
+placeholder room 10 is deactivated by `seed_rooms`, never deleted, so its history
+survives.
+
+Room 304's class hours were read from the sheet's own column geometry: pdftotext
+word coordinates against the hour ruler, with each label matched to the column or
+span it is centred on. On that reading Counterpoint and Harmony are two-hour
+classes (Mon 10–12, Thu 10–12) and Skill-Piano a one-hour slot (Tue 12–13). Where
+the sheet is ambiguous the block errs wide: turning a student away from an
+over-blocked hour costs one booking, letting one walk into a class in session
+costs the room. The hours should be confirmed with the department, and the sheet
+has no page for A303, so 303 is unblocked.
+
+The mechanism is a recurring `WeeklyBlock` per room, configured in
+`ROOM_WEEKLY_BLOCKS` and applied by `seed_rooms` like the room audiences, so a
+schedule change is a configuration change rather than a migration. A blocked hour
+refuses reservations **and** walk-ins through the same `assert_slot_open` the
+closures use, the grid labels it "Class" with the course name, and — like a
+room-audience change (D-26) — it never cancels a booking that already exists.
+
+**D-29 — Room suggestions are a deterministic ranking, never a model.**
+Students under contention need "which room should I take?" answered fast, and the
+temptation is to reach for an AI recommendation. That would be the wrong tool:
+the grid already computes every room's every slot, so the question has an exact
+answer, and a probabilistic answer would sometimes name a room the server then
+refuses — raising exactly the failure rate it was meant to lower. The suggester
+(`core/services/suggest.py`) ranks the same per-cell states the table renders:
+legal for this viewer (calendar, class hours, audience; the current hour under
+the walk-in rule), clear of the viewer's own adjacent bookings, inside the
+remaining quota, soonest hour then room position. It appears as a dashboard
+panel above the grid, and inside refusals as "other rooms free at this hour",
+computed fresh per request. A probabilistic service also cannot pass
+`scripts/verify` deterministically, and student data must not reach an external
+API while the privacy notice is still awaiting faculty approval.
+
+**D-30 — A student may declare their instrument at registration; the roster stays
+the authority.**
+Supersedes the second half of D-22 ("derived, never self-declared"). With the 2569
+roster holding personal addresses for most students, no piano or percussion row
+could link to an account, so the restricted room 303 was reserved-by-nobody — the
+rule worked and the feature was dead. Registration now asks for an instrument
+family (`User.declared_category`). The declaration opens restricted rooms only
+once the account is approved — the approval step that already gates every account
+— and a roster link, when it appears, silently overrides the declaration because
+`category_for_user` prefers the roster row. Staff can set or clear the value on
+the user screen (`user.declared_category_set`, audited), and `UNKNOWN` is not
+declarable: a student cannot claim our inability to classify them. Everyone,
+declared or not, sees restricted rooms' availability; only reserving is filtered.
+
+**D-31 — The emailed QR check-in link: convenience, not proof.**
+Every advance reservation carries a secret token (`Booking.checkin_token`). The
+confirmation and reminder emails embed a QR code for `/check-in/<token>/`; a scan
+brings the owner to the same deliberate confirm button as everywhere else — same
+window rules, same idempotency, same audit. Three gates make the link safe: the
+token is unguessable and binds it to that one reservation; sign-in binds the
+action to the owner (a token is that student's key, and another account gets a
+404); and nothing checks in without the explicit POST. The token never expires on
+its own — the check-in window is the gate that matters — and reconciliation still
+converts a missed deadline into a no-show before any late confirm. This does not
+weaken the standing honesty rule: a QR code, emailed or posted, is never proof of
+presence. It lowers the friction of *declaring* presence honestly; staff spot
+checks remain the actual check.
+
+**D-32 — The visual refresh uses modern platform CSS, progressively.**
+The interface was modernised with patterns from GoogleChrome/modern-web-guidance:
+a sticky glass header (backdrop-filter, with a solid fallback), scroll-state
+queries that deepen its shadow only while stuck, scroll-driven entry reveals on
+the suggestion cards, `:user-invalid` form state, and cross-document view
+transitions. Everything is plain CSS — no new JavaScript — and anything that
+moves is gated on prefers-reduced-motion; browsers without a feature render the
+plain surface untouched.
+
+View transitions and `scroll-behavior: smooth` were **rejected after trial**:
+each hangs a path the browser tests guarantee — transitions broke the
+JavaScript-disabled navigation flow, smooth scrolling made Playwright's
+scroll-into-view never settle on the horizontally scrolling grid. The rejected
+rules are kept in `tailwind/input.css` as warning comments. The lesson matches
+the house doctrine — the verification harness is the trust anchor, and a visual
+nicety that makes the harness hang is a defect, not a delight.
+
+**D-33 — The interface wears the faculty's own colours.**
+The generic blue was the loudest AI-slop signal, so the palette is now taken from
+the faculty itself: the crimson of the logo and of the Arts Building's red lattice
+(`#a02b33`, with tint and shade steps), plaster-white paper (`#f6f5f1`), and the
+real faculty logo in the header, vendored under `static/img/` like htmx — no CDN.
+Per the frontend-design guidance, colour comes from the subject's world, not from
+a framework default.
+
+**D-34 — Faculty accounts are invited, sign in with email or ID, and are
+read-only today.**
+Roles are never self-selected at sign-in: a self-chosen "admin" is privilege
+escalation by definition. Teachers get accounts by staff invitation (the existing
+`invite_account`, now with a teacher flag, audited); they set their own password
+through the emailed activation link, and sign in with **email or institutional
+ID** — one login field, one error message. A teacher account is approved,
+verified — and read-only: `TEACHER_READ_ONLY` is stated in
+`eligibility.account_block_code`, so every booking mutation refuses and every
+button hides without per-view special cases. Widening a teacher's permissions
+later is one gate to move, deliberately.
 
 ---
 

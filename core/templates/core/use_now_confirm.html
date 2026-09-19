@@ -10,6 +10,20 @@
     <div class="card mt-3 border-red-700 bg-red-50" role="alert">{{ outcome.message }}</div>
   {% endif %}
 
+  {% if free_now %}
+    <div class="card mt-3 max-w-xl border-brand-600 bg-brand-50">
+      <h2 class="text-sm font-semibold">{% trans "Rooms you can still walk into this hour" %}</h2>
+      <ul class="mt-2 flex flex-wrap gap-1.5">
+        {% for card in free_now %}
+          <li>
+            <a class="inline-flex items-center rounded-full border border-brand-600 bg-white px-3 py-1 text-xs font-medium text-brand-700 hover:bg-brand-600 hover:text-white"
+               href="{% url 'core:use_now' room_id=card.room.pk slot=card.slot_key %}">{{ card.room }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
   {% if suspension %}
     <div class="card mt-3 border-red-700 bg-red-50" role="alert">
       {% trans "Booking is suspended on this account. You can still read your history and ask staff for help." %}
@@ -42,12 +56,10 @@
         <a class="btn-secondary" href="{% url 'core:home' %}">{% trans "Cancel" %}</a>
       </form>
     {% elif suspension %}
-      {# The alert at the top of the page says why. Offer the useful next step,
-         not a button that the server would only refuse. #}
+  {# The alert at the top of the page says why. Offer the useful next step, not a button that the server would only refuse. #}
       <a class="btn-secondary mt-3" href="{% url 'core:help' %}">{% trans "How to ask for a review" %}</a>
     {% else %}
-      {# Reached from a grid that has gone stale, or after a race: the room is not
-         startable now, so offering the button would only ever fail. #}
+  {# Reached from a grid that has gone stale, or after a race: the room is not startable now, so offering the button would only ever fail. #}
       <p class="mt-3 text-sm font-medium text-amber-700" role="status">
         {% trans "This room cannot be started for the current hour. Check the availability grid for another room." %}
       </p>

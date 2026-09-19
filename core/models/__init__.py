@@ -19,7 +19,14 @@ from core.models.operations import (
     OperationRequest,
 )
 from core.models.policy import PolicyVersion, ServiceIncident
-from core.models.room import CalendarOverride, Closure, Room, RoomAllowedCategory
+from core.models.room import (
+    CalendarOverride,
+    Closure,
+    Room,
+    RoomAllowedCategory,
+    Weekday,
+    WeeklyBlock,
+)
 from core.models.sanctions import Suspension, Violation
 from core.models.user import User
 
@@ -44,5 +51,7 @@ __all__ = [
     "Suspension",
     "User",
     "Violation",
+    "Weekday",
+    "WeeklyBlock",
     "advance_deadline",
 ]

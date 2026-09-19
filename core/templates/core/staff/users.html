@@ -19,6 +19,7 @@
         <th scope="col" class="p-2 text-start">{% trans "Name" %}</th>
         <th scope="col" class="p-2 text-start">{% trans "Email" %}</th>
         <th scope="col" class="p-2 text-start">{% trans "Eligibility" %}</th>
+        <th scope="col" class="p-2 text-start">{% trans "Instrument" %}</th>
         <th scope="col" class="p-2 text-start">{% trans "Sanction" %}</th>
         <th scope="col" class="p-2 text-start">{% trans "Actions" %}</th>
       </tr></thead>
@@ -28,7 +29,18 @@
             <td class="p-2">{{ row.user.institutional_id }}</td>
             <td class="p-2">{{ row.user.display_name }}</td>
             <td class="p-2">{{ row.user.email }}{% if not row.user.email_is_verified %} <span class="text-amber-700">(unverified)</span>{% endif %}</td>
-            <td class="p-2">{{ row.user.get_eligibility_display }}{% if not row.user.is_active %} · <span class="text-red-800">{% trans "inactive" %}</span>{% endif %}</td>
+            <td class="p-2">{{ row.user.get_eligibility_display }}{% if not row.user.is_active %} · <span class="text-red-800">{% trans "inactive" %}</span>{% endif %}{% if row.user.is_teacher %} · <span class="font-medium text-brand-700">{% trans "teacher" %}</span>{% endif %}{% if row.user.is_operational_staff %} · <span class="font-medium">{% trans "staff" %}</span>{% endif %}</td>
+            <td class="p-2">
+              {# Roster category (authoritative) or the registration declaration (D-30). #}
+              {% with linked=row.user.roster_entries.all %}
+                {% if linked %}
+                  {% for entry in linked %}{% if entry.is_active %}<span class="text-xs font-medium text-brand-700">{{ entry.get_instrument_category_display }}</span> <span class="text-xs text-slate-500">({% trans "roster" %})</span>{% endif %}{% endfor %}
+                {% elif row.user.declared_category %}
+                  <span class="text-xs font-medium">{{ row.user.get_declared_category_display }}</span>
+                  <span class="text-xs text-slate-500">({% trans "declared" %})</span>
+                {% else %}—{% endif %}
+              {% endwith %}
+            </td>
             <td class="p-2">
               {% if row.suspension %}
                 {{ row.suspension.get_source_display }}
@@ -38,6 +50,20 @@
             <td class="p-2">
               <details>
                 <summary class="cursor-pointer">{% trans "Manage" %}</summary>
+
+                {# D-30: the declaration opens restricted rooms until a roster row links. #}
+                <form method="post" action="{% url 'core:staff_set_declared_category' pk=row.user.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
+                  {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <label class="sr-only" for="declared-{{ row.user.pk }}">{% trans "Declared instrument" %}</label>
+                  <select class="field !py-1" id="declared-{{ row.user.pk }}" name="declared_category">
+                    <option value="">--- {% trans "None" %} ---</option>
+                    {% for value, label in instrument_choices %}
+                      <option value="{{ value }}" {% if row.user.declared_category == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn-secondary" type="submit">{% trans "Set declared instrument" %}</button>
+                </form>
 
                 <form method="post" action="{% url 'core:staff_record_violation' pk=row.user.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
                   {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
@@ -80,9 +106,7 @@
                   <button class="btn-danger" type="submit">{% trans "Deactivate account" %}</button>
                 </form>
 
-                {# The strikes behind a sanction, and the only way to act on an appeal.
-                   A student who believes a strike is wrong is told to contact the
-                   office; this is where the office can correct it. #}
+  {# The strikes behind a sanction, and the only way to act on an appeal. A student who believes a strike is wrong is told to contact the office; this is where the office can correct it. #}
                 <div class="mt-3 border-t border-slate-200 pt-2">
                   <p class="text-xs font-medium">{% trans "Strikes on record" %}</p>
                   {% if row.violations %}

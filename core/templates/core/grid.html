@@ -38,7 +38,9 @@
 
   {% if user.is_authenticated %}
     <p class="card mt-3 text-sm">
-      {% if user.eligibility == 'PENDING' %}
+      {% if user.is_teacher %}
+        <span class="font-medium">{% trans "Teacher account: you can view every schedule. Booking is available to students." %}</span>
+      {% elif user.eligibility == 'PENDING' %}
         <span class="font-medium text-amber-700">{% trans "Your account is waiting for staff approval; you cannot book yet." %}</span>
       {% elif not user.email_is_verified %}
         <span class="font-medium text-amber-700">{% trans "Verify your email address before booking." %}</span>

@@ -15,6 +15,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from core.models.identity import InstrumentCategory
+
 # Permissive on purpose: roster IDs are supplied by the faculty and may contain
 # characters the default Django username validator rejects. Whitespace is the
 # only hard exclusion.
@@ -101,12 +103,34 @@ class User(AbstractUser):
     )
     eligibility_reason = models.TextField(blank=True)
 
+    # Self-declared at registration (D-30). Honoured for restricted-room access
+    # only once the account is approved, and overridden by the roster row's
+    # derived category the moment a roster link exists.
+    declared_category = models.CharField(
+        _("declared instrument"),
+        max_length=32,
+        blank=True,
+        choices=InstrumentCategory.choices,
+        help_text=_(
+            "The instrument family the student declared at registration. A roster "
+            "link, when it exists, is authoritative over this value."
+        ),
+    )
+
     # Operational staff (ten named accounts) are distinct from the technical
     # maintainer, who is the only superuser (V3 section 1 and section 8).
     is_operational_staff = models.BooleanField(
         _("operational staff"),
         default=False,
         help_text=_("Members of the ten-account staff group; cannot grant superuser."),
+    )
+
+    # Faculty accounts (D-34): invited by staff, sign in with email or ID, and
+    # are read-only for now — they see schedules but cannot reserve rooms.
+    is_teacher = models.BooleanField(
+        _("teacher"),
+        default=False,
+        help_text=_("Faculty account. Read-only today; permissions widen later."),
     )
 
     rules_ack_version = models.CharField(max_length=32, blank=True)

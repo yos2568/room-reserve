@@ -68,6 +68,74 @@ class Room(models.Model):
         return any(row.category == category for row in self.allowed_categories.all())
 
 
+class Weekday(models.IntegerChoices):
+    """ISO weekday, matching ``date.weekday()``: Monday is 0."""
+
+    MONDAY = 0, _("Monday")
+    TUESDAY = 1, _("Tuesday")
+    WEDNESDAY = 2, _("Wednesday")
+    THURSDAY = 3, _("Thursday")
+    FRIDAY = 4, _("Friday")
+    SATURDAY = 5, _("Saturday")
+    SUNDAY = 6, _("Sunday")
+
+
+class WeeklyBlock(models.Model):
+    """A recurring weekly unavailability of one room: the teaching timetable.
+
+    Rooms 303 and 304 are teaching rooms as well as practice rooms, so a class
+    that meets in them every week makes those hours unreservable and unwalkable,
+    exactly as a closure does, but recurring and keyed by weekday and hour range
+    instead of by date. Check-in is deliberately untouched: a booking made before
+    a schedule change stays valid, the same survivorship a room-audience change
+    grants. An optional validity window bounds the block to a semester.
+    """
+
+    room = models.ForeignKey(
+        "core.Room",
+        on_delete=models.PROTECT,
+        related_name="weekly_blocks",
+    )
+    weekday = models.PositiveSmallIntegerField(choices=Weekday.choices)
+    start_hour = models.PositiveSmallIntegerField(help_text=_("Inclusive, e.g. 10 for 10:00."))
+    end_hour = models.PositiveSmallIntegerField(
+        help_text=_("Exclusive end hour: 12 means the block ends at 12:00.")
+    )
+    reason = models.CharField(max_length=200, help_text=_("Shown to students, e.g. the course name."))
+    valid_from = models.DateField(null=True, blank=True)
+    valid_until = models.DateField(null=True, blank=True, help_text=_("Inclusive; empty means no end."))
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = _("weekly room block")
+        verbose_name_plural = _("weekly room blocks")
+        ordering = ["room", "weekday", "start_hour"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(end_hour__gt=models.F("start_hour")),
+                name="weekly_block_end_after_start",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(end_hour__lte=24),
+                name="weekly_block_hours_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(valid_from__isnull=True)
+                | models.Q(valid_until__isnull=True)
+                | models.Q(valid_until__gte=models.F("valid_from")),
+                name="weekly_block_validity_window",
+            ),
+            models.UniqueConstraint(
+                fields=["room", "weekday", "start_hour"],
+                name="weekly_block_room_day_hour_unique",
+            ),
+        ]
+        indexes = [models.Index(fields=["room", "weekday"], name="weekly_block_room_day_idx")]
+
+    def __str__(self) -> str:
+        return f"{self.room} {self.get_weekday_display()} {self.start_hour}:00–{self.end_hour}:00"
+
+
 class RoomAllowedCategory(models.Model):
     """One instrument category permitted to reserve a room.
 

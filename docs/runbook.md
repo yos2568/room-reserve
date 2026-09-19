@@ -266,10 +266,13 @@ row, so a bulk correction is never silent.
 
 ## 8. The instrument-specific room
 
-Room 10 (`ห้องซ้อมใหญ่`) can only be **reserved** by piano and percussion students;
+Room 303 (`ห้อง 303`) can only be **reserved** by piano and percussion students;
 anyone may walk in once the hour has started and the room is still free. Changing
 that is a staff action: **Configuration → Rooms → Who may reserve**. It is audited
 (`room.audience_changed`) and it never cancels an existing booking.
+
+The old placeholder room 10 (`ห้องซ้อมใหญ่`) never existed on the floor; `seed_rooms`
+deactivates it, and its bookings and history stay in the database untouched.
 
 **If a piano or percussion student says they cannot reserve the room**, the cause is
 almost always one of two data problems, in this order:
@@ -277,8 +280,11 @@ almost always one of two data problems, in this order:
 1. **Their roster row is not linked to their account.** Linking happens when the
    institutional ID *and* email match at verification. A row holding a personal
    address (the 2569 roster has 57 of them) never links, so no instrument can be
-   found for that account. Fix the roster email first — that is the runbook section
-   above, and it is the more common cause.
+   found from the roster. Until the email is fixed, the student's **declared
+   instrument** from registration covers it (D-30): set or correct it on
+   Staff → Users → Manage → *Set declared instrument*, audited as
+   `user.declared_category_set`. The declaration works as soon as the account is
+   approved, and a later roster link overrides it automatically.
 2. **Nobody has categorised their instrument.** Their roster row says something the
    category table does not know, so it is `UNKNOWN` and `UNKNOWN` cannot open a
    restricted room. The roster screen (Staff → Roster) marks those rows in amber,
@@ -305,7 +311,33 @@ frozen copy of the table drifts from the live one.
 (`roomreserve/settings/base.py`) plus `ROOM_COUNT`, then `manage.py seed_rooms`;
 or, for a room that already exists, the staff screen alone.
 
-## 9. Emergency closure
+## 9. The teaching timetable (rooms 303 and 304)
+
+Rooms 303 and 304 host classes from the department's sheet
+(`ตารางห้อง อาคารศิลปกรรมชั้น3.pdf`). Those hours are `WeeklyBlock` rows —
+recurring, keyed by weekday and hour — configured in `ROOM_WEEKLY_BLOCKS` and
+applied by `manage.py seed_rooms`. A blocked hour refuses reservations *and*
+walk-ins, the grid shows it as "Class" with the course name, and a booking that
+already existed still checks in.
+
+**When the department's schedule changes** (a new semester, a moved course):
+
+1. Edit `ROOM_WEEKLY_BLOCKS` in `roomreserve/settings/base.py`. Weekday is
+   Monday=0; `end_hour` is exclusive. An optional `valid_from`/`valid_until`
+   bounds a block to a semester without deleting it.
+2. Run `manage.py seed_rooms` — it replaces the configured rooms' blocks, so a
+   removed entry disappears. Rooms absent from the setting keep their database
+   rows; clear those manually if they are genuinely gone.
+3. Bookings inside newly blocked hours are **not** cancelled — the students keep
+   them. If a class genuinely needs the hour back, contact the students or use a
+   closure; both are visible on the audit trail.
+
+The hours currently configured were read from the sheet's column geometry and
+should be confirmed with the department (D-28). There is no staff screen for the
+timetable yet; it is deliberately a configuration change with a seed run, not a
+click, because a wrong schedule blocks a whole room for a semester.
+
+## 10. Emergency closure
 
 Staff → Closures → preview the range → confirm. The preview counts the sessions
 that will be cancelled and flags any that are in progress; the confirm step
@@ -319,7 +351,7 @@ the penalties without touching anyone else's.
 
 ---
 
-## 9. Traps already encountered
+## 11. Traps already encountered
 
 **`DJANGO_SETTINGS_MODULE` in the environment overrides the test settings.**
 pytest-django resolves the settings module as `--ds` → environment →
@@ -375,7 +407,7 @@ nothing. The Dockerfile does the same.
 
 ---
 
-## 10. What is still manual
+## 12. What is still manual
 
 - **Physical poster check.** Whether the printed sheet is legible and hung on the
   correct door cannot be automated. The QR *targets* are verified; the doors are

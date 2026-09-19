@@ -67,8 +67,7 @@
               <td class="p-2">
                 {{ entry.instrument }}
                 {% if entry.instrument_category == "UNKNOWN" %}
-                  {# Visible on purpose: an uncategorised student cannot reserve an
-                     instrument-specific room, so staff need to see who they are. #}
+  {# Visible on purpose: an uncategorised student cannot reserve an instrument-specific room, so staff need to see who they are. #}
                   · <span class="text-amber-700">{% trans "no category — cannot use instrument-specific rooms" %}</span>
                 {% else %}
                   · <span class="text-slate-600">{{ entry.get_instrument_category_display }}</span>
@@ -77,8 +76,7 @@
               <td class="p-2">{{ entry.program }}</td>
               <td class="p-2">{% if entry.is_active %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
               <td class="p-2">
-                {# The address a student is matched against. The import refuses to
-                   change it, so correcting a wrong one is this explicit action. #}
+  {# The address a student is matched against. The import refuses to change it, so correcting a wrong one is this explicit action. #}
                 <details>
                   <summary class="cursor-pointer">{% trans "Correct email" %}</summary>
                   <form method="post" action="{% url 'core:staff_correct_roster_email' pk=entry.pk %}" class="mt-1 flex flex-wrap items-center gap-1">

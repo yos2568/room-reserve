@@ -272,13 +272,31 @@ def test_login_next_accepts_a_local_path(frozen, student):
     assert response["Location"] == reverse("core:my_bookings")
 
 
-def test_login_is_by_institutional_id_not_email(frozen, student):
-    """One identifier per account keeps the duplicate rules of section 8 sound."""
-    response = Client().post(
+def test_login_accepts_the_id_and_the_account_email(frozen, student):
+    """One field, two identifiers (D-34): the ID for students, the account's
+    email for faculty. A password is still required either way, and an email
+    that belongs to nobody fails exactly like a wrong password."""
+    client = Client()
+
+    by_id = client.post(
+        reverse("core:login"),
+        {"institutional_id": student.username, "password": PASSWORD},
+    )
+    assert by_id.status_code == 302
+
+    client.logout()
+    by_email = client.post(
         reverse("core:login"),
         {"institutional_id": student.email, "password": PASSWORD},
     )
-    assert response.status_code == 401
+    assert by_email.status_code == 302
+
+    client.logout()
+    unknown = client.post(
+        reverse("core:login"),
+        {"institutional_id": "nobody@student.chula.ac.th", "password": PASSWORD},
+    )
+    assert unknown.status_code == 401
 
 
 def test_repeated_failed_logins_are_rate_limited(frozen, student):

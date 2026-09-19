@@ -17,7 +17,7 @@ from django.conf import settings
 from core.models import BLOCKING_STATUSES, Booking, Closure, Room
 
 from . import clock, instruments, slots
-from .calendar import day_hours
+from .calendar import day_hours, weekly_blocks_for_date
 
 
 class SlotState(StrEnum):
@@ -47,6 +47,7 @@ class SlotCell:
     is_mine: bool = False
     remaining_minutes: int = 0
     closed_reason: str = ""
+    block_reason: str = ""
 
     @property
     def is_current(self) -> bool:
@@ -102,7 +103,7 @@ def _closures_for(local_date, room_ids):
 
 
 def room_day_cells(
-    room: Room, local_date, now, *, user=None, closure_map=None, viewer_category=None
+    room: Room, local_date, now, *, user=None, closure_map=None, block_map=None, viewer_category=None
 ) -> list[SlotCell]:
     """Every slot cell for one room on one local date.
 
@@ -111,6 +112,7 @@ def room_day_cells(
     somebody else's instrument.
     """
     closure_map = closure_map if closure_map is not None else _closures_for(local_date, [room.pk])
+    block_map = block_map if block_map is not None else weekly_blocks_for_date(local_date, [room.pk])
     hours = day_hours(local_date)
     if hours is None:
         starts = list(slots.day_slot_starts(local_date))
@@ -130,6 +132,7 @@ def room_day_cells(
         booking = bookings.get((room.pk, slot_start))
         is_mine = booking is not None and booking.user_id == user_id
         reason = _closure_reason_for(room, slot_start, slot_end, closure_map)
+        block_reason = _block_reason_for(room, slot_start, block_map)
 
         state = _classify(
             now=now,
@@ -138,6 +141,7 @@ def room_day_cells(
             room_active=room.is_active,
             day_closed=closed,
             closure_reason=reason,
+            block_reason=block_reason,
             booking=booking,
             horizon_last=horizon_last,
             can_reserve_here=can_reserve_here,
@@ -152,6 +156,7 @@ def room_day_cells(
                 is_mine=is_mine,
                 remaining_minutes=slots.remaining_minutes(now, slot_end),
                 closed_reason=reason,
+                block_reason=block_reason,
             )
         )
     return cells
@@ -167,6 +172,15 @@ def _closure_reason_for(room, slot_start, slot_end, closure_map) -> str:
     return ""
 
 
+def _block_reason_for(room, slot_start, block_map) -> str:
+    """The teaching-timetable reason for this slot, if a class claims the hour."""
+    hour = clock.local_time(slot_start).hour
+    for block in block_map.get(room.pk, []):
+        if block.start_hour <= hour < block.end_hour:
+            return block.reason
+    return ""
+
+
 def _classify(
     *,
     now,
@@ -177,11 +191,12 @@ def _classify(
     closure_reason,
     booking,
     horizon_last,
+    block_reason="",
     can_reserve_here=True,
 ):
     if slot_end <= now:
         return SlotState.PAST
-    if not room_active or day_closed or closure_reason:
+    if not room_active or day_closed or closure_reason or block_reason:
         return SlotState.CLOSED
     if booking is not None:
         if booking.status == Booking.Status.COMPLETED:
@@ -209,6 +224,7 @@ def public_grid(local_date, now, *, user=None) -> dict:
         return {"rooms": [], "rows": [], "local_date": local_date}
 
     closure_map = _closures_for(local_date, [room.pk for room in rooms])
+    block_map = weekly_blocks_for_date(local_date, [room.pk for room in rooms])
     hours = day_hours(local_date)
     if hours is None:
         column_starts = list(slots.day_slot_starts(local_date))
@@ -226,6 +242,7 @@ def public_grid(local_date, now, *, user=None) -> dict:
             now,
             user=user,
             closure_map=closure_map,
+            block_map=block_map,
             viewer_category=viewer_category,
         )
         by_start = {cell.slot_start: cell for cell in cells}

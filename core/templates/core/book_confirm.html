@@ -8,6 +8,19 @@
 
   {% if outcome and not outcome.ok %}
     <div class="card mt-3 border-red-700 bg-red-50" role="alert">{{ outcome.message }}</div>
+    {% if alternatives %}
+      <div class="card mt-3 max-w-xl border-brand-600 bg-brand-50">
+        <h2 class="text-sm font-semibold">{% trans "Other rooms free at this hour" %}</h2>
+        <ul class="mt-2 flex flex-wrap gap-1.5">
+          {% for alt in alternatives %}
+            <li>
+              <a class="inline-flex items-center rounded-full border border-brand-600 bg-white px-3 py-1 text-xs font-medium text-brand-700 hover:bg-brand-600 hover:text-white"
+                 href="{% url 'core:book_slot' room_id=alt.pk slot=slot_key %}">{{ alt }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
   {% endif %}
 
   <div class="card mt-4 max-w-xl">

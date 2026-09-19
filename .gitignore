@@ -31,3 +31,8 @@ htmlcov/
 /.chart-data-*/
 .DS_Store
 ._*
+
+# Personal data and local junk — never commit (D-33 era guard)
+รายชื่อนิสิตป.ตรี ทั้ง 4 ปี.xlsx
+._*
+Screenshot *.png

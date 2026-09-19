@@ -114,13 +114,13 @@ class Command(BaseCommand):
 
     def _seed_rooms(self) -> int:
         # Same provisioning path as `seed_rooms`, so a demo database and a real
-        # one have the same rooms — including the instrument-specific tenth room.
+        # one have the same rooms — including room 303 and its audience.
         return ensure_rooms()["created"]
 
     def _seed_student(self, index: int, password: str) -> str:
         institutional_id = f"66{index:07d}"
         email = normalize_email(f"student{index:04d}@{DEMO_DOMAIN}")
-        # Includes piano and percussion so the instrument-specific tenth room is
+        # Includes piano and percussion so the instrument-specific room 303 is
         # demonstrable from a seeded database.
         instrument = random.choice(["เปียโน", "เครื่องตี", "ไวโอลิน", "ร้องเพลง", "กีตาร์", "ฟลูต", "ทรัมเป็ต", "เชลโล"])
 
@@ -152,9 +152,8 @@ class Command(BaseCommand):
                 "name_th": user.name_th,
                 "program": "ดนตรีตะวันตก",
                 "instrument": instrument,
-                # Categorised like a real roster row, so the demo can exercise the
-                # instrument-specific tenth room rather than leaving every demo
-                # student uncategorised.
+                # Categorised like a real roster row, so the demo can exercise
+                # room 303 rather than leaving every demo student uncategorised.
                 "instrument_category": instruments.categorise(instrument),
                 "year": random.randint(1, 4),
                 "is_active": True,

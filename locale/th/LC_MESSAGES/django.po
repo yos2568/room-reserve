@@ -469,6 +469,160 @@ msgstr "ชั่วโมงนั้นผ่านไปแล้ว"
 msgid "That room is closed for the selected time."
 msgstr "ห้องนี้ปิดในเวลาที่เลือก"
 
+msgid "A class meets in that room at that hour. Choose another hour or another room."
+msgstr "มีการเรียนการสอนในห้องนี้ในชั่วโมงดังกล่าว กรุณาเลือกชั่วโมงอื่นหรือห้องอื่น"
+
+msgid "Class"
+msgstr "มีสอน"
+
+msgid "Monday"
+msgstr "วันจันทร์"
+
+msgid "Tuesday"
+msgstr "วันอังคาร"
+
+msgid "Wednesday"
+msgstr "วันพุธ"
+
+msgid "Thursday"
+msgstr "วันพฤหัสบดี"
+
+msgid "Friday"
+msgstr "วันศุกร์"
+
+msgid "Saturday"
+msgstr "วันเสาร์"
+
+msgid "Sunday"
+msgstr "วันอาทิตย์"
+
+msgid "weekly room block"
+msgstr "ตารางสอนประจำห้อง"
+
+msgid "weekly room blocks"
+msgstr "ตารางสอนประจำห้อง"
+
+msgid "Inclusive, e.g. 10 for 10:00."
+msgstr "ชั่วโมงเริ่มต้น เช่น 10 คือ 10:00"
+
+msgid "Exclusive end hour: 12 means the block ends at 12:00."
+msgstr "ชั่วโมงสิ้นสุด (ไม่รวม) เช่น 12 คือจบเวลา 12:00"
+
+msgid "Shown to students, e.g. the course name."
+msgstr "ข้อความที่นักศึกษาเห็น เช่น ชื่อวิชา"
+
+msgid "Inclusive; empty means no end."
+msgstr "รวมวันที่ระบุ หากเว้นว่างคือไม่มีวันสิ้นสุด"
+
+msgid "Suggestions"
+msgstr "ข้อเสนอแนะ"
+
+msgid "You have used your bookings for today, so nothing more can be reserved. Existing bookings are unaffected."
+msgstr "คุณใช้โควตาจองของวันนี้ครบแล้ว จึงไม่สามารถจองเพิ่มได้ การจองที่มีอยู่ไม่ได้รับผลกระทบ"
+
+msgid "Free right now"
+msgstr "ว่างตอนนี้"
+
+msgid "%(counter)s room — walk in before the hour ends"
+msgid_plural "%(counter)s rooms — walk in before the hour ends"
+msgstr[0] "ว่าง %(counter)s ห้อง — เข้าใช้ได้จนถึงสิ้นชั่วโมง"
+
+msgid "%(minutes)s min left in this hour"
+msgstr "เหลือ %(minutes)s นาทีในชั่วโมงนี้"
+
+msgid "Use %(room)s now"
+msgstr "เข้าใช้ %(room)s ตอนนี้"
+
+msgid "Bookable later today"
+msgstr "จองได้ในชั่วโมงถัดไปของวันนี้"
+
+msgid "Bookable that day"
+msgstr "จองได้ในวันที่เลือก"
+
+msgid "Soonest first — one tap opens the confirmation."
+msgstr "เรียงจากเร็วสุด — แตะครั้งเดียวเพื่อไปหน้ายืนยัน"
+
+msgid "Other rooms free at this hour"
+msgstr "ห้องอื่นที่ว่างในชั่วโมงนี้"
+
+msgid "Rooms you can still walk into this hour"
+msgstr "ห้องที่ยังเข้าใช้ได้ในชั่วโมงนี้"
+
+msgid "to reserve or use a room."
+msgstr "เพื่อจองหรือเข้าใช้ห้อง"
+
+msgid "Your instrument"
+msgstr "เครื่องดนตรีที่เล่น"
+
+msgid "Not specified"
+msgstr "ไม่ระบุ"
+
+msgid "Piano and percussion students who declare their instrument can reserve room 303 once their account is approved. The department's roster remains the authority and corrects this later if needed."
+msgstr "นิสิตเปียโนและเครื่องตีที่ระบุเครื่องดนตรีจะสามารถจองห้อง 303 ได้เมื่อบัญชีได้รับอนุมัติ ทั้งนี้รายชื่อของภาควิชายังคงเป็นข้อมูลอ้างอิงหลักและจะถูกใช้แก้ไขภายหลังหากไม่ตรง"
+
+msgid "Instrument"
+msgstr "เครื่องดนตรี"
+
+msgid "roster"
+msgstr "จากรายชื่อ"
+
+msgid "declared"
+msgstr "จากการลงทะเบียน"
+
+msgid "Declared instrument"
+msgstr "เครื่องดนตรีที่ระบุ"
+
+msgid "None"
+msgstr "ไม่มี"
+
+msgid "Set declared instrument"
+msgstr "บันทึกเครื่องดนตรีที่ระบุ"
+
+msgid "Check in at the room"
+msgstr "เช็คอินที่ห้อง"
+
+msgid "Confirming checks you in for this hour. After %(minutes)s minutes past the hour the room is released to other students and a strike is recorded."
+msgstr "การยืนยันคือการเช็คอินสำหรับชั่วโมงนี้ หากผ่าน %(minutes)s นาทีหลังเริ่มชั่วโมงแล้วยังไม่เช็คอิน ห้องจะถูกปล่อยให้นิสิตคนอื่นและจะบันทึกคะแนนโทษ"
+
+msgid "Check-in opens when the hour starts at %(start)s. Keep this page or scan again then."
+msgstr "เช็คอินจะเปิดเมื่อเริ่มชั่วโมงเวลา %(start)s กรุณาเก็บหน้านี้ไว้หรือสแกนอีกครั้งในภายหลัง"
+
+msgid "The check-in window closed at %(deadline)s. The room has been released to other students and a strike was recorded."
+msgstr "ช่วงเช็คอินปิดที่ %(deadline)s ห้องถูกปล่อยให้นิสิตคนอื่นแล้ว และมีการบันทึกคะแนนโทษ"
+
+msgid "Scan at the room to check in"
+msgstr "สแกนที่ห้องเพื่อเช็คอิน"
+
+msgid "Opens between {{ start }} and {{ deadline }}. Scanning confirms a declaration, not proven presence — staff may spot check."
+msgstr "ใช้ได้ระหว่าง {{ start }} ถึง {{ deadline }} การสแกนเป็นการยืนยันตัวตนเท่านั้น ไม่ใช่การพิสูจน์ว่าอยู่ในห้อง — เจ้าหน้าที่อาจตรวจสอบพัก"
+
+msgid "Scan the QR code below at the room, or open this link, to check in:"
+msgstr "สแกน QR ด้านล่างที่ห้อง หรือเปิดลิงก์นี้ เพื่อเช็คอิน"
+
+msgid "Student ID or email"
+msgstr "รหัสนิสิต หรือ อีเมล"
+
+msgid "e.g. 6600001 or teacher@chula.ac.th"
+msgstr "เช่น 6600001 หรือ teacher@chula.ac.th"
+
+msgid "Teacher (view-only)"
+msgstr "อาจารย์ (ดูได้อย่างเดียว)"
+
+msgid "teacher"
+msgstr "อาจารย์"
+
+msgid "staff"
+msgstr "เจ้าหน้าที่"
+
+msgid "Teacher account: you can view every schedule. Booking is available to students."
+msgstr "บัญชีอาจารย์: ดูตารางทั้งหมดได้ การจองห้องเปิดให้นิสิตเท่านั้น"
+
+msgid "Faculty of Fine and Applied Arts, Chulalongkorn University"
+msgstr "คณะศิลปกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย"
+
+msgid "Teacher accounts are read-only: they can view schedules but cannot reserve rooms."
+msgstr "บัญชีอาจารย์เป็นแบบดูได้อย่างเดียว สามารถดูตารางได้แต่ไม่สามารถจองห้องได้"
+
 #: core/services/errors.py:78
 msgid ""
 "That room can only be reserved by piano and percussion students. Once the "
@@ -1471,7 +1625,7 @@ msgstr ""
 
 #: core/templates/core/partials/slot_cell.html:39
 msgid "Piano & percussion only"
-msgstr "เปียโน"
+msgstr "เฉพาะเปียโนและเพอร์คัชชัน"
 
 #: core/templates/core/password_reset.html:4
 #: core/templates/core/register_done.html:17
@@ -2574,9 +2728,6 @@ msgid "ID"
 msgstr "รหัส"
 
 #: core/templates/core/staff/roster.html:56
-msgid "Instrument"
-msgstr "เครื่องดนตรี"
-
 #: core/templates/core/staff/roster.html:57
 msgid "Programme"
 msgstr "หลักสูตร"

@@ -3,65 +3,78 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f5f1">
   <title>{% block title %}{% trans "Room Reserve" %}{% endblock %} · {% trans "Practice room booking" %}</title>
   <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
   {# htmx is vendored locally: the deployment must not depend on a CDN. #}
   <script src="{% static 'js/htmx.min.js' %}" defer></script>
   {% block head_extra %}{% endblock %}
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+<body class="min-h-screen bg-paper text-slate-900 antialiased">
   <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:shadow">
     {% trans "Skip to main content" %}
   </a>
 
-  <header class="border-b border-slate-300 bg-white">
-    <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-3 py-3">
-      <a href="{% url 'core:home' %}" class="text-base font-semibold text-brand-700">{% trans "Room Reserve" %}</a>
-      <nav aria-label="{% trans 'Main navigation' %}" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-        <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:home' %}">{% trans "Availability" %}</a>
-        {% if user.is_authenticated %}
-          <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:my_bookings' %}">{% trans "My bookings" %}</a>
-          {% if user.is_operational_staff or user.is_superuser %}
-            <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:staff_today' %}">{% trans "Staff" %}</a>
+  {# Sticky + state-aware: scroll-state queries add depth while stuck (D-32). #}
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2.5 sm:px-6">
+        <a href="{% url 'core:home' %}" class="flex items-center gap-2.5 text-base font-semibold tracking-tight text-brand-700">
+          <img src="{% static 'img/faa-logo.png' %}" alt="{% trans 'Faculty of Fine and Applied Arts, Chulalongkorn University' %}" class="h-10 w-auto">
+          <span>{% trans "Room Reserve" %}</span>
+        </a>
+        <nav aria-label="{% trans 'Main navigation' %}" class="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm">
+          {% url 'core:home' as nav_home %}
+          <a class="nav-link min-h-touch" {% if request.path == nav_home %}aria-current="page"{% endif %} href="{{ nav_home }}">{% trans "Availability" %}</a>
+          {% if user.is_authenticated %}
+            {% url 'core:my_bookings' as nav_bookings %}
+            <a class="nav-link min-h-touch" {% if request.path == nav_bookings %}aria-current="page"{% endif %} href="{{ nav_bookings }}">{% trans "My bookings" %}</a>
+            {% if user.is_operational_staff or user.is_superuser %}
+              {% url 'core:staff_today' as nav_staff %}
+              <a class="nav-link min-h-touch" {% if request.path == nav_staff %}aria-current="page"{% endif %} href="{{ nav_staff }}">{% trans "Staff" %}</a>
+            {% endif %}
           {% endif %}
-        {% endif %}
-        <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:rules' %}">{% trans "Rules" %}</a>
-        <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:help' %}">{% trans "Help" %}</a>
-        <a class="min-h-touch inline-flex items-center px-1 hover:underline" href="{% url 'core:privacy' %}">{% trans "Privacy" %}</a>
-      </nav>
+          {% url 'core:rules' as nav_rules %}
+          <a class="nav-link min-h-touch" {% if request.path == nav_rules %}aria-current="page"{% endif %} href="{{ nav_rules }}">{% trans "Rules" %}</a>
+          {% url 'core:help' as nav_help %}
+          <a class="nav-link min-h-touch" {% if request.path == nav_help %}aria-current="page"{% endif %} href="{{ nav_help }}">{% trans "Help" %}</a>
+          {% url 'core:privacy' as nav_privacy %}
+          <a class="nav-link min-h-touch" {% if request.path == nav_privacy %}aria-current="page"{% endif %} href="{{ nav_privacy }}">{% trans "Privacy" %}</a>
+        </nav>
 
-      <div class="ms-auto flex flex-wrap items-center gap-2 text-sm">
-        {# Language toggle: a plain GET form, so it works without JavaScript. #}
-        <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1">
-          {% csrf_token %}
-          <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <label class="sr-only" for="language-select">{% trans "Language" %}</label>
-          <select id="language-select" name="language" class="rounded border border-slate-400 px-2 py-1">
-            <option value="th" {% if LANGUAGE_CODE == 'th' %}selected{% endif %}>ไทย</option>
-            <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
-          </select>
-          <button type="submit" class="btn-secondary">{% trans "Switch" %}</button>
-        </form>
-
-        {% if user.is_authenticated %}
-          <span class="text-slate-600">{{ user.display_name }}</span>
-          <form method="post" action="{% url 'core:logout' %}">
+        <div class="ms-auto flex flex-wrap items-center gap-2 text-sm">
+          {# Language toggle: a plain GET form, so it works without JavaScript. #}
+          <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1">
             {% csrf_token %}
-            <button type="submit" class="btn-secondary">{% trans "Sign out" %}</button>
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <label class="sr-only" for="language-select">{% trans "Language" %}</label>
+            <select id="language-select" name="language" class="rounded-full border border-slate-300 bg-white/70 px-2.5 py-1">
+              <option value="th" {% if LANGUAGE_CODE == 'th' %}selected{% endif %}>ไทย</option>
+              <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+            </select>
+            <button type="submit" class="btn-secondary !min-h-touch !rounded-full !px-3 !py-1 text-xs">{% trans "Switch" %}</button>
           </form>
-        {% else %}
-          <a class="btn-secondary" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
-          <a class="btn-primary" href="{% url 'core:register' %}">{% trans "Register" %}</a>
-        {% endif %}
+
+          {% if user.is_authenticated %}
+            <span class="hidden text-slate-600 sm:inline">{{ user.display_name }}</span>
+            <form method="post" action="{% url 'core:logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn-secondary !min-h-touch !rounded-full !px-3 !py-1 text-xs">{% trans "Sign out" %}</button>
+            </form>
+          {% else %}
+            <a class="btn-secondary !min-h-touch !rounded-full !px-3 !py-1 text-xs" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
+            <a class="btn-primary !min-h-touch !rounded-full !px-3 !py-1 text-xs" href="{% url 'core:register' %}">{% trans "Register" %}</a>
+          {% endif %}
+        </div>
       </div>
     </div>
   </header>
 
   {# Result messages are announced to assistive technology, not just coloured. #}
   {% if messages %}
-    <div class="mx-auto max-w-7xl px-3 pt-3">
+    <div class="mx-auto max-w-7xl px-3 pt-4 sm:px-6">
       {% for message in messages %}
-        <div class="card mb-2 {% if message.tags == 'error' %}border-red-700 bg-red-50{% elif message.tags == 'warning' %}border-amber-600 bg-amber-50{% else %}border-emerald-700 bg-emerald-50{% endif %}"
+        <div class="card mb-2 {% if message.tags == 'error' %}border-red-200 bg-red-50{% elif message.tags == 'warning' %}border-amber-200 bg-amber-50{% else %}border-emerald-200 bg-emerald-50{% endif %}"
              role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}"
              aria-live="{% if message.tags == 'error' %}assertive{% else %}polite{% endif %}">
           {{ message }}
@@ -70,12 +83,12 @@
     </div>
   {% endif %}
 
-  <main id="main" class="mx-auto max-w-7xl px-3 py-4">
+  <main id="main" class="mx-auto max-w-7xl px-3 py-6 sm:px-6">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="mt-8 border-t border-slate-300 bg-white">
-    <div class="mx-auto max-w-7xl px-3 py-4 text-sm text-slate-700">
+  <footer class="mt-10 border-t border-slate-200 bg-white">
+    <div class="mx-auto max-w-7xl px-3 py-6 text-sm text-slate-600 sm:px-6">
       <p>
         {% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}
       </p>
@@ -84,7 +97,7 @@
       </p>
       <p class="mt-1">
         {% url 'core:privacy' as privacy_url %}
-        {% blocktrans %}Dates use the Gregorian calendar (ค.ศ.). See the privacy notice for how data is handled.{% endblocktrans %}
+        {% blocktrans %}Dates use the Gregorian calendar (ค.ศ.). See the <a class="underline decoration-slate-400 underline-offset-2 hover:text-slate-900" href="{{ privacy_url }}">privacy notice</a> for how data is handled.{% endblocktrans %}
       </p>
     </div>
   </footer>

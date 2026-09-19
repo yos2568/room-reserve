@@ -10,9 +10,10 @@
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ next }}">
     <div>
-      <label class="label" for="id_institutional_id">{% trans "Institutional ID" %}</label>
+      <label class="label" for="id_institutional_id">{% trans "Student ID or email" %}</label>
       <input class="field" id="id_institutional_id" name="institutional_id" required
-             autocomplete="username" value="{{ institutional_id|default:'' }}">
+             autocomplete="username" value="{{ institutional_id|default:'' }}"
+             placeholder="{% trans 'e.g. 6600001 or teacher@chula.ac.th' %}">
     </div>
     <div>
       <label class="label" for="id_password">{% trans "Password" %}</label>

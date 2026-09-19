@@ -6,6 +6,7 @@ and the email domain is reserved for documentation use.
 
 from __future__ import annotations
 
+import secrets
 from datetime import datetime
 
 from django.utils import timezone
@@ -17,6 +18,8 @@ from core.models import (
     Room,
     RoomAllowedCategory,
     User,
+    Weekday,
+    WeeklyBlock,
     advance_deadline,
 )
 from core.services import instruments, slots
@@ -86,8 +89,8 @@ def make_roster_entry(user: User | None = None, **overrides) -> EligibleStudent:
 
 
 def make_restricted_room(
-    number: str = "10",
-    label: str = "ห้องซ้อมใหญ่",
+    number: str = "303",
+    label: str = "ห้อง 303",
     categories: tuple[str, ...] = (InstrumentCategory.PIANO, InstrumentCategory.PERCUSSION),
     position: int = 10,
 ) -> Room:
@@ -101,6 +104,28 @@ def make_restricted_room(
     for category in categories:
         RoomAllowedCategory.objects.get_or_create(room=room, category=category)
     return room
+
+
+def make_weekly_block(
+    room: Room,
+    *,
+    weekday: int = Weekday.MONDAY,
+    start_hour: int = 10,
+    end_hour: int = 12,
+    reason: str = "COUNTERPOINT",
+    valid_from=None,
+    valid_until=None,
+) -> WeeklyBlock:
+    """One recurring teaching-timetable hour range on a room."""
+    return WeeklyBlock.objects.create(
+        room=room,
+        weekday=weekday,
+        start_hour=start_hour,
+        end_hour=end_hour,
+        reason=reason,
+        valid_from=valid_from,
+        valid_until=valid_until,
+    )
 
 
 def make_rooms(count: int = 9) -> list[Room]:
@@ -141,6 +166,12 @@ def make_booking(
         "source": source,
         "policy_version": policy,
     }
+    # Advance reservations carry the QR check-in token, exactly as the real
+    # creation path does; walk-ins have nothing to check in to.
+    defaults["checkin_token"] = overrides.pop(
+        "checkin_token",
+        secrets.token_urlsafe(24) if source == Booking.Source.ADVANCE else None,
+    )
     if status == Booking.Status.IN_USE:
         defaults.setdefault("checked_in_at", slot_start)
     if status == Booking.Status.CANCELLED:

@@ -1,8 +1,10 @@
 """Idempotently ensure the configured practice rooms exist.
 
-The count and the per-room configuration come from settings
-(``ROOM_COUNT`` / ``ROOM_OVERRIDES``), so the tenth room and its audience are
-deployment configuration rather than a literal buried in a command.
+The rooms and their per-room configuration come from settings
+(``ROOM_COUNT`` / ``ROOM_OVERRIDES`` / ``ROOM_WEEKLY_BLOCKS``): the nine stalls,
+the piano-and-percussion room 303, and the teaching room 304 with its class
+hours are deployment configuration rather than literals buried in a command.
+Rooms outside the configured set are deactivated, never deleted.
 """
 
 from django.conf import settings
@@ -19,6 +21,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         report = ensure_rooms(count=options["count"])
-        self.stdout.write(
-            self.style.SUCCESS(f"rooms ready: {report['total']} total, {report['created']} created")
-        )
+        parts = [f"rooms ready: {report['total']} total, {report['created']} created"]
+        if report.get("retired"):
+            parts.append(f"{report['retired']} deactivated")
+        self.stdout.write(self.style.SUCCESS(", ".join(parts)))

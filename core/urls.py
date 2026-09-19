@@ -36,6 +36,9 @@ urlpatterns = [
     path("my-bookings/", views.booking.my_bookings, name="my_bookings"),
     path("my-bookings/<int:pk>/cancel/", views.booking.cancel_booking, name="cancel_booking"),
     path("my-bookings/<int:pk>/check-in/", views.booking.check_in, name="check_in"),
+    # QR target from the confirmation email (D-31); the locale prefix comes from
+    # i18n_patterns, so the scanned URL keeps the student's language.
+    path("check-in/<str:token>/", views.booking.checkin_qr, name="checkin_qr"),
     # Staff operations ---------------------------------------------------------
     path("staff/today/", views.staff.today, name="staff_today"),
     path("staff/approvals/<int:pk>/", views.staff.decide_eligibility, name="staff_decide_eligibility"),
@@ -48,6 +51,11 @@ urlpatterns = [
     path("staff/bookings/<int:pk>/complete/", views.staff.complete_early, name="staff_complete_early"),
     path("staff/bookings/<int:pk>/review/", views.staff.resolve_review, name="staff_resolve_review"),
     path("staff/users/", views.staff.users, name="staff_users"),
+    path(
+        "staff/users/<int:pk>/declared-category/",
+        views.staff.set_declared_category,
+        name="staff_set_declared_category",
+    ),
     path("staff/users/<int:pk>/suspend/", views.staff.manual_suspension, name="staff_suspend"),
     path("staff/users/<int:pk>/deactivate/", views.staff.deactivate_account, name="staff_deactivate"),
     path("staff/sanctions/<int:pk>/lift/", views.staff.lift_suspension, name="staff_lift"),

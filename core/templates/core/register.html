@@ -26,6 +26,18 @@
              value="{{ form.email|default:'' }}" autocomplete="email">
       <p class="mt-1 text-xs text-slate-600">{% blocktrans with domain=policy.snapshot.institution_email_domain %}Must end with {{ domain }}{% endblocktrans %}</p>
     </div>
+    <div>
+      <label class="label" for="id_declared_category">{% trans "Your instrument" %}</label>
+      <select class="field" id="id_declared_category" name="declared_category">
+        <option value="">--- {% trans "Not specified" %} ---</option>
+        {% for value, label in instrument_choices %}
+          <option value="{{ value }}" {% if form.declared_category == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <p class="mt-1 text-xs text-slate-600">
+        {% blocktrans %}Piano and percussion students who declare their instrument can reserve room 303 once their account is approved. The department's roster remains the authority and corrects this later if needed.{% endblocktrans %}
+      </p>
+    </div>
     <button class="btn-primary" type="submit">{% trans "Create account" %}</button>
   </form>
 

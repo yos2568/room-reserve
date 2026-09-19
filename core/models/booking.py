@@ -82,6 +82,16 @@ class Booking(models.Model):
         on_delete=models.SET_NULL,
         related_name="check_ins_performed",
     )
+    # Secret per-reservation token (D-31): encodes the emailed QR target. Null for
+    # walk-ins, which are already in use and have nothing to check in to.
+    checkin_token = models.CharField(
+        _("check-in token"),
+        max_length=64,
+        unique=True,
+        null=True,
+        blank=True,
+        editable=False,
+    )
     cancelled_at = models.DateTimeField(null=True, blank=True)
     cancelled_by = models.ForeignKey(
         "core.User",

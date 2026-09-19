@@ -26,7 +26,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from core.models import EligibleStudent, Invitation, User
+from core.models import EligibleStudent, InstrumentCategory, Invitation, User
 
 from . import clock
 from .audit import record_audit
@@ -36,6 +36,12 @@ from .outbox import enqueue
 from .policy import current_policy
 
 logger = logging.getLogger(__name__)
+
+# What a student may declare at registration: the real families, not UNKNOWN —
+# declaring "uncategorised" would be a claim about our data, not about them (D-30).
+DECLARABLE_CATEGORIES = frozenset(
+    value for value, _label in InstrumentCategory.choices if value != InstrumentCategory.UNKNOWN
+)
 
 VERIFICATION_TTL = timedelta(days=3)
 ACTIVATION_TTL = timedelta(days=14)
@@ -143,20 +149,28 @@ class RegistrationResult:
     raw_token: str | None = None
 
 
-def start_registration(*, institutional_id: str, email: str, name: str, actor=None) -> RegistrationResult:
+def start_registration(
+    *, institutional_id: str, email: str, name: str, declared_category: str | None = None, actor=None
+) -> RegistrationResult:
     """Create a pending account and send a verification link.
 
     The account has no usable password until the emailed token is redeemed, so an
-    unverified registration cannot be signed into.
+    unverified registration cannot be signed into. ``declared_category`` is the
+    instrument family the student claims at registration (D-30): it is stored
+    verbatim against the known families, never trusted for restricted-room
+    access until the account is approved, and overridden by a roster link.
     """
     institutional_id = (institutional_id or "").strip()
     email = normalize_email(email)
     name = (name or "").strip()
+    declared_category = (declared_category or "").strip()
 
     if not institutional_id or not email or not name:
         raise OperationRejected(Code.INVALID_INPUT)
     if not email_domain_allowed(email):
         raise OperationRejected(Code.DOMAIN_NOT_ALLOWED)
+    if declared_category and declared_category not in DECLARABLE_CATEGORIES:
+        raise OperationRejected(Code.INVALID_INPUT)
 
     with transaction.atomic():
         # Neither branch says which field collided: that would confirm account or
@@ -174,6 +188,7 @@ def start_registration(*, institutional_id: str, email: str, name: str, actor=No
                 name_th=name,
                 eligibility=User.Eligibility.PENDING,
                 is_active=True,
+                declared_category=declared_category,
             )
         except IntegrityError as exc:
             raise OperationRejected(Code.DUPLICATE_ACCOUNT) from exc
@@ -191,7 +206,11 @@ def start_registration(*, institutional_id: str, email: str, name: str, actor=No
         entity_id=user.pk,
         actor=None,
         actor_label="self-registration",
-        changes={"institutional_id": institutional_id, "eligibility": user.eligibility},
+        changes={
+            "institutional_id": institutional_id,
+            "eligibility": user.eligibility,
+            "declared_category": declared_category,
+        },
     )
 
     enqueue(
@@ -489,11 +508,46 @@ def decide_eligibility(*, user, decision: str, actor, reason: str) -> User:
     return user
 
 
-def invite_account(*, institutional_id: str, email: str, name: str, actor, staff: bool, reason: str = ""):
+def set_declared_category(*, user: User, declared_category: str, actor) -> User:
+    """Staff set or clear a student's declared instrument (D-30). Audited.
+
+    Staff are the correction path of last resort: a student who declared the
+    wrong family, or one who registered before the selector existed, is fixed
+    here rather than by waiting for a roster link. An empty value clears it.
+    """
+    declared_category = (declared_category or "").strip()
+    if declared_category and declared_category not in DECLARABLE_CATEGORIES:
+        raise OperationRejected(Code.INVALID_INPUT)
+
+    before = user.declared_category
+    user.declared_category = declared_category
+    user.save(update_fields=["declared_category"])
+    record_audit(
+        action="user.declared_category_set",
+        entity_type="User",
+        entity_id=user.pk,
+        actor=actor,
+        changes={"before": before, "after": declared_category},
+    )
+    return user
+
+
+def invite_account(
+    *,
+    institutional_id: str,
+    email: str,
+    name: str,
+    actor,
+    staff: bool,
+    teacher: bool = False,
+    reason: str = "",
+):
     """Create an invited account and return its activation link.
 
     Staff identities are supplied by the owner; this never grants superuser, and
-    it never resets a password on an account that already exists.
+    it never resets a password on an account that already exists. ``teacher``
+    invites a faculty account (D-34): sign-in works, but the account is
+    read-only — schedules only — until the owner widens its permissions.
     """
     institutional_id = (institutional_id or "").strip()
     email = normalize_email(email)
@@ -517,6 +571,7 @@ def invite_account(*, institutional_id: str, email: str, name: str, actor, staff
                 name_th=name,
                 eligibility=User.Eligibility.APPROVED,
                 is_operational_staff=staff,
+                is_teacher=teacher,
                 email_verified_at=clock.now(),
             )
             user.set_unusable_password()
@@ -534,7 +589,7 @@ def invite_account(*, institutional_id: str, email: str, name: str, actor, staff
         entity_type="User",
         entity_id=user.pk,
         actor=actor,
-        changes={"staff": staff, "created": created},
+        changes={"staff": staff, "teacher": teacher, "created": created},
         reason=reason,
     )
     enqueue(
