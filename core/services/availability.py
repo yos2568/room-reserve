@@ -196,8 +196,10 @@ def _classify(
 ):
     if slot_end <= now:
         return SlotState.PAST
-    if not room_active or day_closed or closure_reason or block_reason:
+    if not room_active or day_closed or closure_reason:
         return SlotState.CLOSED
+    # A booking outranks a class block: a reservation made before the teaching
+    # timetable changed stays valid (D-28), so the grid must show it, not "Class".
     if booking is not None:
         if booking.status == Booking.Status.COMPLETED:
             # Historical occupancy: a completed slot is never resold.
@@ -207,6 +209,8 @@ def _classify(
         if booking.deadline is not None and slot_start <= now < booking.deadline:
             return SlotState.HELD
         return SlotState.TAKEN
+    if block_reason:
+        return SlotState.CLOSED
     if slot_start <= now:
         # The hour has begun and nobody holds it. Open to everyone, whatever the
         # room's reservation audience: this is the release valve that keeps a

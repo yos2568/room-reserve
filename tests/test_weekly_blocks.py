@@ -226,3 +226,29 @@ def test_seed_does_not_undo_a_staff_deactivation(frozen, db):
     room.refresh_from_db()
     assert not room.is_active
     assert report["held_out"] == ["5"]
+
+
+def test_a_booking_that_predates_a_class_shows_as_booked_not_class(frozen, student, other_student, rooms):
+    booked = helpers.advance_booking(student, rooms[0], slots.slot_start_for(NEXT_TUESDAY, 13))
+    assert booked.ok, booked.code
+    # The timetable changes after the reservation: the booking stands (D-28).
+    factories.make_weekly_block(rooms[0], weekday=1, start_hour=13, end_hour=15, reason="HARMONY")
+
+    mine = cell_for(availability.public_grid(NEXT_TUESDAY, clock.now(), user=student), rooms[0], 13)
+    theirs = cell_for(availability.public_grid(NEXT_TUESDAY, clock.now(), user=other_student), rooms[0], 13)
+    unbooked = cell_for(availability.public_grid(NEXT_TUESDAY, clock.now(), user=student), rooms[0], 14)
+
+    assert mine.state == availability.SlotState.TAKEN and mine.is_mine
+    assert mine.block_reason == "HARMONY"
+    assert theirs.state == availability.SlotState.TAKEN and not theirs.is_mine
+    assert unbooked.state == availability.SlotState.CLOSED
+
+
+def test_dropping_a_room_from_the_timetable_clears_its_blocks(frozen, db):
+    rooms_service.ensure_rooms()
+    assert WeeklyBlock.objects.filter(room__number="304").count() == 3
+
+    report = rooms_service.ensure_rooms(weekly_blocks={})
+
+    assert not WeeklyBlock.objects.exists()
+    assert report["blocks_cleared"] == 3

@@ -3061,3 +3061,9 @@ msgid ""
 "This room cannot be started for the current hour. Check the availability "
 "grid for another room."
 msgstr "ห้องนี้ไม่สามารถเริ่มใช้งานในชั่วโมงปัจจุบันได้ กรุณาดูตารางห้องว่างเพื่อเลือกห้องอื่น"
+
+#: core/templates/core/partials/slot_cell.html:34
+#, python-format
+msgid ""
+"Your booking stands. A class (%(reason)s) is now timetabled for this hour."
+msgstr "การจองของคุณยังคงใช้ได้ ชั่วโมงนี้มีการจัดตารางเรียน (%(reason)s) เพิ่มเข้ามาภายหลัง"

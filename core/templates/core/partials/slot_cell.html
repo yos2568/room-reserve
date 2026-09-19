@@ -29,7 +29,15 @@
 {% elif cell.state == "completed" %}
   <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700">{% trans "Used" %}</span>
 {% elif cell.state == "taken" %}
-  <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700">{% trans "Booked" %}</span>
+  {% if cell.is_mine %}
+    {# A booking that predates a class block survives it (D-28); the title says why the hour also shows a class. #}
+    <span class="block w-full rounded bg-brand-100 px-2 py-2 text-center text-xs text-brand-700"
+          {% if cell.block_reason %}title="{% blocktrans with reason=cell.block_reason %}Your booking stands. A class ({{ reason }}) is now timetabled for this hour.{% endblocktrans %}"{% endif %}>
+      {% trans "Yours" %}
+    </span>
+  {% else %}
+    <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700">{% trans "Booked" %}</span>
+  {% endif %}
 {% elif cell.state == "outside_horizon" %}
   <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-500">{% trans "Too far ahead" %}</span>
 {% elif cell.state == "restricted" %}

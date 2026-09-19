@@ -24,6 +24,8 @@ class Command(BaseCommand):
         parts = [f"rooms ready: {report['total']} total, {report['created']} created"]
         if report.get("retired"):
             parts.append(f"{report['retired']} deactivated")
+        if report.get("blocks_cleared"):
+            parts.append(f"{report['blocks_cleared']} class blocks removed (no longer configured)")
         if report.get("held_out"):
             parts.append(f"left out of service by staff: {', '.join(report['held_out'])}")
         self.stdout.write(self.style.SUCCESS(", ".join(parts)))

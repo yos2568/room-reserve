@@ -137,6 +137,9 @@ def ensure_rooms(
         room = Room.objects.filter(number=number).first()
         if room is not None:
             set_weekly_blocks(room=room, entries=entries)
+    # Settings are the whole timetable: a room dropped from ROOM_WEEKLY_BLOCKS
+    # (a semester with no classes there) loses its old blocks too.
+    blocks_cleared, _ = WeeklyBlock.objects.exclude(room__number__in=list(weekly_blocks)).delete()
 
     retired = Room.objects.filter(is_active=True).exclude(number__in=numbers).update(is_active=False)
 
@@ -145,4 +148,5 @@ def ensure_rooms(
         "total": Room.objects.count(),
         "retired": retired,
         "held_out": held_out,
+        "blocks_cleared": blocks_cleared,
     }
