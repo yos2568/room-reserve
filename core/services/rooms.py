@@ -9,7 +9,9 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import transaction
 
-from core.models import Room, RoomAllowedCategory, WeeklyBlock
+from core.models import AuditEvent, Room, RoomAllowedCategory, WeeklyBlock
+
+from .audit import record_audit
 
 
 def set_audience(*, room: Room, scope: str, categories) -> dict:
@@ -36,6 +38,26 @@ def set_audience(*, room: Room, scope: str, categories) -> dict:
         "categories_before": before,
         "categories_after": wanted,
     }
+
+
+def _held_out_by_staff(room: Room) -> bool:
+    """Whether staff took this room out of service and nobody has put it back.
+
+    Configuration may retire a room and bring it back, but a room staff
+    deactivated (a broken piano, a leak) stays out until a person decides
+    otherwise: a routine ``seed_rooms`` run must not undo that decision.
+    """
+    latest = (
+        AuditEvent.objects.filter(
+            entity_type="Room",
+            entity_id=str(room.pk),
+            action__in=("room.deactivated", "room.reactivated"),
+        )
+        .order_by("-occurred_at", "-pk")
+        .values_list("action", flat=True)
+        .first()
+    )
+    return latest == "room.deactivated"
 
 
 def set_weekly_blocks(*, room: Room, entries) -> None:
@@ -70,6 +92,7 @@ def ensure_rooms(
     numbers += [key for key in overrides if key not in numbers]
 
     created = 0
+    held_out = []
     for index, number in enumerate(numbers, start=1):
         config = overrides.get(number, {})
         room, was_created = Room.objects.get_or_create(
@@ -82,10 +105,21 @@ def ensure_rooms(
         created += int(was_created)
 
         if not room.is_active:
-            # A room back in the configured set returns to the grid; retiring
-            # hides a room, it does not bury it.
-            room.is_active = True
-            room.save(update_fields=["is_active"])
+            if _held_out_by_staff(room):
+                held_out.append(number)
+            else:
+                # A room back in the configured set returns to the grid; retiring
+                # hides a room, it does not bury it.
+                room.is_active = True
+                room.save(update_fields=["is_active"])
+                record_audit(
+                    action="room.reactivated",
+                    entity_type="Room",
+                    entity_id=room.pk,
+                    actor_label="seed_rooms",
+                    changes={"room": room.number},
+                    reason="Room is in the configured set again.",
+                )
 
         # Applied on every run, not only at creation, so a configuration change in
         # settings reaches an existing database without a migration.
@@ -106,4 +140,9 @@ def ensure_rooms(
 
     retired = Room.objects.filter(is_active=True).exclude(number__in=numbers).update(is_active=False)
 
-    return {"created": created, "total": Room.objects.count(), "retired": retired}
+    return {
+        "created": created,
+        "total": Room.objects.count(),
+        "retired": retired,
+        "held_out": held_out,
+    }

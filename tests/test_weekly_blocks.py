@@ -15,6 +15,7 @@ import pytest
 from core.models import Booking, Closure, Room, WeeklyBlock
 from core.services import availability, calendar, clock, slots
 from core.services import rooms as rooms_service
+from core.services.audit import record_audit
 from core.services.errors import Code
 from tests import factories, helpers
 
@@ -211,3 +212,17 @@ def test_retired_room_returns_when_configured_again(frozen, db):
     rooms_service.ensure_rooms()
     room.refresh_from_db()
     assert room.is_active
+
+
+def test_seed_does_not_undo_a_staff_deactivation(frozen, db):
+    rooms_service.ensure_rooms()
+    room = Room.objects.get(number="5")
+    room.is_active = False
+    room.save(update_fields=["is_active"])
+    record_audit(action="room.deactivated", entity_type="Room", entity_id=room.pk, reason="broken piano")
+
+    report = rooms_service.ensure_rooms()
+
+    room.refresh_from_db()
+    assert not room.is_active
+    assert report["held_out"] == ["5"]

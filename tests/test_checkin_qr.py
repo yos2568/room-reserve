@@ -159,3 +159,30 @@ def test_confirm_after_the_deadline_refuses(frozen, student, rooms, client):
     # The protocol's reconciliation runs first: an expired reservation is a
     # no-show — room released, strike recorded — before the refusal is shown.
     assert booking.status == Booking.Status.NO_SHOW
+
+
+def test_reminder_email_carries_link_and_qr(frozen, student, rooms):
+    # Every advance booking has a token, so the reminder takes the HTML path too.
+    # It once had no HTML template, and every reminder failed at delivery.
+    outcome = helpers.advance_booking(student, rooms[0], slots.slot_start_for(TOMORROW, 13))
+    booking = Booking.objects.get(pk=outcome.data["booking_id"])
+    notification = notification_stub(
+        student,
+        kind=notifications.KIND_BOOKING_REMINDER,
+        payload={
+            "booking_id": booking.pk,
+            "room_number": booking.room.number,
+            "slot_start": booking.slot_start.isoformat(),
+            "slot_end": booking.slot_end.isoformat(),
+        },
+    )
+
+    context = notifications.revalidate(notification, clock.now())
+    subject, text = notifications.render(notification, context)
+    html = notifications.render_html(notification, context)
+
+    path = reverse("core:checkin_qr", args=[booking.checkin_token])
+    assert path in text
+    assert html is not None
+    assert path in html
+    assert "data:image/png;base64," in html
