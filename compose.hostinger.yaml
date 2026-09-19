@@ -1,0 +1,125 @@
+# Room Reserve pilot topology for Hostinger Docker Manager.
+#
+# Hostinger already owns ports 80/443 with its Traefik project, so this file
+# intentionally has no Caddy service and publishes no host ports. The web
+# service joins Traefik's existing external network and is routed only for
+# roomreserve.yos.in.th.
+
+name: roomreserve
+
+x-app: &app
+  build:
+    context: https://github.com/yos2568/room-reserve.git#e3c8522e079b15c7951006d83c3150337adb2e5a
+    dockerfile: Dockerfile
+  image: roomreserve-app:${APP_TAG:-pilot}
+  restart: unless-stopped
+  environment:
+    DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:?DJANGO_SETTINGS_MODULE is required}
+    DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY is required}
+    DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:?DJANGO_ALLOWED_HOSTS is required}
+    DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:?DJANGO_CSRF_TRUSTED_ORIGINS is required}
+    STAFF_ALLOWED_IPS: ${STAFF_ALLOWED_IPS:-}
+    MAINTAINER_ALLOWED_IPS: ${MAINTAINER_ALLOWED_IPS:?MAINTAINER_ALLOWED_IPS is required}
+    DJANGO_LOG_LEVEL: ${DJANGO_LOG_LEVEL:-INFO}
+    DJANGO_CONN_MAX_AGE: ${DJANGO_CONN_MAX_AGE:-60}
+    ALLOW_TEST_CLOCK: "false"
+    POSTGRES_DB: ${POSTGRES_DB:-roomreserve}
+    POSTGRES_USER: ${POSTGRES_USER:-roomreserve}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    POSTGRES_HOST: db
+    POSTGRES_PORT: "5432"
+    EMAIL_HOST: ${EMAIL_HOST:?EMAIL_HOST is required}
+    EMAIL_PORT: ${EMAIL_PORT:-587}
+    EMAIL_HOST_USER: ${EMAIL_HOST_USER:?EMAIL_HOST_USER is required}
+    EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:?EMAIL_HOST_PASSWORD is required}
+    EMAIL_USE_TLS: ${EMAIL_USE_TLS:-true}
+    EMAIL_USE_SSL: ${EMAIL_USE_SSL:-false}
+    DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:?DEFAULT_FROM_EMAIL is required}
+    OUTBOX_ENABLED: ${OUTBOX_ENABLED:-true}
+    POLICY_HORIZON_DAYS: ${POLICY_HORIZON_DAYS:-7}
+    POLICY_DAILY_QUOTA: ${POLICY_DAILY_QUOTA:-2}
+    POLICY_CHECKIN_GRACE_MINUTES: ${POLICY_CHECKIN_GRACE_MINUTES:-15}
+    POLICY_STRIKE_WINDOW_DAYS: ${POLICY_STRIKE_WINDOW_DAYS:-30}
+    POLICY_STRIKE_THRESHOLD: ${POLICY_STRIKE_THRESHOLD:-3}
+    POLICY_AUTO_SUSPENSION_DAYS: ${POLICY_AUTO_SUSPENSION_DAYS:-7}
+    POLICY_REMINDER_LEAD_MINUTES: ${POLICY_REMINDER_LEAD_MINUTES:-30}
+    INSTITUTION_EMAIL_DOMAIN: ${INSTITUTION_EMAIL_DOMAIN:-student.chula.ac.th}
+    SUPPORT_CONTACT_NAME: ${SUPPORT_CONTACT_NAME:-}
+    SUPPORT_CONTACT_PHONE: ${SUPPORT_CONTACT_PHONE:-}
+    SUPPORT_CONTACT_EMAIL: ${SUPPORT_CONTACT_EMAIL:-}
+  networks:
+    - roomreserve_private
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  db:
+    image: postgres:16.4-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-roomreserve}
+      POSTGRES_USER: ${POSTGRES_USER:-roomreserve}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - roomreserve_private
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  web:
+    <<: *app
+    command: ["gunicorn", "roomreserve.wsgi:application", "--config", "gunicorn.conf.py"]
+    expose:
+      - "8000"
+    networks:
+      - roomreserve_private
+      - static_sites
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz/', timeout=5).status==200 else 1)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=static_sites"
+      - "traefik.http.routers.roomreserve.rule=Host(`roomreserve.yos.in.th`)"
+      - "traefik.http.routers.roomreserve.entrypoints=websecure"
+      - "traefik.http.routers.roomreserve.tls=true"
+      - "traefik.http.routers.roomreserve.tls.certresolver=letsencrypt"
+      - "traefik.http.services.roomreserve.loadbalancer.server.port=8000"
+
+  scheduler:
+    <<: *app
+    command: ["python", "-m", "core.scheduler"]
+    networks:
+      - roomreserve_private
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+
+networks:
+  roomreserve_private:
+    driver: bridge
+  static_sites:
+    external: true
