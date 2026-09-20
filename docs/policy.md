@@ -27,7 +27,7 @@ cannot retroactively invalidate a check-in that already happened.
 | Reminder lead | 30 minutes before the hour | `POLICY_REMINDER_LEAD_MINUTES` |
 | Institutional email | `student.chula.ac.th` | `INSTITUTION_EMAIL_DOMAIN` |
 | Rooms | 11 — stalls 1–9, room 303 instrument-specific, room 304 general | `ROOM_COUNT`, `ROOM_OVERRIDES` |
-| Class hours on 304 | Mon 10–12, Tue 12–13, Thu 10–12 | `ROOM_WEEKLY_BLOCKS` |
+| Class hours on 304 | Mon 10–12, Tue 12–14, Thu 10–12, Fri 13–15 | `ROOM_WEEKLY_BLOCKS` |
 
 These numbers are the department's operational defaults. They are **not** figures
 stated in the regulation, and the Rules page says so.
@@ -83,8 +83,9 @@ Rooms 303 and 304 are teaching rooms as well as practice rooms: classes meet in
 them every week (the department's sheet `ตารางห้อง อาคารศิลปกรรมชั้น3.pdf`). A class
 hour is blocked on the grid and labelled with the course, because an unexplained
 gap reads as a fault. Room 304's blocked hours are Monday 10:00–12:00
-(Counterpoint), Tuesday 12:00–13:00 (Skill-Piano) and Thursday 10:00–12:00
-(Harmony); the sheet has no page for 303, so it has none.
+(Counterpoint), Tuesday 12:00–14:00 (Skill-Piano), Thursday 10:00–12:00
+(Harmony), and Friday 13:00–15:00 (Wind Pedagogy); the sheet has no page for
+303, so it has none. Other 08:00–20:00 weekday hours remain reservable.
 
 - **A blocked hour refuses reservations and walk-ins**, like a closure, but
   recurring: it comes back every week without anyone re-entering it.

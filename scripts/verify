@@ -165,17 +165,22 @@ else
   record migration_drift FAIL "$drift_log"
 fi
 
-# --- 5. The suite, PostgreSQL and real browser together ------------------------
-# One invocation, no deselection: the browser tests are part of the gate, not an
-# optional extra, and `--strict-markers` is already on in pyproject.toml.
-run pytest_suite "$VENV_PY" -m pytest -q
-
 # --- Infrastructure preconditions ---------------------------------------------
 docker_ok=0
 if docker info >/dev/null 2>&1; then
   if docker compose up -d "$PG_SERVICE" >/dev/null 2>&1; then
     docker_ok=1
   fi
+fi
+
+# --- 5. The suite, PostgreSQL and real browser together ------------------------
+# One invocation, no deselection: the browser tests are part of the gate, not an
+# optional extra, and `--strict-markers` is already on in pyproject.toml. Start
+# PostgreSQL before pytest so pytest-django can create its isolated test DB.
+if [ "$docker_ok" -eq 1 ]; then
+  run pytest_suite "$VENV_PY" -m pytest -q
+else
+  blocked pytest_suite "Docker/PostgreSQL unavailable"
 fi
 
 if [ "$docker_ok" -eq 0 ]; then
