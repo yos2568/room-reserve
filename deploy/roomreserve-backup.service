@@ -1,0 +1,10 @@
+[Unit]
+Description=Encrypted RoomReserve PostgreSQL backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/root/roomreserve-backup.env
+ExecStart=/root/roomreserve/deploy/backup_postgres.sh

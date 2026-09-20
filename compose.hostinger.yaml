@@ -8,10 +8,10 @@
 name: roomreserve
 
 x-app: &app
-  build:
-    context: https://github.com/yos2568/room-reserve.git#e3c8522e079b15c7951006d83c3150337adb2e5a
-    dockerfile: Dockerfile
-  image: roomreserve-app:${APP_TAG:-pilot}
+  # Production uses an image built and published by CI. Set APP_IMAGE to an
+  # immutable tag or digest before a release; the VPS must never build from a
+  # moving branch or pull source at deploy time.
+  image: ${APP_IMAGE:?APP_IMAGE is required; use a CI image tag or digest}
   restart: unless-stopped
   environment:
     DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:?DJANGO_SETTINGS_MODULE is required}

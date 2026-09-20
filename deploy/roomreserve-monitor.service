@@ -1,0 +1,10 @@
+[Unit]
+Description=RoomReserve operational monitor
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/root/roomreserve-monitor.env
+ExecStart=/root/roomreserve/deploy/monitor_roomreserve.sh

@@ -49,6 +49,20 @@ docker compose ps
 docker compose logs --tail=100 web scheduler
 ```
 
+The Hostinger stack uses the image published by CI. Set `APP_IMAGE` in the
+deployment environment to the exact release tag or digest before starting it;
+do not leave it pointed at `latest` for a production release. The first release
+after the room timetable change must also run:
+
+```bash
+docker compose --env-file .env -f compose.hostinger.yaml run --rm web python manage.py seed_rooms
+```
+
+That command applies the four recurring room 304 class blocks while preserving
+bookings and audit history. Room 304 remains reservable during every other
+Monday–Friday period from 08:00–20:00. Use an explicit closure or date override
+for a special event instead of editing the recurring timetable.
+
 The production environment must set `MAINTAINER_ALLOWED_IPS` to the
 maintainer's fixed address or VPN CIDR. The technical admin at `/maintainer/`
 is refused from every other network and is available only to an active
@@ -105,6 +119,38 @@ trust a real restore.
 5. **Review incidents** and record a `ServiceIncident` for the outage window, so
    students are not penalised for it.
 6. **Do not blindly resend old emails** and do not auto-penalise outage victims.
+
+### 3.1 Enable the automated backup and monitor timers
+
+The repository includes host-level scripts and systemd units. They deliberately
+keep credentials outside the repository. The backup job requires an `age`
+recipient and an independently accessible `rclone` destination; without both,
+it fails closed instead of creating an unencrypted or same-disk-only backup.
+
+On the VPS, after installing `age` and `rclone`:
+
+```bash
+cp deploy/backup.env.example /root/roomreserve-backup.env
+cp deploy/monitor.env.example /root/roomreserve-monitor.env
+chmod 600 /root/roomreserve-backup.env /root/roomreserve-monitor.env
+# Edit both files: set the age recipient, rclone destination, and alert webhook.
+install -m 0755 deploy/backup_postgres.sh /root/roomreserve/deploy/backup_postgres.sh
+install -m 0755 deploy/monitor_roomreserve.sh /root/roomreserve/deploy/monitor_roomreserve.sh
+install -m 0644 deploy/roomreserve-backup.service /etc/systemd/system/roomreserve-backup.service
+install -m 0644 deploy/roomreserve-backup.timer /etc/systemd/system/roomreserve-backup.timer
+install -m 0644 deploy/roomreserve-monitor.service /etc/systemd/system/roomreserve-monitor.service
+install -m 0644 deploy/roomreserve-monitor.timer /etc/systemd/system/roomreserve-monitor.timer
+systemctl daemon-reload
+systemctl enable --now roomreserve-backup.timer roomreserve-monitor.timer
+systemctl start roomreserve-backup.service
+systemctl status roomreserve-backup.timer roomreserve-monitor.timer --no-pager
+```
+
+Confirm the first encrypted file exists locally and at the remote destination,
+then perform one restore drill into a fresh database before opening the system
+to more users. The monitor checks `healthz`, `readyz`, the scheduler heartbeat,
+queued-mail age, backup freshness, and disk usage. Configure an external uptime
+check for `https://<host>/healthz/` as a separate failure domain.
 
 ---
 
@@ -342,10 +388,12 @@ already existed still checks in.
    them. If a class genuinely needs the hour back, contact the students or use a
    closure; both are visible on the audit trail.
 
-The hours currently configured were read from the sheet's column geometry and
-should be confirmed with the department (D-28). There is no staff screen for the
-timetable yet; it is deliberately a configuration change with a seed run, not a
-click, because a wrong schedule blocks a whole room for a semester.
+The currently configured class spans are Monday 10:00–12:00 Counterpoint,
+Tuesday 12:00–14:00 Skill-Piano, Thursday 10:00–12:00 Harmony, and Friday
+13:00–15:00 Wind Pedagogy. Blank hours remain reservable. There is no staff
+screen for the timetable yet; it is deliberately a configuration change with a
+seed run, not a click, because a wrong schedule blocks a whole room for a
+semester.
 
 ## 10. Emergency closure
 

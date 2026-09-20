@@ -1,11 +1,23 @@
-# Handoff — Room Reserve V3 · 19 September 2026 (checkpoint 3)
+# Handoff — Room Reserve V3 · 20 September 2026 (checkpoint 4)
 
 **Project:** `/Volumes/Crucial2TB/All Codes/FAA/Room problem`
-**Previous checkpoint:** `handoff15sep26.md` (superseded by this file)
+**Previous checkpoint:** this file's 19 September checkpoint (superseded by this file)
 **Newest decisions:** `docs/decisions.md` **D-28** (the real floor and the
 teaching timetable) — read that first; it supersedes the old D-23 "tenth room".
 
 ## What this session changed
+
+The department confirmed that room 304 has the same opening schedule as the
+other rooms: Monday–Friday, 08:00–20:00. The supplied A304 timetable blocks
+only the class spans — Monday 10:00–12:00 Counterpoint, Tuesday 12:00–14:00
+Skill-Piano, Thursday 10:00–12:00 Harmony, and Friday 13:00–15:00 Wind
+Pedagogy. Every other hour remains reservable; special events should be
+represented by an explicit closure or date override.
+
+Priority 1 deployment foundations were added: encrypted off-host PostgreSQL
+backup and monitoring scripts with systemd timers, a CI workflow that runs the
+full verification gate, and immutable container-image publishing. Hostinger
+deployments now require an explicit `APP_IMAGE` tag or digest.
 
 The department supplied the actual floor plan and the teaching timetable
 (`ตารางห้อง อาคารศิลปกรรมชั้น3.pdf`, semester 1/2569), and the app now models the
@@ -15,19 +27,12 @@ real floor instead of a placeholder:
 |---|---|---|
 | Stalls 1–9 | Two rows (①–⑤, then ⑥–⑨ numbered right-to-left) | General rooms, unchanged |
 | **303** | Large room, bottom-left of the plan | Piano & percussion may **reserve**; anyone may walk in. No class hours (the sheet has no A303 page) |
-| **304** | `ห้องบรรยาย 1` (Lecture Room 1), bottom-right | General room, **blocked during its class hours** |
+| **304** | `ห้องบรรยาย 1` (Lecture Room 1), bottom-right | General room, same 08:00–20:00 weekday schedule; listed class spans blocked |
 | 301 / 302 | Recital Hall / open area | Not in the app |
 | ~~10~~ | Never existed — placeholder `ห้องซ้อมใหญ่` | Deactivated by `seed_rooms`, never deleted |
 
-Room 304's class hours (from the sheet, **still to be confirmed with the
-department** — D-28 records how they were derived):
-
-- Monday 10:00–12:00 — Counterpoint (`อ.ดร.ปริญญา`)
-- Tuesday 12:00–13:00 — Skill-Piano (`ผศ.ดร.รามสูร`)
-- Thursday 10:00–12:00 — Harmony (`อ.ดร.ปริญญา`)
-
-The sheet's note "Day: 28/9/69, 16/11/69" under Counterpoint looks like exam
-dates; it is not modelled.
+Room 304 has four recurring class blocks in the app. If a one-off teaching event
+needs the room, staff should create a finite closure or date override.
 
 ## The new mechanism: `WeeklyBlock`
 
@@ -112,8 +117,9 @@ they hung the no-JS navigation guarantee (see the warning comment in
 
 ## What remains, in order
 
-1. **Confirm room 304's class hours with the department** (and ask whether A303
-   really has none). One settings edit + `seed_rooms` if they differ.
+1. **Apply the corrected room 304 timetable** with `seed_rooms` after deploying
+   this revision. It blocks only the four class spans and preserves all other
+   08:00–20:00 weekday hours for reservations.
 2. The previous checkpoint's list is unchanged and still stands: the 57
    corrected roster addresses, clearing demo logins, CI wiring for
    `scripts/verify`, A27/A30 leftovers, printing now **eleven** posters, Thai

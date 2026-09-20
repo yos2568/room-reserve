@@ -236,12 +236,16 @@ survives.
 
 Room 304's class hours were read from the sheet's own column geometry: pdftotext
 word coordinates against the hour ruler, with each label matched to the column or
-span it is centred on. On that reading Counterpoint and Harmony are two-hour
-classes (Mon 10–12, Thu 10–12) and Skill-Piano a one-hour slot (Tue 12–13). Where
-the sheet is ambiguous the block errs wide: turning a student away from an
-over-blocked hour costs one booking, letting one walk into a class in session
-costs the room. The hours should be confirmed with the department, and the sheet
-has no page for A303, so 303 is unblocked.
+span it is centred on. The supplied timetable shows Counterpoint on Monday
+10:00–12:00, Skill-Piano on Tuesday 12:00–14:00, Harmony on Thursday
+10:00–12:00, and Wind Pedagogy on Friday 13:00–15:00. The end hour is exclusive;
+blank hours remain reservable. The sheet has no page for A303, so 303 is
+unblocked.
+
+**Update 2026-09-20:** The department confirmed that room 304 follows the same
+08:00–20:00 Monday–Friday opening schedule as the other rooms. That opening
+schedule applies outside the four class spans above; one-off events should use
+an explicit closure or date override instead of changing the recurring timetable.
 
 The mechanism is a recurring `WeeklyBlock` per room, configured in
 `ROOM_WEEKLY_BLOCKS` and applied by `seed_rooms` like the room audiences, so a

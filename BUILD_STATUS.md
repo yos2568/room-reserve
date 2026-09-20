@@ -1,6 +1,6 @@
 # BUILD_STATUS — Room Reserve V3
 
-**Last updated:** 2026-09-19 (the real floor: rooms 303 and 304)
+**Last updated:** 2026-09-20 (room 304 schedule and Priority 1 deployment foundations)
 **Status:** `LOCAL_PASS_CANDIDATE` — every automated local check passes.
 Deployment and pilot are **BLOCKED** on missing external inputs.
 
@@ -16,12 +16,12 @@ room" (D-28, which supersedes D-23):
 - **Eleven rooms**: stalls 1–9 (general), **room 303** (piano and percussion may
   reserve; anyone may walk in) and **room 304** (`ห้องบรรยาย 1`, general). The
   placeholder room 10 is deactivated by `seed_rooms`, never deleted.
-- **A recurring teaching timetable** (`WeeklyBlock`, configured in
-  `ROOM_WEEKLY_BLOCKS`, applied by `seed_rooms`): a class hour on 304 refuses
-  reservations *and* walk-ins, shows on the grid as "Class" with the course name,
-  and never cancels a booking that already exists. Currently Mon 10–12
-  (Counterpoint), Tue 12–13 (Skill-Piano), Thu 10–12 (Harmony) — read from the
-  sheet's column geometry, still to be confirmed with the department.
+- **Recurring teaching timetable** (`WeeklyBlock`, configured in
+  `ROOM_WEEKLY_BLOCKS`, applied by `seed_rooms`). Room 304 follows the same
+  08:00–20:00 Monday–Friday schedule as the other rooms, with only its class
+  spans blocked: Mon 10:00–12:00, Tue 12:00–14:00, Thu 10:00–12:00, and Fri
+  13:00–15:00. Blank hours remain reservable; special events use an explicit
+  closure or date override.
 - **A suggestions dashboard** (D-29): "Free right now" cards and "Bookable later
   today" hour groups above the grid, plus "other rooms free at this hour" inside
   booking refusals — a deterministic ranking over the same grid states, with an
@@ -154,10 +154,10 @@ roster email item below, which is now a hard prerequisite for this feature.
 | 2 | **Get the 57 corrected addresses from the department** | The tooling now exists (Staff → Roster → *Correct email*, or the importer's opt-in — runbook §7–§8). This is a data task, not a code one, and it is what makes both automatic registration and the instrument-specific room work for the 65 students still affected. |
 | 3 | **Clear the demo logins** | 100 synthetic students + 10 staff remain active and bookable. |
 | 4 | A30 p95 latency | Needs the intended deployment hardware. |
-| 5 | A27 `check --deploy`, rollback rehearsal, CI image push | Needs real hostnames/TLS, a previous image, registry credentials. |
+| 5 | A27 `check --deploy`, rollback rehearsal, CI image push | CI workflow is now in the repository; it still needs one successful GitHub run and a registry-backed VPS rollout. |
 | 6 | A29 physical poster check | Printing and doors; the posters for rooms 303 and 304 must be printed too. |
 | 7 | Thai copy review | 592 entries; the new ones were translated here and still need a Thai speaker. |
-| 8 | Deployment, then pilot | Real SMTP, domain, TLS, backup destination, alerting, then ~10 students for two weeks. |
+| 8 | Deployment, then pilot | Real SMTP, domain, TLS, configured backup destination, alerting, then ~10 students for two weeks. |
 
 ## Blockers and the smallest required action
 

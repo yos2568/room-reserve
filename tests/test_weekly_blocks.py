@@ -1,4 +1,4 @@
-"""The teaching timetable: recurring weekly blocks on rooms 303 and 304 (D-28).
+"""Optional recurring teaching timetable blocks (D-28).
 
 Rooms 303 and 304 are teaching rooms as well as practice rooms. A class that
 meets every week makes its hours unreservable and unwalkable, shows on the grid
@@ -186,7 +186,14 @@ def test_ensure_rooms_provisions_the_real_floor(frozen, db):
     assert not active["304"].is_restricted
     assert active["304"].label == "ห้อง 304 (ห้องบรรยาย 1)"
 
-    assert WeeklyBlock.objects.filter(room=active["304"]).count() == 3
+    assert set(
+        WeeklyBlock.objects.filter(room=active["304"]).values_list("weekday", "start_hour", "end_hour")
+    ) == {
+        (0, 10, 12),  # Monday: Counterpoint
+        (1, 12, 14),  # Tuesday: Skill-Piano
+        (3, 10, 12),  # Thursday: Harmony
+        (4, 13, 15),  # Friday: Wind Pedagogy
+    }
     assert not WeeklyBlock.objects.filter(room=active["303"]).exists()
 
 
@@ -199,7 +206,7 @@ def test_ensure_rooms_is_idempotent_and_retires_strays(frozen, db):
     stray.refresh_from_db()
     assert not stray.is_active
     assert Room.objects.filter(is_active=True).count() == 11
-    assert WeeklyBlock.objects.filter(room__number="304").count() == 3
+    assert WeeklyBlock.objects.filter(room__number="304").count() == 4
 
 
 def test_retired_room_returns_when_configured_again(frozen, db):
@@ -246,9 +253,11 @@ def test_a_booking_that_predates_a_class_shows_as_booked_not_class(frozen, stude
 
 def test_dropping_a_room_from_the_timetable_clears_its_blocks(frozen, db):
     rooms_service.ensure_rooms()
-    assert WeeklyBlock.objects.filter(room__number="304").count() == 3
+    room = Room.objects.get(number="304")
+    factories.make_weekly_block(room, weekday=2, start_hour=10, end_hour=11)
+    assert WeeklyBlock.objects.filter(room=room).count() == 5
 
     report = rooms_service.ensure_rooms(weekly_blocks={})
 
     assert not WeeklyBlock.objects.exists()
-    assert report["blocks_cleared"] == 3
+    assert report["blocks_cleared"] == 5
