@@ -37,6 +37,9 @@ jobs:
           npm run build:css
           cp .env.example .env
 
+      - name: Install Playwright Chromium
+        run: python -m playwright install --with-deps chromium
+
       - name: Run the complete verification gate
         env:
           VENV_PY: python
