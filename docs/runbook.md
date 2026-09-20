@@ -133,7 +133,8 @@ On the VPS, after installing `age` and `rclone`:
 cp deploy/backup.env.example /root/roomreserve-backup.env
 cp deploy/monitor.env.example /root/roomreserve-monitor.env
 chmod 600 /root/roomreserve-backup.env /root/roomreserve-monitor.env
-# Edit both files: set the age recipient, rclone destination, and alert webhook.
+# Edit both files: set the age recipient, rclone destination, and either
+# ALERT_EMAIL_TO (Mailcow SMTP settings are reused from ENV_FILE) or a webhook.
 install -m 0755 deploy/backup_postgres.sh /root/roomreserve/deploy/backup_postgres.sh
 install -m 0755 deploy/monitor_roomreserve.sh /root/roomreserve/deploy/monitor_roomreserve.sh
 install -m 0644 deploy/roomreserve-backup.service /etc/systemd/system/roomreserve-backup.service
