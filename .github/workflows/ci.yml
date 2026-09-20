@@ -43,6 +43,15 @@ jobs:
           COMPOSE_PROJECT_NAME: roomreserve-ci
         run: bash scripts/verify
 
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-evidence-${{ github.run_id }}
+          path: artifacts/qa/
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Clean up verification services
         if: always()
         env:
