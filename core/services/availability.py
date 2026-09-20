@@ -201,6 +201,8 @@ def _classify(
     # A booking outranks a class block: a reservation made before the teaching
     # timetable changed stays valid (D-28), so the grid must show it, not "Class".
     if booking is not None:
+        if booking.status == Booking.Status.PENDING_APPROVAL:
+            return SlotState.HELD
         if booking.status == Booking.Status.COMPLETED:
             # Historical occupancy: a completed slot is never resold.
             return SlotState.COMPLETED
@@ -221,9 +223,16 @@ def _classify(
     return SlotState.OUTSIDE_HORIZON
 
 
-def public_grid(local_date, now, *, user=None) -> dict:
+def public_grid(
+    local_date, now, *, user=None, capacity_min: int | None = None, equipment_query: str = ""
+) -> dict:
     """The whole grid: active rooms down, hourly slots across."""
-    rooms = list(Room.objects.filter(is_active=True).prefetch_related("allowed_categories"))
+    room_query = Room.objects.filter(is_active=True)
+    if capacity_min:
+        room_query = room_query.filter(capacity__gte=capacity_min)
+    if equipment_query:
+        room_query = room_query.filter(equipment__icontains=equipment_query)
+    rooms = list(room_query.prefetch_related("allowed_categories"))
     if not rooms:
         return {"rooms": [], "rows": [], "local_date": local_date}
 
@@ -280,7 +289,7 @@ def my_upcoming(user, now, limit: int = 20):
     """Upcoming bookings for My bookings."""
     return (
         Booking.objects.filter(user=user, slot_end__gt=now)
-        .exclude(status=Booking.Status.CANCELLED)
+        .exclude(status__in=[Booking.Status.CANCELLED, Booking.Status.REJECTED])
         .order_by("slot_start")
         .select_related("room")[:limit]
     )

@@ -1,0 +1,12 @@
+{% load i18n %}{% blocktrans %}Practice room request received{% endblocktrans %}
+
+{% blocktrans with room=room_label date=slot_start_display %}Your request for {{ room }} on {{ date }} was received and is waiting for room approval.{% endblocktrans %}
+
+{% if title %}{% trans "Title" %}: {{ title }}{% endif %}
+{% if purpose %}{% trans "Purpose" %}: {{ purpose }}{% endif %}
+{% if participant_names %}{% trans "Participants" %}: {{ participant_names }}{% endif %}
+
+{% blocktrans %}Do not go to the room until you receive the approval email. The request will be released if it is not approved before the session starts.{% endblocktrans %}
+{% trans "Booking reference" %}: {{ booking_id }}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

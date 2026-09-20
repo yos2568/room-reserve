@@ -12,8 +12,8 @@ from django.utils.translation import gettext_lazy as _
 
 BANGKOK = ZoneInfo("Asia/Bangkok")
 
-BLOCKING_STATUSES = ("SCHEDULED", "IN_USE", "COMPLETED")
-QUOTA_STATUSES = ("SCHEDULED", "IN_USE", "COMPLETED", "NO_SHOW")
+BLOCKING_STATUSES = ("PENDING_APPROVAL", "SCHEDULED", "IN_USE", "COMPLETED")
+QUOTA_STATUSES = ("PENDING_APPROVAL", "SCHEDULED", "IN_USE", "COMPLETED", "NO_SHOW")
 
 
 class BookingControl(models.Model):
@@ -41,6 +41,71 @@ class BookingControl(models.Model):
         return "BookingControl"
 
 
+class RecurringReservation(models.Model):
+    """A weekly reservation series owned by one student.
+
+    Occurrences are materialised as ordinary bookings so the existing conflict,
+    quota, approval and cancellation rules remain the source of truth. The series
+    row is only the user's durable explanation of why those bookings are related.
+    """
+
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE", _("Active")
+        CANCELLED = "CANCELLED", _("Cancelled")
+
+    user = models.ForeignKey("core.User", on_delete=models.PROTECT, related_name="recurring_reservations")
+    room = models.ForeignKey("core.Room", on_delete=models.PROTECT, related_name="recurring_reservations")
+    weekday = models.PositiveSmallIntegerField()
+    start_hour = models.PositiveSmallIntegerField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+    title = models.CharField(max_length=120, blank=True)
+    purpose = models.TextField(max_length=500, blank=True)
+    participant_names = models.TextField(max_length=500, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.ACTIVE)
+    created_at = models.DateTimeField(default=timezone.now)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(weekday__gte=0, weekday__lte=6),
+                name="recurring_weekday_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(start_hour__gte=0, start_hour__lte=23),
+                name="recurring_start_hour_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(end_date__gte=models.F("start_date")),
+                name="recurring_date_range_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(status__in=["ACTIVE", "CANCELLED"]),
+                name="recurring_status_valid",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "status"], name="recurring_user_status_idx"),
+            models.Index(fields=["room", "start_date"], name="recurring_room_start_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.room} weekly {self.start_hour:02d}:00"
+
+    def get_weekday_display(self):
+        return (
+            _("Monday"),
+            _("Tuesday"),
+            _("Wednesday"),
+            _("Thursday"),
+            _("Friday"),
+            _("Saturday"),
+            _("Sunday"),
+        )[self.weekday]
+
+
 class Booking(models.Model):
     """A reservation of one room for one fixed hourly slot.
 
@@ -50,11 +115,13 @@ class Booking(models.Model):
     """
 
     class Status(models.TextChoices):
+        PENDING_APPROVAL = "PENDING_APPROVAL", _("Awaiting room approval")
         SCHEDULED = "SCHEDULED", _("Scheduled")
         IN_USE = "IN_USE", _("In use")
         COMPLETED = "COMPLETED", _("Completed")
         NO_SHOW = "NO_SHOW", _("No-show")
         CANCELLED = "CANCELLED", _("Cancelled")
+        REJECTED = "REJECTED", _("Not approved")
 
     class Source(models.TextChoices):
         ADVANCE = "ADVANCE", _("Advance reservation")
@@ -72,6 +139,33 @@ class Booking(models.Model):
     )
     status = models.CharField(max_length=16, choices=Status.choices)
     source = models.CharField(max_length=16, choices=Source.choices)
+    recurrence = models.ForeignKey(
+        "core.RecurringReservation",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="occurrences",
+    )
+
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(
+        "core.User",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="booking_approvals",
+    )
+    approval_note = models.TextField(blank=True)
+
+    # Planning details are deliberately separate from the student's identity:
+    # staff can understand what a room is being used for without exposing this
+    # information on the public availability grid.
+    title = models.CharField(max_length=120, blank=True)
+    purpose = models.TextField(max_length=500, blank=True)
+    participant_names = models.TextField(
+        max_length=500, blank=True, help_text=_("Optional names of other participants.")
+    )
+    details_version = models.PositiveIntegerField(default=0, editable=False)
 
     created_at = models.DateTimeField(default=timezone.now)
     checked_in_at = models.DateTimeField(null=True, blank=True)
@@ -146,7 +240,7 @@ class Booking(models.Model):
         ordering = ["-slot_start"]
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(status__in=[*BLOCKING_STATUSES, "NO_SHOW", "CANCELLED"]),
+                condition=models.Q(status__in=[*BLOCKING_STATUSES, "NO_SHOW", "CANCELLED", "REJECTED"]),
                 name="booking_status_valid",
             ),
             models.CheckConstraint(
@@ -243,6 +337,7 @@ class Booking(models.Model):
             self.Status.COMPLETED,
             self.Status.NO_SHOW,
             self.Status.CANCELLED,
+            self.Status.REJECTED,
         }
 
     @property

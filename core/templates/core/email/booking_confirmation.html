@@ -11,6 +11,14 @@
       {% endif %}
     </p>
 
+    {% if title or purpose or participant_names %}
+      <div style="margin:0 0 16px;padding:12px;border-left:3px solid #a02b33;background:#fbf2f2;font-size:13px;">
+        {% if title %}<div><strong>{% trans "Title" %}:</strong> {{ title }}</div>{% endif %}
+        {% if purpose %}<div><strong>{% trans "Purpose" %}:</strong> {{ purpose }}</div>{% endif %}
+        {% if participant_names %}<div><strong>{% trans "Participants" %}:</strong> {{ participant_names }}</div>{% endif %}
+      </div>
+    {% endif %}
+
     {% if checkin_path and source != "WALK_IN" %}
       <div style="text-align:center;padding:16px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;">
         <p style="margin:0 0 12px;font-size:14px;font-weight:600;">{% blocktrans %}Scan at the room to check in{% endblocktrans %}</p>

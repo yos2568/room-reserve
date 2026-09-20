@@ -1,0 +1,12 @@
+{% load i18n %}{% blocktrans %}Your practice room booking changed{% endblocktrans %}
+
+{% blocktrans with room=room_label date=slot_start_display %}Room {{ room }} on {{ date }}{% endblocktrans %}
+{% if title %}{% trans "Title" %}: {{ title }}{% endif %}
+{% if purpose %}{% trans "Purpose" %}: {{ purpose }}{% endif %}
+{% if participant_names %}{% trans "Participants" %}: {{ participant_names }}{% endif %}
+
+{% blocktrans with deadline=deadline_local %}Check in at the room between the start of the hour and {{ deadline }}.{% endblocktrans %}
+{% trans "Room and hour remain unchanged; only the booking details were updated." %}
+{% trans "Booking reference" %}: {{ booking_id }}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

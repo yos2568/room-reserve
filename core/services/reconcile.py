@@ -33,12 +33,46 @@ def reconcile(now, *, actor=None, budget: int | None = None) -> dict:
     """Bring persisted state up to date. Must run under the control lock."""
     budget = budget or settings.RECONCILE_BUDGET
     summary = {
+        "expired_approvals": _reconcile_expired_approvals(now, budget, actor),
         "no_shows": _reconcile_no_shows(now, budget, actor),
         "completions": _reconcile_completions(now, budget, actor),
         "suspensions": _apply_strike_thresholds(now, actor),
         "lifts": _notify_finished_suspensions(now),
     }
     return summary
+
+
+def _reconcile_expired_approvals(now, budget: int, actor) -> int:
+    """Release requests that reached their start without room approval."""
+    due = list(
+        Booking.objects.filter(status=Booking.Status.PENDING_APPROVAL, slot_start__lte=now)
+        .order_by("slot_start", "id")
+        .select_related("room", "user")
+    )
+    if len(due) > budget:
+        raise ReconciliationBacklog(
+            f"{len(due)} pending approvals are overdue, above the budget of {budget}."
+        )
+    for booking in due:
+        booking.status = Booking.Status.REJECTED
+        booking.approval_note = "The room approval window expired before the session started."
+        booking.save(update_fields=["status", "approval_note"])
+        record_audit(
+            action="booking.rejected",
+            entity_type="Booking",
+            entity_id=booking.pk,
+            actor=actor,
+            actor_label="" if actor else "reconciler",
+            changes={"status": booking.status},
+            reason=booking.approval_note,
+        )
+        enqueue(
+            kind="booking_rejected",
+            recipient=booking.user,
+            dedupe_key=f"booking_rejected:{booking.pk}",
+            payload=_booking_payload(booking) | {"reason": booking.approval_note},
+        )
+    return len(due)
 
 
 def _reconcile_no_shows(now, budget: int, actor) -> int:
@@ -204,7 +238,10 @@ def _create_automatic_suspension(user_id: int, now, policy, actor) -> Suspension
 def _cancel_scheduled_for_suspension(user, suspension, now, actor) -> int:
     """Cancel every remaining SCHEDULED booking, including beyond the sanction."""
     remaining = list(
-        Booking.objects.filter(user=user, status=Booking.Status.SCHEDULED)
+        Booking.objects.filter(
+            user=user,
+            status__in=[Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED],
+        )
         .order_by("slot_start")
         .select_related("room")
     )

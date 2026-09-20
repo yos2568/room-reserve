@@ -182,6 +182,11 @@ class User(AbstractUser):
         return self.email_verified_at is not None
 
     @property
+    def is_room_admin(self) -> bool:
+        """Whether this account has at least one active room-admin grant."""
+        return self.room_administrations.filter(room__is_active=True).exists()
+
+    @property
     def is_approved(self) -> bool:
         return self.eligibility == self.Eligibility.APPROVED and self.is_active
 

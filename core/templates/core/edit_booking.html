@@ -1,0 +1,38 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Edit booking details" %}{% endblock %}
+
+{% block content %}
+  <div class="max-w-2xl">
+    <p class="text-sm font-medium text-brand-700">{{ booking.room }}</p>
+    <h1 class="mt-1 text-xl font-semibold">{% trans "Edit booking details" %}</h1>
+    <p class="mt-1 text-sm text-slate-700">{{ booking.local_start|date:"j F Y" }} · {{ booking.local_start|date:"H:i" }}–{{ booking.local_end|date:"H:i" }}</p>
+
+    {% if outcome and not outcome.ok %}
+      <div class="card mt-4 border-red-700 bg-red-50" role="alert">{{ outcome.message }}</div>
+    {% endif %}
+
+    <form method="post" class="card mt-4 space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="operation_key" value="{{ operation_key }}">
+      <div>
+        <label class="label" for="edit-booking-title">{% trans "Title" %}</label>
+        <input class="field" id="edit-booking-title" name="title" maxlength="120" value="{{ details.title }}" autocomplete="off">
+      </div>
+      <div>
+        <label class="label" for="edit-booking-purpose">{% trans "Purpose" %}</label>
+        <textarea class="field" id="edit-booking-purpose" name="purpose" rows="4" maxlength="500">{{ details.purpose }}</textarea>
+      </div>
+      <div>
+        <label class="label" for="edit-booking-participants">{% trans "Participants (optional)" %}</label>
+        <input class="field" id="edit-booking-participants" name="participant_names" maxlength="500" value="{{ details.participant_names }}" autocomplete="off">
+        <p class="mt-1 text-xs text-slate-600">{% trans "Room and hour stay unchanged. Staff can see the details in the operational record." %}</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn-primary" type="submit">{% trans "Save changes" %}</button>
+        <a class="btn-secondary" href="{% url 'core:my_bookings' %}">{% trans "Back to my bookings" %}</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

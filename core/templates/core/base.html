@@ -26,12 +26,20 @@
         <nav aria-label="{% trans 'Main navigation' %}" class="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm">
           {% url 'core:home' as nav_home %}
           <a class="nav-link min-h-touch" {% if request.path == nav_home %}aria-current="page"{% endif %} href="{{ nav_home }}">{% trans "Availability" %}</a>
+          {% url 'core:week' as nav_week %}
+          <a class="nav-link min-h-touch" {% if request.path == nav_week %}aria-current="page"{% endif %} href="{{ nav_week }}">{% trans "Week view" %}</a>
+          {% url 'core:lobby' as nav_lobby %}
+          <a class="nav-link min-h-touch" {% if request.path == nav_lobby %}aria-current="page"{% endif %} href="{{ nav_lobby }}">{% trans "Lobby status" %}</a>
           {% if user.is_authenticated %}
             {% url 'core:my_bookings' as nav_bookings %}
             <a class="nav-link min-h-touch" {% if request.path == nav_bookings %}aria-current="page"{% endif %} href="{{ nav_bookings }}">{% trans "My bookings" %}</a>
             {% if user.is_operational_staff or user.is_superuser %}
               {% url 'core:staff_today' as nav_staff %}
               <a class="nav-link min-h-touch" {% if request.path == nav_staff %}aria-current="page"{% endif %} href="{{ nav_staff }}">{% trans "Staff" %}</a>
+            {% endif %}
+            {% if user.is_room_admin %}
+              {% url 'core:room_admin' as nav_room_admin %}
+              <a class="nav-link min-h-touch" {% if request.path == nav_room_admin %}aria-current="page"{% endif %} href="{{ nav_room_admin }}">{% trans "Room admin" %}</a>
             {% endif %}
           {% endif %}
           {% url 'core:rules' as nav_rules %}

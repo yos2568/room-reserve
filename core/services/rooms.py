@@ -9,7 +9,7 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import transaction
 
-from core.models import AuditEvent, Room, RoomAllowedCategory, WeeklyBlock
+from core.models import AuditEvent, Room, RoomAdministrator, RoomAllowedCategory, User, WeeklyBlock
 
 from .audit import record_audit
 
@@ -38,6 +38,85 @@ def set_audience(*, room: Room, scope: str, categories) -> dict:
         "categories_before": before,
         "categories_after": wanted,
     }
+
+
+def update_profile(
+    ctx, *, room: Room, capacity: int, equipment: str, requires_approval: bool | None = None
+) -> Room:
+    """Update public room-profile metadata with an auditable staff action."""
+    from .errors import Code, OperationRejected
+    from .refs import reload_for_update
+
+    if not isinstance(capacity, int) or not 1 <= capacity <= 100:
+        raise OperationRejected(Code.INVALID_INPUT)
+    equipment = "\n".join(line.strip() for line in (equipment or "").splitlines() if line.strip())
+    if len(equipment) > 1000:
+        raise OperationRejected(Code.INVALID_INPUT)
+
+    room = reload_for_update(room)
+    before = {
+        "capacity": room.capacity,
+        "equipment": room.equipment,
+        "requires_approval": room.requires_approval,
+    }
+    room.capacity = capacity
+    room.equipment = equipment
+    if requires_approval is not None:
+        room.requires_approval = bool(requires_approval)
+    room.save(update_fields=["capacity", "equipment", "requires_approval"])
+    ctx.audit(
+        action="room.profile_updated",
+        entity_type="Room",
+        entity_id=room.pk,
+        actor=ctx.actor,
+        changes={
+            "before": before,
+            "after": {
+                "capacity": capacity,
+                "equipment": equipment,
+                "requires_approval": room.requires_approval,
+            },
+        },
+    )
+    return room
+
+
+def can_manage_room(user, room: Room) -> bool:
+    """Global staff may manage every room; room admins only their assignment."""
+    if not getattr(user, "is_authenticated", False) or not user.is_active:
+        return False
+    if user.is_superuser or user.is_operational_staff:
+        return True
+    return RoomAdministrator.objects.filter(user=user, room=room, room__is_active=True).exists()
+
+
+def set_administrator(ctx, *, room: Room, user: User, add: bool):
+    """Grant or revoke a room-scoped administrator assignment."""
+    from .errors import Code, OperationRejected
+
+    if not user.is_active:
+        raise OperationRejected(Code.INVALID_INPUT)
+    assignment = RoomAdministrator.objects.filter(room=room, user=user).first()
+    if add:
+        if assignment is None:
+            assignment = RoomAdministrator.objects.create(room=room, user=user, granted_by=ctx.actor)
+            changed = "added"
+        else:
+            changed = "unchanged"
+    else:
+        if assignment is None:
+            changed = "unchanged"
+        else:
+            assignment.delete()
+            changed = "removed"
+    ctx.audit(
+        action=f"room.administrator_{changed}",
+        entity_type="Room",
+        entity_id=room.pk,
+        actor=ctx.actor,
+        changes={"user_id": user.pk, "user": user.institutional_id, "room": room.number},
+    )
+    return {"room_id": room.pk, "user_id": user.pk, "changed": changed}
 
 
 def _held_out_by_staff(room: Room) -> bool:
@@ -124,9 +203,13 @@ def ensure_rooms(
         # Applied on every run, not only at creation, so a configuration change in
         # settings reaches an existing database without a migration.
         if config:
-            if config.get("label") and room.label != config["label"]:
-                room.label = config["label"]
-                room.save(update_fields=["label"])
+            profile_updates = {}
+            for field in ("label", "capacity", "equipment", "requires_approval"):
+                if field in config and getattr(room, field) != config[field]:
+                    setattr(room, field, config[field])
+                    profile_updates[field] = config[field]
+            if profile_updates:
+                room.save(update_fields=list(profile_updates))
             set_audience(
                 room=room,
                 scope=config.get("reservation_scope", Room.ReservationScope.EVERYONE),

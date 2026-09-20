@@ -2,6 +2,10 @@
 
 {% blocktrans with room=room_label date=slot_start_display %}Room {{ room }} on {{ date }}{% endblocktrans %}
 
+{% if title %}{% trans "Title" %}: {{ title }}{% endif %}
+{% if purpose %}{% trans "Purpose" %}: {{ purpose }}{% endif %}
+{% if participant_names %}{% trans "Participants" %}: {{ participant_names }}{% endif %}
+
 {% if source == "WALK_IN" %}
 {% blocktrans %}You confirmed you are at the room now.{% endblocktrans %}
 {% blocktrans with minutes=remaining_minutes %}Time remaining in this hour: {{ minutes }} minutes.{% endblocktrans %}

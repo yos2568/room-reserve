@@ -13,6 +13,9 @@ app_name = "core"
 urlpatterns = [
     path("", views.public.grid, name="home"),
     path("availability/", views.public.availability_fragment, name="availability"),
+    path("week/", views.public.week, name="week"),
+    path("lobby/", views.public.lobby, name="lobby"),
+    path("rooms/<int:room_id>/", views.public.room_profile, name="room_profile"),
     path("r/<int:room_id>/", views.public.room_qr_landing, name="room_qr"),
     # Identity -----------------------------------------------------------------
     path("register/", views.identity.register, name="register"),
@@ -34,13 +37,22 @@ urlpatterns = [
     ),
     path("use-now/<int:room_id>/<str:slot>/", views.booking.use_now, name="use_now"),
     path("my-bookings/", views.booking.my_bookings, name="my_bookings"),
+    path("my-bookings/<int:pk>/calendar.ics", views.booking.booking_ics, name="booking_ics"),
     path("my-bookings/<int:pk>/cancel/", views.booking.cancel_booking, name="cancel_booking"),
+    path("my-bookings/series/<int:pk>/cancel/", views.booking.cancel_recurring, name="cancel_recurring"),
     path("my-bookings/<int:pk>/check-in/", views.booking.check_in, name="check_in"),
+    path("my-bookings/<int:pk>/edit/", views.booking.edit_booking, name="edit_booking"),
     # QR target from the confirmation email (D-31); the locale prefix comes from
     # i18n_patterns, so the scanned URL keeps the student's language.
     path("check-in/<str:token>/", views.booking.checkin_qr, name="checkin_qr"),
     # Staff operations ---------------------------------------------------------
     path("staff/today/", views.staff.today, name="staff_today"),
+    path("staff/room-admin/", views.staff.room_admin_dashboard, name="room_admin"),
+    path(
+        "staff/room-admin/bookings/<int:pk>/decision/",
+        views.staff.decide_booking_approval,
+        name="staff_decide_booking_approval",
+    ),
     path("staff/approvals/<int:pk>/", views.staff.decide_eligibility, name="staff_decide_eligibility"),
     path(
         "staff/bookings/<int:pk>/check-in/",
@@ -109,6 +121,12 @@ urlpatterns = [
         "staff/rooms/<int:pk>/audience/",
         views.staff.set_room_audience,
         name="staff_set_room_audience",
+    ),
+    path("staff/rooms/<int:pk>/profile/", views.staff.update_room_profile, name="staff_update_room_profile"),
+    path(
+        "staff/rooms/<int:pk>/administrator/",
+        views.staff.set_room_administrator,
+        name="staff_set_room_administrator",
     ),
     path("staff/rooms/<int:pk>/deactivate/", views.staff.deactivate_room, name="staff_deactivate_room"),
     path("staff/quota/", views.staff.quota_lookup, name="staff_quota_lookup"),

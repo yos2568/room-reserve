@@ -48,7 +48,9 @@ def create_incident(
     room_ids = {room.pk for room in rooms}
     affected = (
         Booking.objects.filter(slot_start__lt=ends_at, slot_end__gt=starts_at)
-        .filter(status__in=[Booking.Status.SCHEDULED, Booking.Status.NO_SHOW])
+        .filter(
+            status__in=[Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED, Booking.Status.NO_SHOW]
+        )
         .select_related("room", "user")
     )
     affected = [booking for booking in affected if not room_ids or booking.room_id in room_ids]

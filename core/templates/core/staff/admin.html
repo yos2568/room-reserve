@@ -26,7 +26,62 @@
     <ul class="mt-2 space-y-3 text-sm">
       {% for room in rooms %}
         <li>
-          {{ room }}{% if not room.is_active %} · <span class="text-red-800">{% trans "out of service" %}</span>{% endif %}
+          <div class="flex flex-wrap items-center gap-2">
+            {% if room.is_active %}<a class="font-medium text-brand-700 hover:underline" href="{% url 'core:room_profile' room_id=room.pk %}">{{ room }}</a>{% else %}<span class="font-medium">{{ room }}</span>{% endif %}
+            <span class="text-slate-600">{{ room.capacity }} {% trans "seats" %}</span>
+            {% if not room.is_active %} · <span class="text-red-800">{% trans "out of service" %}</span>{% endif %}
+          </div>
+          <details class="mt-1">
+            <summary class="cursor-pointer">{% trans "Room profile" %}</summary>
+            <form method="post" action="{% url 'core:staff_update_room_profile' pk=room.pk %}" class="mt-2 grid gap-2 sm:grid-cols-[8rem_1fr_auto] sm:items-end">
+              {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+              <div>
+                <label class="label" for="capacity-{{ room.pk }}">{% trans "Capacity" %}</label>
+                <input class="field" id="capacity-{{ room.pk }}" name="capacity" type="number" min="1" max="100" required value="{{ room.capacity }}">
+              </div>
+              <div>
+                <label class="label" for="equipment-{{ room.pk }}">{% trans "Equipment (one per line)" %}</label>
+                <textarea class="field" id="equipment-{{ room.pk }}" name="equipment" rows="2" maxlength="1000">{{ room.equipment }}</textarea>
+              </div>
+              <label class="flex items-center gap-2 text-sm sm:self-center">
+                <input type="checkbox" name="requires_approval" {% if room.requires_approval %}checked{% endif %}>
+                {% trans "Approval required" %}
+              </label>
+              <button class="btn-secondary" type="submit">{% trans "Save profile" %}</button>
+            </form>
+          </details>
+          {% if is_maintainer %}
+            <details class="mt-2">
+              <summary class="cursor-pointer">{% trans "Room administrators" %}</summary>
+              <ul class="mt-2 space-y-1 text-xs">
+                {% for administrator in room.administrators.all %}
+                  <li class="flex flex-wrap items-center gap-2">
+                    <span>{{ administrator.user.display_name }} ({{ administrator.user.institutional_id }})</span>
+                    <form method="post" action="{% url 'core:staff_set_room_administrator' pk=room.pk %}">
+                      {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}"><input type="hidden" name="user_id" value="{{ administrator.user.pk }}"><input type="hidden" name="action" value="remove">
+                      <button class="btn-danger !min-h-[32px] !px-2 text-xs" type="submit">{% trans "Remove" %}</button>
+                    </form>
+                  </li>
+                {% empty %}
+                  <li class="text-slate-600">{% trans "No room administrator assigned." %}</li>
+                {% endfor %}
+              </ul>
+              <form method="post" action="{% url 'core:staff_set_room_administrator' pk=room.pk %}" class="mt-2 flex flex-wrap items-end gap-2">
+                {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}"><input type="hidden" name="action" value="add">
+                <div>
+                  <label class="label" for="room-admin-{{ room.pk }}">{% trans "Assign account" %}</label>
+                  <select class="field" id="room-admin-{{ room.pk }}" name="user_id" required>
+                    <option value="">{% trans "Choose a user" %}</option>
+                    {% for candidate in staff_candidates %}
+                      <option value="{{ candidate.pk }}">{{ candidate.display_name }} ({{ candidate.institutional_id }})</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <button class="btn-secondary" type="submit">{% trans "Assign" %}</button>
+              </form>
+              <p class="mt-1 text-xs text-slate-600">{% trans "Room administrators can review this room's requests and manage its profile. They cannot grant themselves wider staff access." %}</p>
+            </details>
+          {% endif %}
           {% if room.is_restricted %}
             · <span class="text-violet-800">
               {% trans "Reserved for" %}:

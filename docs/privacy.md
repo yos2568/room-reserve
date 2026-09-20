@@ -11,7 +11,7 @@
 |---|---|---|
 | Institutional ID, institutional email, name (Thai and English) | `User` | Identifying the account, matching it to the roster, contacting the student |
 | Password hash | `User` | Sign-in. Never stored or logged in plaintext |
-| Bookings: room, hour, status, source, check-in time, cancellation | `Booking` | The service itself, and the quota and strike rules |
+| Bookings: room, hour, status, source, check-in time, cancellation, optional title/purpose/participant names | `Booking` | The service itself, room coordination, and the quota and strike rules |
 | Strikes and suspensions, with reason and recording staff member | `Violation`, `Suspension` | Enforcing the department's rules, and reviewing appeals |
 | Roster rows: ID, email, name, instrument, active flag | `EligibleStudent` | Proving department membership. A roster row is not an account |
 | Invitations: **digest only** | `Invitation` | Single-use links. The plaintext token exists only in the outbox payload and the email |
@@ -35,6 +35,9 @@ cannot retroactively re-judge a historical decision.
   pages are scanned for a student's name, ID and email in
   `tests/test_browser_privacy_posters.py`, and the check also looks for the secret
   key.
+- **Booking details are not public.** Optional title, purpose and participant
+  names appear only to the booking owner and operational staff; they are not
+  rendered in the public grid.
 - **No personal data in a shared cache.** `PersonalResponseCacheMiddleware` marks
   every authenticated response and every non-GET `private, no-store`, and varies
   every response on `Cookie`. Anonymous pages are deliberately not marked `public`,

@@ -41,7 +41,7 @@ def cancel(ctx, *, booking: Booking, reason: str = "", staff_action: bool = Fals
 
     if booking.status == Booking.Status.CANCELLED:
         raise OperationRejected(Code.TERMINAL_STATUS, booking_id=booking.pk)
-    if booking.status != Booking.Status.SCHEDULED:
+    if booking.status not in {Booking.Status.SCHEDULED, Booking.Status.PENDING_APPROVAL}:
         raise OperationRejected(Code.TERMINAL_STATUS, booking_id=booking.pk)
 
     if not staff_action and now >= booking.slot_start:

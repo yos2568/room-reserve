@@ -1,0 +1,7 @@
+{% load i18n %}{% blocktrans %}Practice room request not approved{% endblocktrans %}
+
+{% blocktrans with room=room_label date=slot_start_display %}Your request for {{ room }} on {{ date }} was not approved.{% endblocktrans %}
+{% if reason %}{% trans "Reason" %}: {{ reason }}{% endif %}
+{% trans "Booking reference" %}: {{ booking_id }}
+
+{% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

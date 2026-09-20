@@ -1,0 +1,58 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Lobby room status" %}{% endblock %}
+
+{% block head_extra %}
+  <meta http-equiv="refresh" content="30">
+{% endblock %}
+
+{% block content %}
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-medium text-brand-700">{% trans "Live room board" %}</p>
+      <h1 class="mt-1 text-2xl font-semibold tracking-tight">{% trans "Practice room status" %}</h1>
+      <p class="mt-1 text-sm text-slate-700">{% trans "A simple view for the lobby. It refreshes automatically and never shows student names." %}</p>
+    </div>
+    <div class="rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700" aria-live="polite">
+      {% trans "Updated" %} {{ moment|date:"H:i" }}
+    </div>
+  </div>
+
+  <section class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="{% trans 'Room status' %}">
+    {% for row in rows %}
+      <article class="card border-l-4 {% if row.status_key == 'available' %}border-l-emerald-600{% elif row.status_key == 'in_use' %}border-l-brand-600{% elif row.status_key == 'class' %}border-l-violet-600{% elif row.status_key == 'reserved' %}border-l-amber-500{% else %}border-l-slate-400{% endif %}">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-sm text-slate-600">{% trans "Room" %}</p>
+            <h2 class="text-xl font-semibold">{{ row.room.number }}</h2>
+          </div>
+          <span class="rounded-full px-3 py-1 text-sm font-medium {% if row.status_key == 'available' %}bg-emerald-50 text-emerald-800{% elif row.status_key == 'in_use' %}bg-brand-50 text-brand-700{% elif row.status_key == 'class' %}bg-violet-50 text-violet-900{% elif row.status_key == 'reserved' %}bg-amber-50 text-amber-800{% else %}bg-slate-100 text-slate-700{% endif %}">
+            <span aria-hidden="true">●</span>
+            {% if row.status_key == 'available' %}{% trans "Available" %}{% elif row.status_key == 'in_use' %}{% trans "In use" %}{% elif row.status_key == 'class' %}{% trans "Class in session" %}{% elif row.status_key == 'reserved' %}{% trans "Reserved" %}{% else %}{% trans "Closed" %}{% endif %}
+          </span>
+        </div>
+        <p class="mt-4 text-sm text-slate-700">
+          {% if row.status_key == 'available' %}
+            {% trans "Available for use now" %}
+          {% elif row.status_key == 'in_use' %}
+            {% trans "A session is currently in progress" %}
+          {% elif row.status_key == 'class' %}
+            {{ row.cell.block_reason }}
+          {% elif row.status_key == 'reserved' %}
+            {% trans "Reserved for this hour" %}
+          {% else %}
+            {% trans "Not available at this time" %}
+          {% endif %}
+        </p>
+        {% if row.next_start %}
+          <p class="mt-2 text-xs text-slate-600">{% trans "Next reservation" %}: {{ row.next_start|date:"D j M, H:i" }}</p>
+        {% endif %}
+      </article>
+    {% empty %}
+      <p class="card text-sm">{% trans "No active rooms are configured." %}</p>
+    {% endfor %}
+  </section>
+
+  <p class="mt-5 text-xs text-slate-600">{% trans "For booking or a complete timetable, open the availability grid." %} <a class="underline" href="{% url 'core:home' %}">{% trans "Open availability" %}</a></p>
+{% endblock %}

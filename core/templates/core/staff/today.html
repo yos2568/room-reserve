@@ -33,7 +33,13 @@
                 <td class="p-2">{{ booking.local_start|date:"H:i" }}</td>
                 <td class="p-2">{{ booking.room }}</td>
                 <td class="p-2">{{ booking.user.display_name }} ({{ booking.user.institutional_id }})</td>
-                <td class="p-2">{{ booking.get_status_display }}{% if booking.needs_review %} · <span class="text-red-800">{% trans "review needed" %}</span>{% endif %}</td>
+                <td class="p-2">
+                  {{ booking.get_status_display }}
+                  {% if booking.title %}<div class="font-medium">{{ booking.title }}</div>{% endif %}
+                  {% if booking.purpose %}<div class="text-xs text-slate-600">{{ booking.purpose }}</div>{% endif %}
+                  {% if booking.participant_names %}<div class="text-xs text-slate-600">{% trans "Participants" %}: {{ booking.participant_names }}</div>{% endif %}
+                  {% if booking.needs_review %} · <span class="text-red-800">{% trans "review needed" %}</span>{% endif %}
+                </td>
                 <td class="p-2">
                   {% if booking.status == 'SCHEDULED' %}
                     <form method="post" action="{% url 'core:staff_assisted_check_in' pk=booking.pk %}" class="inline-flex items-center gap-1">

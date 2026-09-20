@@ -17,6 +17,7 @@ class Command(BaseCommand):
         mail = summary.get("mail", {})
         self.stdout.write(
             "tick complete: "
+            f"expired_approvals={reconciled.get('expired_approvals', 0)} "
             f"no_shows={reconciled.get('no_shows', 0)} "
             f"completions={reconciled.get('completions', 0)} "
             f"suspensions={reconciled.get('suspensions', 0)} "

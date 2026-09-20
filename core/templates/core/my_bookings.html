@@ -34,6 +34,9 @@
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="text-sm">
               <p class="font-medium">{{ booking.room }} · {{ booking.local_start|date:"j F Y" }} {{ booking.local_start|date:"H:i" }}–{{ booking.local_end|date:"H:i" }}</p>
+              {% if booking.title %}<p class="mt-1 text-slate-900">{{ booking.title }}</p>{% endif %}
+              {% if booking.purpose %}<p class="text-slate-700">{{ booking.purpose }}</p>{% endif %}
+              {% if booking.participant_names %}<p class="text-xs text-slate-600">{% trans "Participants" %}: {{ booking.participant_names }}</p>{% endif %}
               <p class="text-slate-700">
                 {% if booking.status == 'IN_USE' %}
                   {% trans "In use now" %} · {% trans "ends" %} {{ booking.local_end|date:"H:i" }}
@@ -56,14 +59,20 @@
                   <button class="btn-primary" type="submit">{% trans "Check in" %}</button>
                 </form>
               {% endif %}
-              {% if booking.status == 'SCHEDULED' and moment < booking.slot_start %}
-                <form method="post" action="{% url 'core:cancel_booking' pk=booking.pk %}" class="flex items-center gap-2">
-                  {% csrf_token %}
-                  <input type="hidden" name="operation_key" value="{{ operation_key }}">
-                  <label class="sr-only" for="reason-{{ booking.pk }}">{% trans "Reason" %}</label>
-                  <input class="field !py-1" id="reason-{{ booking.pk }}" name="reason" placeholder="{% trans 'Reason (optional)' %}">
-                  <button class="btn-danger" type="submit">{% trans "Cancel" %}</button>
-                </form>
+              {% if moment < booking.slot_start %}
+                {% if booking.status == 'SCHEDULED' or booking.status == 'PENDING_APPROVAL' %}
+                  <a class="btn-secondary" href="{% url 'core:edit_booking' pk=booking.pk %}">{% trans "Edit details" %}</a>
+                  <form method="post" action="{% url 'core:cancel_booking' pk=booking.pk %}" class="flex items-center gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="operation_key" value="{{ operation_key }}">
+                    <label class="sr-only" for="reason-{{ booking.pk }}">{% trans "Reason" %}</label>
+                    <input class="field !py-1" id="reason-{{ booking.pk }}" name="reason" placeholder="{% trans 'Reason (optional)' %}">
+                    <button class="btn-danger" type="submit">{% trans "Cancel" %}</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+              {% if booking.status == 'SCHEDULED' or booking.status == 'PENDING_APPROVAL' %}
+                <a class="btn-secondary" href="{% url 'core:booking_ics' pk=booking.pk %}">{% trans "Add to calendar" %}</a>
               {% endif %}
               <a class="btn-secondary" href="{% url 'core:room_qr' room_id=booking.room.pk %}">{% trans "Room page" %}</a>
             </div>
@@ -73,6 +82,27 @@
     </ul>
   {% else %}
     <p class="card mt-2 text-sm">{% trans "No upcoming bookings." %}</p>
+  {% endif %}
+
+  {% if recurring %}
+    <section class="card mt-6">
+      <h2 class="text-base font-semibold">{% trans "Weekly reservation series" %}</h2>
+      <p class="mt-1 text-sm text-slate-700">{% trans "Cancelling a series cancels its future occurrences. Past sessions stay in your history." %}</p>
+      <ul class="mt-3 space-y-3 text-sm">
+        {% for series in recurring %}
+          <li class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 last:border-0 last:pb-0">
+            <div>
+              <p class="font-medium">{{ series.room }} · {{ series.get_weekday_display }} · {{ series.start_hour|stringformat:'02d' }}:00</p>
+              <p class="text-slate-600">{{ series.start_date|date:"j F Y" }}–{{ series.end_date|date:"j F Y" }}{% if series.title %} · {{ series.title }}{% endif %}</p>
+            </div>
+            <form method="post" action="{% url 'core:cancel_recurring' pk=series.pk %}">
+              {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+              <button class="btn-danger" type="submit">{% trans "Cancel series" %}</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
   {% endif %}
 
   <h2 class="mt-6 text-lg font-semibold">{% trans "History" %}</h2>

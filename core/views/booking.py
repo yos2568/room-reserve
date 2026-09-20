@@ -8,16 +8,17 @@ booking (V3 sections 5 and 9).
 from __future__ import annotations
 
 import uuid
-from datetime import timedelta
+from datetime import UTC, timedelta
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from core.models import Booking, Room
+from core.models import Booking, RecurringReservation, Room
 from core.services import availability, clock, instruments, sanctions, slots, suggest
 from core.services import booking as booking_service
 from core.services import cancel as cancel_service
@@ -118,8 +119,37 @@ def _grid_url(slot_start) -> str:
     return f"{reverse('core:home')}?date={clock.local_date(slot_start).isoformat()}"
 
 
+def _ics_escape(value: str) -> str:
+    return (
+        str(value or "")
+        .replace("\\", "\\\\")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+        .replace("\r\n", "\\n")
+        .replace("\n", "\\n")
+        .replace("\r", "\\n")
+    )
+
+
 def _may_reserve(room: Room, user) -> bool:
     return room.may_be_reserved_by(instruments.category_for_user(user))
+
+
+def _booking_details(request) -> dict[str, str]:
+    return booking_service.normalise_details(
+        {
+            "title": request.POST.get("title"),
+            "purpose": request.POST.get("purpose"),
+            "participant_names": request.POST.get("participant_names"),
+        }
+    )
+
+
+def _booking_options(request) -> dict[str, object]:
+    return {
+        "repeat_weekly": request.POST.get("repeat_weekly") == "on",
+        "repeat_until": (request.POST.get("repeat_until") or "").strip(),
+    }
 
 
 @login_required
@@ -156,6 +186,10 @@ def book_slot(request, room_id: int, slot: str):
             "quota_remaining": quota_remaining(request.user, clock.local_date(slot_start)),
             "operation_key": _new_key(),
             "outcome": outcome,
+            "details": {"title": "", "purpose": "", "participant_names": ""},
+            "repeat_weekly": False,
+            "repeat_until": "",
+            "recurring_max_weeks": settings.RECURRING_MAX_WEEKS,
         },
         status=409 if outcome is not None and not outcome.ok else 200,
     )
@@ -167,7 +201,9 @@ def confirm_booking(request, room_id: int, slot: str):
     """Create the reservation, with POST revalidation and stale-hour handling."""
     room = get_object_or_404(Room, pk=room_id)
     slot_start = _decode_slot_or_404(slot)
-    payload = booking_service.build_payload(room, slot_start)
+    details = _booking_details(request)
+    options = _booking_options(request)
+    payload = booking_service.build_payload(room, slot_start, details, **options)
 
     outcome = run_view_operation(
         request=request,
@@ -226,8 +262,60 @@ def confirm_booking(request, room_id: int, slot: str):
             "operation_key": _new_key(),
             "outcome": outcome,
             "alternatives": alternatives,
+            "details": details,
+            **options,
+            "recurring_max_weeks": settings.RECURRING_MAX_WEEKS,
         },
         status=409,
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def edit_booking(request, pk: int):
+    """Edit descriptive details for a future booking owned by the student."""
+    booking = get_object_or_404(Booking.objects.select_related("room"), pk=pk, user=request.user)
+    outcome = None
+    details = (
+        _booking_details(request)
+        if request.method == "POST"
+        else {
+            "title": booking.title,
+            "purpose": booking.purpose,
+            "participant_names": booking.participant_names,
+        }
+    )
+    if request.method == "POST":
+        payload = booking_service.build_update_payload(booking, details)
+        outcome = run_view_operation(
+            request=request,
+            operation="update_booking_details",
+            payload=payload,
+            key=operation_key(request),
+            body=lambda ctx: _success(
+                **booking_service.update_booking_details(ctx, booking=booking, details=details)
+            ),
+        )
+        if outcome.ok:
+            add_outcome_message(
+                request,
+                outcome,
+                success_message="รายละเอียดการจองถูกบันทึกแล้ว / Booking details updated.",
+            )
+            return redirect("core:my_bookings")
+        booking.refresh_from_db()
+
+    return render(
+        request,
+        "core/edit_booking.html",
+        {
+            "booking": booking,
+            "details": details,
+            "operation_key": _new_key(),
+            "outcome": outcome,
+            "moment": now(),
+        },
+        status=409 if outcome is not None and not outcome.ok else 200,
     )
 
 
@@ -312,6 +400,11 @@ def my_bookings(request):
     today = clock.local_date(moment)
     upcoming = availability.my_upcoming(request.user, moment)
     history = availability.my_history(request.user, moment)
+    recurring = RecurringReservation.objects.filter(
+        user=request.user,
+        status=RecurringReservation.Status.ACTIVE,
+        end_date__gte=clock.local_date(moment),
+    ).select_related("room")
 
     return render(
         request,
@@ -319,6 +412,7 @@ def my_bookings(request):
         {
             "upcoming": upcoming,
             "history": history,
+            "recurring": recurring,
             "moment": moment,
             "today": today,
             "quota_used": quota_used(request.user, today),
@@ -330,6 +424,50 @@ def my_bookings(request):
             "operation_key": _new_key(),
         },
     )
+
+
+@login_required
+@require_GET
+def booking_ics(request, pk: int):
+    """Download one private booking as a standards-compatible calendar event."""
+    booking = get_object_or_404(Booking.objects.select_related("room"), pk=pk, user=request.user)
+    if booking.status in {Booking.Status.CANCELLED, Booking.Status.REJECTED}:
+        raise Http404
+    start = booking.slot_start.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+    end = booking.slot_end.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+    stamp = now().astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+    summary = f"{booking.room}"
+    if booking.title:
+        summary = f"{booking.title} — {summary}"
+    description = "\n".join(
+        value
+        for value in (
+            booking.purpose,
+            f"Participants: {booking.participant_names}" if booking.participant_names else "",
+            f"Booking reference: {booking.pk}",
+        )
+        if value
+    )
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//RoomReserve//Practice Room Booking//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "BEGIN:VEVENT",
+        f"UID:booking-{booking.pk}@roomreserve",
+        f"DTSTAMP:{stamp}",
+        f"DTSTART:{start}",
+        f"DTEND:{end}",
+        f"SUMMARY:{_ics_escape(summary)}",
+        f"DESCRIPTION:{_ics_escape(description)}",
+        "LOCATION:Faculty of Fine and Applied Arts practice room",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ]
+    response = HttpResponse("\r\n".join(lines) + "\r\n", content_type="text/calendar; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="roomreserve-{booking.pk}.ics"'
+    return response
 
 
 @login_required
@@ -351,6 +489,29 @@ def cancel_booking(request, pk: int):
         body=lambda ctx: _success(**cancel_service.cancel(ctx, booking=booking, reason=reason)),
     )
     add_outcome_message(request, outcome)
+    return redirect("core:my_bookings")
+
+
+@login_required
+@require_POST
+def cancel_recurring(request, pk: int):
+    recurrence = get_object_or_404(booking_service.RecurringReservation, pk=pk, user=request.user)
+    outcome = run_view_operation(
+        request=request,
+        operation="cancel_recurring_reservation",
+        payload={"recurrence_id": pk, "reason": (request.POST.get("reason") or "").strip()},
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            **booking_service.cancel_recurring_reservation(
+                ctx, recurrence=recurrence, reason=(request.POST.get("reason") or "").strip()
+            )
+        ),
+    )
+    add_outcome_message(
+        request,
+        outcome,
+        success_message="รายการจองรายสัปดาห์ถูกยกเลิกแล้ว / Weekly reservations cancelled.",
+    )
     return redirect("core:my_bookings")
 
 

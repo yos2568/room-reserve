@@ -32,7 +32,10 @@
         <tbody>
           {% for row in grid.rows %}
             <tr class="border-t border-slate-200">
-              <th scope="row" class="sticky start-0 bg-white p-2 text-start font-medium">{{ row.room }}</th>
+              <th scope="row" class="sticky start-0 bg-white p-2 text-start font-medium">
+                <a class="text-brand-700 underline-offset-2 hover:underline" href="{% url 'core:room_profile' room_id=row.room.pk %}">{{ row.room }}</a>
+                <span class="block text-xs font-normal text-slate-600">{{ row.room.capacity }} {% trans "seats" %}</span>
+              </th>
               {% for cell in row.cells %}
                 <td class="p-1 align-middle">
                   {% include "core/partials/slot_cell.html" with cell=cell compact=True %}
@@ -49,7 +52,8 @@
   <div class="space-y-3 md:hidden">
     {% for row in grid.rows %}
       <section class="card">
-        <h3 class="mb-2 text-base font-semibold">{{ row.room }}</h3>
+        <h3 class="mb-2 text-base font-semibold"><a class="text-brand-700 hover:underline" href="{% url 'core:room_profile' room_id=row.room.pk %}">{{ row.room }}</a></h3>
+        <p class="mb-2 text-xs text-slate-600">{{ row.room.capacity }} {% trans "seats" %}</p>
         <ul class="flex flex-wrap gap-2">
           {% for cell in row.cells %}
             <li>{% include "core/partials/slot_cell.html" with cell=cell compact=True %}</li>

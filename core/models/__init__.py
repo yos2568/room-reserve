@@ -9,6 +9,7 @@ from core.models.booking import (
     QUOTA_STATUSES,
     Booking,
     BookingControl,
+    RecurringReservation,
     advance_deadline,
 )
 from core.models.identity import EligibleStudent, InstrumentCategory, Invitation
@@ -23,6 +24,7 @@ from core.models.room import (
     CalendarOverride,
     Closure,
     Room,
+    RoomAdministrator,
     RoomAllowedCategory,
     Weekday,
     WeeklyBlock,
@@ -45,7 +47,9 @@ __all__ = [
     "Notification",
     "OperationRequest",
     "PolicyVersion",
+    "RecurringReservation",
     "Room",
+    "RoomAdministrator",
     "RoomAllowedCategory",
     "ServiceIncident",
     "Suspension",

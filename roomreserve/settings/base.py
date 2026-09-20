@@ -160,6 +160,7 @@ OUTBOX_ENABLED = env_bool("OUTBOX_ENABLED", True)
 # (V3 section 1). They are snapshotted into a PolicyVersion row on first use and
 # are editable through staff screens, except the fixed hourly slot geometry.
 HORIZON_DAYS = env_int("POLICY_HORIZON_DAYS", 7)
+RECURRING_MAX_WEEKS = env_int("RECURRING_MAX_WEEKS", 4)
 DAILY_QUOTA = env_int("POLICY_DAILY_QUOTA", 2)
 CHECKIN_GRACE_MINUTES = env_int("POLICY_CHECKIN_GRACE_MINUTES", 15)
 STRIKE_WINDOW_DAYS = env_int("POLICY_STRIKE_WINDOW_DAYS", 30)

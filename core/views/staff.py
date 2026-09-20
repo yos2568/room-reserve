@@ -10,7 +10,10 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime, timedelta
 
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
@@ -27,14 +30,18 @@ from core.models import (
     JobHeartbeat,
     Notification,
     Room,
+    RoomAdministrator,
     ServiceIncident,
     Suspension,
     User,
     Violation,
 )
+from core.security import client_ip_allowed
+from core.services import booking as booking_service
 from core.services import identity as identity_service
 from core.services import incidents as incident_service
 from core.services import maintenance, outbox, sanctions
+from core.services import rooms as rooms_service
 from core.services import roster as roster_service
 from core.services.cancel import cancel as cancel_service
 from core.services.checkin import check_in as check_in_service
@@ -45,6 +52,7 @@ from core.services.quota import quota_used
 
 from ._helpers import (
     add_outcome_message,
+    maintainer_required,
     now,
     operation_key,
     redirect_back,
@@ -77,6 +85,21 @@ def _int_or_none(value):
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _assert_room_manager(request, room: Room) -> None:
+    """Allow global staff or the named administrator of this room only."""
+    if not request.user.is_active or not rooms_service.can_manage_room(request.user, room):
+        raise PermissionDenied("Room administrator access required.")
+    if not client_ip_allowed(request, settings.STAFF_ALLOWED_IPS):
+        raise PermissionDenied("Staff access is not available from this network.")
+
+
+def _room_manager_redirect(request) -> str:
+    """Return a landing page the current room manager is allowed to open."""
+    if request.user.is_superuser or request.user.is_operational_staff:
+        return "core:staff_admin"
+    return "core:room_admin"
 
 
 # --- Today ---------------------------------------------------------------------
@@ -939,13 +962,52 @@ def stats(request):
 @require_GET
 def stats_page(request):
     moment = now()
+    since = moment - timedelta(days=30)
+    rooms = Room.objects.all().order_by("position")
+    stats = (
+        Booking.objects.filter(slot_start__gte=since, slot_start__lt=moment)
+        .values("room_id")
+        .annotate(
+            total=Count("id"),
+            completed=Count("id", filter=Q(status=Booking.Status.COMPLETED)),
+            no_show=Count("id", filter=Q(status=Booking.Status.NO_SHOW)),
+            cancelled=Count("id", filter=Q(status=Booking.Status.CANCELLED)),
+            in_use=Count("id", filter=Q(status=Booking.Status.IN_USE)),
+            scheduled=Count("id", filter=Q(status=Booking.Status.SCHEDULED)),
+        )
+    )
+    by_room = {row["room_id"]: row for row in stats}
+    room_stats = []
+    for room in rooms:
+        row = by_room.get(room.pk, {})
+        total = row.get("total", 0)
+        used = row.get("completed", 0) + row.get("in_use", 0)
+        room_stats.append(
+            {
+                "room": room,
+                "total": total,
+                "completed": row.get("completed", 0),
+                "no_show": row.get("no_show", 0),
+                "cancelled": row.get("cancelled", 0),
+                "in_use": row.get("in_use", 0),
+                "scheduled": row.get("scheduled", 0),
+                "used": used,
+                "use_rate": round((used / total) * 100) if total else 0,
+            }
+        )
+    totals = {
+        key: sum(row[key] for row in room_stats)
+        for key in ("total", "completed", "no_show", "cancelled", "in_use", "scheduled", "used")
+    }
+    totals["use_rate"] = round((totals["used"] / totals["total"]) * 100) if totals["total"] else 0
     return render(
         request,
         "core/staff/stats.html",
         {
-            "rooms": Room.objects.all().order_by("position"),
+            "room_stats": room_stats,
+            "totals": totals,
             "moment": moment,
-            "since": moment - timedelta(days=30),
+            "since": since,
         },
     )
 
@@ -1047,7 +1109,13 @@ def admin_home(request):
         request,
         "core/staff/admin.html",
         {
-            "rooms": Room.objects.all().order_by("position").prefetch_related("allowed_categories"),
+            "rooms": Room.objects.all()
+            .order_by("position")
+            .prefetch_related("allowed_categories", "administrators__user"),
+            "room_admins": RoomAdministrator.objects.select_related("room", "user").order_by(
+                "room__position", "user__username"
+            ),
+            "staff_candidates": User.objects.filter(is_active=True).order_by("username"),
             "instrument_categories": InstrumentCategory.choices,
             "policy": current_policy(),
             "moment": moment,
@@ -1063,10 +1131,78 @@ def admin_home(request):
     )
 
 
-@staff_required
+@login_required
+@require_GET
+def room_admin_dashboard(request):
+    """Room-scoped control panel for named room administrators."""
+    if not request.user.is_active or not (
+        request.user.is_superuser or request.user.is_operational_staff or request.user.is_room_admin
+    ):
+        raise PermissionDenied("Room administrator access required.")
+    if not client_ip_allowed(request, settings.STAFF_ALLOWED_IPS):
+        raise PermissionDenied("Staff access is not available from this network.")
+    if request.user.is_superuser or request.user.is_operational_staff:
+        rooms = list(Room.objects.filter(is_active=True).order_by("position", "number"))
+    else:
+        rooms = list(
+            Room.objects.filter(administrators__user=request.user, is_active=True)
+            .distinct()
+            .order_by("position", "number")
+        )
+    pending = (
+        Booking.objects.filter(room__in=rooms, status=Booking.Status.PENDING_APPROVAL)
+        .select_related("room", "user")
+        .order_by("slot_start", "room__position")
+    )
+    return render(
+        request,
+        "core/staff/room_admin.html",
+        {"rooms": rooms, "pending": pending, "moment": now(), "operation_key": str(uuid.uuid4())},
+    )
+
+
+@login_required
+@require_POST
+def decide_booking_approval(request, pk: int):
+    booking = get_object_or_404(Booking.objects.select_related("room"), pk=pk)
+    _assert_room_manager(request, booking.room)
+    decision = (request.POST.get("decision") or "").strip().upper()
+    note = (request.POST.get("note") or "").strip()
+    outcome = run_view_operation(
+        request=request,
+        operation="decide_booking_approval",
+        payload={"booking": pk, "decision": decision, "note": note},
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            **booking_service.decide_approval(ctx, booking=booking, decision=decision, note=note)
+        ),
+    )
+    add_outcome_message(request, outcome)
+    return redirect("core:room_admin")
+
+
+@maintainer_required
+@require_POST
+def set_room_administrator(request, pk: int):
+    room = get_object_or_404(Room, pk=pk)
+    user = get_object_or_404(User, pk=_int_or_none(request.POST.get("user_id")))
+    add = request.POST.get("action") == "add"
+    outcome = run_view_operation(
+        request=request,
+        operation="set_room_administrator",
+        payload={"room": pk, "user": user.pk, "add": add},
+        key=operation_key(request),
+        body=lambda ctx: _success(**rooms_service.set_administrator(ctx, room=room, user=user, add=add)),
+    )
+    add_outcome_message(request, outcome)
+    return redirect("core:staff_admin")
+
+
+@login_required
 @require_POST
 def deactivate_room(request, pk: int):
     room = get_object_or_404(Room, pk=pk)
+    _assert_room_manager(request, room)
     reason = (request.POST.get("reason") or "").strip()
 
     outcome = run_view_operation(
@@ -1077,10 +1213,10 @@ def deactivate_room(request, pk: int):
         body=lambda ctx: _success(**maintenance.deactivate_room(ctx, room=room, reason=reason)),
     )
     add_outcome_message(request, outcome)
-    return redirect("core:staff_admin")
+    return redirect(_room_manager_redirect(request))
 
 
-@staff_required
+@login_required
 @require_POST
 def set_room_audience(request, pk: int):
     """Change who may reserve a room, without a developer running a command.
@@ -1090,12 +1226,13 @@ def set_room_audience(request, pk: int):
     it is the same one the seed command uses, so the two cannot drift.
     """
     room = get_object_or_404(Room, pk=pk)
+    _assert_room_manager(request, room)
     scope = (request.POST.get("reservation_scope") or "").strip().upper()
     categories = request.POST.getlist("categories")
 
     if scope not in Room.ReservationScope.values:
         messages.error(request, "ต้องระบุขอบเขตการจอง / A reservation scope is required.")
-        return redirect("core:staff_admin")
+        return redirect(_room_manager_redirect(request))
 
     outcome = run_view_operation(
         request=request,
@@ -1107,7 +1244,39 @@ def set_room_audience(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect("core:staff_admin")
+    return redirect(_room_manager_redirect(request))
+
+
+@login_required
+@require_POST
+def update_room_profile(request, pk: int):
+    room = get_object_or_404(Room, pk=pk)
+    _assert_room_manager(request, room)
+    capacity = _int_or_none(request.POST.get("capacity"))
+    equipment = request.POST.get("equipment") or ""
+    requires_approval = request.POST.get("requires_approval") == "on"
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_update_room_profile",
+        payload={
+            "room": pk,
+            "capacity": capacity,
+            "equipment": equipment[:1000],
+            "requires_approval": requires_approval,
+        },
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            room_id=rooms_service.update_profile(
+                ctx,
+                room=room,
+                capacity=capacity,
+                equipment=equipment,
+                requires_approval=requires_approval,
+            ).pk
+        ),
+    )
+    add_outcome_message(request, outcome)
+    return redirect(_room_manager_redirect(request))
 
 
 @staff_required

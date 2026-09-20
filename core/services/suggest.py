@@ -121,7 +121,7 @@ def room_has_blocker(room: Room, slot_start) -> bool:
     ).exists()
 
 
-def _free_now(local_date, now, *, user) -> list:
+def _free_now(local_date, now, *, user, capacity_min: int | None = None, equipment_query: str = "") -> list:
     """Rooms walkable-into right now, longest remaining first.
 
     The walk-in rule ignores the reservation audience on purpose, so this list
@@ -157,7 +157,12 @@ def _free_now(local_date, now, *, user) -> list:
         )
 
     cards = []
-    for room in Room.objects.filter(is_active=True).order_by("position", "number"):
+    room_query = Room.objects.filter(is_active=True)
+    if capacity_min:
+        room_query = room_query.filter(capacity__gte=capacity_min)
+    if equipment_query:
+        room_query = room_query.filter(equipment__icontains=equipment_query)
+    for room in room_query.order_by("position", "number"):
         if room.pk in occupied or room.pk in forfeited:
             continue
         if calendar.is_slot_closed(slot_start, room):
@@ -174,7 +179,15 @@ def _free_now(local_date, now, *, user) -> list:
     return cards
 
 
-def _hour_groups(local_date, now, *, user, limit: int = 4) -> list:
+def _hour_groups(
+    local_date,
+    now,
+    *,
+    user,
+    capacity_min: int | None = None,
+    equipment_query: str = "",
+    limit: int = 4,
+) -> list:
     """The next bookable hours on ``local_date``, with the rooms open in each.
 
     Derived from the same per-cell states the grid renders, so the panel cannot
@@ -183,7 +196,13 @@ def _hour_groups(local_date, now, *, user, limit: int = 4) -> list:
     """
     viewer_category = instruments.category_for_user(user)
     conflicts = _viewer_conflicts(user)
-    grid = availability.public_grid(local_date, now, user=user)
+    grid = availability.public_grid(
+        local_date,
+        now,
+        user=user,
+        capacity_min=capacity_min,
+        equipment_query=equipment_query,
+    )
 
     by_slot: dict[object, list] = {}
     for row in grid["rows"]:
@@ -210,15 +229,38 @@ def _hour_groups(local_date, now, *, user, limit: int = 4) -> list:
     return groups
 
 
-def suggestions(local_date, now, *, user) -> Suggestions:
+def suggestions(
+    local_date,
+    now,
+    *,
+    user,
+    capacity_min: int | None = None,
+    equipment_query: str = "",
+) -> Suggestions:
     """Everything the dashboard panel needs, in one call."""
     remaining_quota = quota.quota_remaining(user, local_date) if user else None
     # Anonymous visitors see the public suggestions but never the quota note:
     # quota is per account, and there is no account to count.
     exhausted = remaining_quota is not None and remaining_quota <= 0
     return Suggestions(
-        free_now=[] if exhausted else _free_now(local_date, now, user=user),
-        hours=[] if exhausted else _hour_groups(local_date, now, user=user),
+        free_now=[]
+        if exhausted
+        else _free_now(
+            local_date,
+            now,
+            user=user,
+            capacity_min=capacity_min,
+            equipment_query=equipment_query,
+        ),
+        hours=[]
+        if exhausted
+        else _hour_groups(
+            local_date,
+            now,
+            user=user,
+            capacity_min=capacity_min,
+            equipment_query=equipment_query,
+        ),
         can_act=_viewer_can_act(user, now),
         quota_remaining=max(0, remaining_quota or 0),
         quota_exhausted=exhausted,

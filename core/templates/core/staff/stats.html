@@ -6,7 +6,16 @@
 {% block staff_content %}
   <section class="card">
     <p class="text-sm">{% blocktrans with since=since|date:"j F Y" %}Counts cover bookings since {{ since }}.{% endblocktrans %}</p>
-    <a class="btn-primary mt-2" href="{% url 'core:staff_stats_export' %}">{% trans "Download CSV" %}</a>
+    <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-lg bg-brand-50 p-3"><span class="block text-xs text-slate-600">{% trans "Reservations" %}</span><strong class="mt-1 block text-2xl text-brand-700">{{ totals.total }}</strong></div>
+      <div class="rounded-lg bg-emerald-50 p-3"><span class="block text-xs text-slate-600">{% trans "Used sessions" %}</span><strong class="mt-1 block text-2xl text-emerald-800">{{ totals.used }}</strong></div>
+      <div class="rounded-lg bg-amber-50 p-3"><span class="block text-xs text-slate-600">{% trans "No-shows" %}</span><strong class="mt-1 block text-2xl text-amber-800">{{ totals.no_show }}</strong></div>
+      <div class="rounded-lg bg-slate-100 p-3"><span class="block text-xs text-slate-600">{% trans "Use rate" %}</span><strong class="mt-1 block text-2xl text-slate-900">{{ totals.use_rate }}%</strong></div>
+    </div>
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+      <a class="btn-primary" href="{% url 'core:staff_stats_export' %}">{% trans "Download CSV" %}</a>
+      <span class="text-xs text-slate-600">{% blocktrans with cancelled=totals.cancelled %}{{ cancelled }} cancellations are included in the room table.{% endblocktrans %}</span>
+    </div>
     <p class="mt-2 text-xs text-slate-600">
       {% blocktrans %}Exported cells that begin with a formula character are neutralised so a spreadsheet cannot execute them.{% endblocktrans %}
     </p>
@@ -16,10 +25,28 @@
     <table class="w-full text-sm">
       <thead><tr class="border-b border-slate-300">
         <th scope="col" class="p-2 text-start">{% trans "Room" %}</th>
+        <th scope="col" class="p-2 text-end">{% trans "Reservations" %}</th>
+        <th scope="col" class="p-2 text-end">{% trans "Used" %}</th>
+        <th scope="col" class="p-2 text-end">{% trans "Scheduled" %}</th>
+        <th scope="col" class="p-2 text-end">{% trans "No-shows" %}</th>
+        <th scope="col" class="p-2 text-end">{% trans "Cancelled" %}</th>
+        <th scope="col" class="p-2 text-end">{% trans "Use rate" %}</th>
       </tr></thead>
       <tbody>
-        {% for room in rooms %}
-          <tr class="border-b border-slate-200"><td class="p-2">{{ room }}</td></tr>
+        {% for row in room_stats %}
+          <tr class="border-b border-slate-200">
+            <th scope="row" class="p-2 text-start font-medium">
+              {% if row.room.is_active %}<a class="text-brand-700 hover:underline" href="{% url 'core:room_profile' room_id=row.room.pk %}">{{ row.room }}</a>{% else %}{{ row.room }}{% endif %}
+            </th>
+            <td class="p-2 text-end tabular-nums">{{ row.total }}</td>
+            <td class="p-2 text-end tabular-nums">{{ row.used }}</td>
+            <td class="p-2 text-end tabular-nums">{{ row.scheduled }}</td>
+            <td class="p-2 text-end tabular-nums">{{ row.no_show }}</td>
+            <td class="p-2 text-end tabular-nums">{{ row.cancelled }}</td>
+            <td class="p-2 text-end tabular-nums">{{ row.use_rate }}%</td>
+          </tr>
+        {% empty %}
+          <tr><td class="p-4 text-center text-slate-600" colspan="7">{% trans "No room data yet." %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

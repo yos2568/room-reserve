@@ -27,6 +27,18 @@ class Room(models.Model):
 
     number = models.CharField(_("room number"), max_length=32, unique=True)
     label = models.CharField(_("label"), max_length=120, blank=True)
+    capacity = models.PositiveSmallIntegerField(
+        default=1,
+        help_text=_("Approximate number of people the room can accommodate."),
+    )
+    equipment = models.TextField(
+        blank=True,
+        help_text=_("Comma-separated equipment or facilities available in this room."),
+    )
+    requires_approval = models.BooleanField(
+        default=False,
+        help_text=_("Reservations for this room must be approved by a room administrator."),
+    )
     is_active = models.BooleanField(_("active"), default=True)
     position = models.PositiveSmallIntegerField(default=0, help_text=_("Display order."))
     reservation_scope = models.CharField(
@@ -51,6 +63,11 @@ class Room(models.Model):
         return self.reservation_scope == self.ReservationScope.LISTED
 
     @property
+    def equipment_items(self) -> list[str]:
+        """Display equipment as readable chips without storing a second table."""
+        return [item.strip() for item in self.equipment.replace("\n", ",").split(",") if item.strip()]
+
+    @property
     def allowed_category_values(self) -> list[str]:
         """Categories permitted to reserve. Uses the prefetch cache when present."""
         return [row.category for row in self.allowed_categories.all()]
@@ -66,6 +83,30 @@ class Room(models.Model):
         if not category:
             return False
         return any(row.category == category for row in self.allowed_categories.all())
+
+
+class RoomAdministrator(models.Model):
+    """A named user who may manage one room's profile and approvals."""
+
+    room = models.ForeignKey("core.Room", on_delete=models.CASCADE, related_name="administrators")
+    user = models.ForeignKey("core.User", on_delete=models.CASCADE, related_name="room_administrations")
+    granted_by = models.ForeignKey(
+        "core.User",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="room_administrator_grants",
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["room", "user"]
+        constraints = [
+            models.UniqueConstraint(fields=["room", "user"], name="room_admin_unique"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} → {self.room}"
 
 
 class Weekday(models.IntegerChoices):

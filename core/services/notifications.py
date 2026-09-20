@@ -30,6 +30,9 @@ KIND_EMAIL_VERIFICATION = "email_verification"
 KIND_INVITATION = "invitation"
 KIND_PASSWORD_RESET = "password_reset"
 KIND_BOOKING_CONFIRMATION = "booking_confirmation"
+KIND_BOOKING_PENDING = "booking_pending"
+KIND_BOOKING_REJECTED = "booking_rejected"
+KIND_BOOKING_CHANGED = "booking_changed"
 KIND_BOOKING_REMINDER = "booking_reminder"
 KIND_BOOKING_CANCELLED = "booking_cancelled"
 KIND_NO_SHOW = "no_show"
@@ -42,6 +45,9 @@ _SUBJECTS = {
     KIND_INVITATION: _("Your Room Reserve invitation"),
     KIND_PASSWORD_RESET: _("Reset your Room Reserve password"),
     KIND_BOOKING_CONFIRMATION: _("Practice room booked"),
+    KIND_BOOKING_PENDING: _("Practice room request received"),
+    KIND_BOOKING_REJECTED: _("Practice room request not approved"),
+    KIND_BOOKING_CHANGED: _("Your practice room booking changed"),
     KIND_BOOKING_REMINDER: _("Reminder: your practice room booking"),
     KIND_BOOKING_CANCELLED: _("Practice room booking cancelled"),
     KIND_NO_SHOW: _("Missed practice room booking"),
@@ -74,7 +80,15 @@ def revalidate(notification: Notification, now) -> dict:
     payload = dict(notification.payload or {})
     kind = notification.kind
 
-    if kind in {KIND_BOOKING_CONFIRMATION, KIND_BOOKING_REMINDER, KIND_BOOKING_CANCELLED, KIND_NO_SHOW}:
+    if kind in {
+        KIND_BOOKING_CONFIRMATION,
+        KIND_BOOKING_PENDING,
+        KIND_BOOKING_REJECTED,
+        KIND_BOOKING_CHANGED,
+        KIND_BOOKING_REMINDER,
+        KIND_BOOKING_CANCELLED,
+        KIND_NO_SHOW,
+    }:
         booking_id = payload.get("booking_id")
         booking = Booking.objects.filter(pk=booking_id).first()
         if booking is None:
@@ -86,6 +100,14 @@ def revalidate(notification: Notification, now) -> dict:
             Booking.Status.COMPLETED,
         }:
             raise MessageStale(f"Booking is {booking.status}.")
+        if kind == KIND_BOOKING_PENDING and booking.status != Booking.Status.PENDING_APPROVAL:
+            raise MessageStale("Booking is no longer awaiting approval.")
+        if kind == KIND_BOOKING_REJECTED and booking.status != Booking.Status.REJECTED:
+            raise MessageStale("Booking is no longer rejected.")
+        if kind == KIND_BOOKING_CHANGED and (
+            booking.status != Booking.Status.SCHEDULED or now >= booking.slot_start
+        ):
+            raise MessageStale("Booking change no longer applies.")
         if kind == KIND_BOOKING_REMINDER and (
             # A reminder is pointless once the booking is no longer upcoming.
             booking.status != Booking.Status.SCHEDULED or now >= booking.slot_start
@@ -96,7 +118,16 @@ def revalidate(notification: Notification, now) -> dict:
         if kind == KIND_NO_SHOW and booking.status != Booking.Status.NO_SHOW:
             raise MessageStale("Booking is not a no-show.")
 
-        context = _booking_context(payload, {"booking": booking, "room": booking.room})
+        context = _booking_context(
+            payload,
+            {
+                "booking": booking,
+                "room": booking.room,
+                "title": booking.title,
+                "purpose": booking.purpose,
+                "participant_names": booking.participant_names,
+            },
+        )
         # The QR check-in link travels with the confirmation and the reminder
         # (D-31). The token is resolved to a path at render time, inside the
         # notification's language, from the booking row as it exists when the

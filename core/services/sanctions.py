@@ -261,7 +261,10 @@ def _cancel_scheduled(ctx, *, user: User, suspension: Suspension, reason: str) -
     from core.models import Booking
 
     remaining = list(
-        Booking.objects.filter(user=user, status=Booking.Status.SCHEDULED)
+        Booking.objects.filter(
+            user=user,
+            status__in=[Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED],
+        )
         .order_by("slot_start")
         .select_related("room")
     )

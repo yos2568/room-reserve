@@ -41,12 +41,14 @@ def preview_closure(room: Room | None, starts_at: datetime, ends_at: datetime) -
     scope = Q(room=room) if room is not None else Q()
     affected = (
         Booking.objects.filter(scope)
-        .filter(status__in=[Booking.Status.SCHEDULED, Booking.Status.IN_USE])
+        .filter(status__in=[Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED, Booking.Status.IN_USE])
         .filter(slot_start__lt=ends_at, slot_end__gt=starts_at)
         .select_related("room", "user")
         .order_by("slot_start")
     )
-    scheduled = [b for b in affected if b.status == Booking.Status.SCHEDULED]
+    scheduled = [
+        b for b in affected if b.status in {Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED}
+    ]
     in_use = [b for b in affected if b.status == Booking.Status.IN_USE]
 
     return {
@@ -302,7 +304,10 @@ def deactivate_room(ctx, *, room: Room, reason: str) -> dict:
     room.save(update_fields=["is_active"])
 
     scheduled = list(
-        Booking.objects.filter(room=room, status=Booking.Status.SCHEDULED).select_related("user")
+        Booking.objects.filter(
+            room=room,
+            status__in=[Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED],
+        ).select_related("user")
     )
     for booking in scheduled:
         booking.status = Booking.Status.CANCELLED
@@ -357,7 +362,12 @@ def deactivate_account(ctx, *, user: User, reason: str) -> dict:
     user.is_active = False
     user.save(update_fields=["is_active"])
 
-    scheduled = list(Booking.objects.filter(user=user, status=Booking.Status.SCHEDULED))
+    scheduled = list(
+        Booking.objects.filter(
+            user=user,
+            status__in=[Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED],
+        )
+    )
     for booking in scheduled:
         booking.status = Booking.Status.CANCELLED
         booking.cancelled_at = ctx.now
