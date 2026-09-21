@@ -502,7 +502,8 @@ def move_booking(request, pk: int):
 
     outcome = None
     if request.method == "POST":
-        room = get_object_or_404(Room, pk=request.POST.get("room_id") or 0, is_active=True)
+        raw_room_id = request.POST.get("room_id") or ""
+        room = get_object_or_404(Room, pk=int(raw_room_id) if raw_room_id.isdigit() else 0, is_active=True)
         outcome = run_view_operation(
             request=request,
             operation="move_booking",

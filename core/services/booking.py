@@ -109,6 +109,11 @@ def validate_advance_target(*, user, room: Room, slot_start, now, enforce_horizo
     assert_quota_and_adjacency(user, slot_start, room=room)
 
 
+def _created_kind(status) -> str:
+    """The email a newly created booking gets: a request receipt or a confirmation."""
+    return "booking_pending" if status == Booking.Status.PENDING_APPROVAL else "booking_confirmation"
+
+
 def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
     """Create the SCHEDULED booking. Called inside the protocol's savepoint."""
     if ctx.payload.get("repeat_weekly"):
@@ -169,9 +174,9 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
     )
 
     enqueue(
-        kind=("booking_pending" if status == Booking.Status.PENDING_APPROVAL else "booking_confirmation"),
+        kind=_created_kind(status),
         recipient=user,
-        dedupe_key=f"{'booking_pending' if status == Booking.Status.PENDING_APPROVAL else 'booking_confirmation'}:{booking.pk}",
+        dedupe_key=f"{_created_kind(status)}:{booking.pk}",
         payload={
             "booking_id": booking.pk,
             "room_number": room.number,
@@ -229,7 +234,7 @@ def create_recurring_booking(ctx, *, room: Room, slot_start) -> dict:
     first_local = clock.local_time(slot_start)
     repeat_until = _parse_repeat_until(ctx.payload.get("repeat_until", ""), first_local.date())
     dates = _recurring_dates(first_local.date(), repeat_until)
-    if len(dates) < 2 or first_local.weekday() != dates[0].weekday():
+    if len(dates) < 2:
         raise OperationRejected(Code.INVALID_INPUT)
 
     details = normalise_details(ctx.payload)
@@ -253,7 +258,9 @@ def create_recurring_booking(ctx, *, room: Room, slot_start) -> dict:
             room=room,
             slot_start=occurrence_start,
             now=ctx.now,
-            enforce_horizon=False,
+            # The anchor is the slot the student chose and obeys the horizon like
+            # any booking; only the repeats beyond it are allowed past it.
+            enforce_horizon=local_date == dates[0],
         )
         if Booking.objects.filter(
             room=room,
@@ -290,9 +297,9 @@ def create_recurring_booking(ctx, *, room: Room, slot_start) -> dict:
             },
         )
         enqueue(
-            kind=("booking_pending" if status == Booking.Status.PENDING_APPROVAL else "booking_confirmation"),
+            kind=_created_kind(status),
             recipient=user,
-            dedupe_key=f"{'booking_pending' if status == Booking.Status.PENDING_APPROVAL else 'booking_confirmation'}:{occurrence.pk}",
+            dedupe_key=f"{_created_kind(status)}:{occurrence.pk}",
             payload={
                 "booking_id": occurrence.pk,
                 "room_number": room.number,
@@ -568,7 +575,9 @@ def decide_approval(ctx, *, booking: Booking, decision: str, note: str = "") -> 
         enqueue(
             kind="booking_confirmation",
             recipient=booking.user,
-            dedupe_key=f"booking_confirmation:{booking.pk}",
+            # Distinct per approval: a booking confirmed at creation, then moved
+            # into an approval room and approved, must still get this email.
+            dedupe_key=f"booking_confirmation:{booking.pk}:approved:{booking.approved_at.isoformat()}",
             payload={
                 "booking_id": booking.pk,
                 "room_number": booking.room.number,

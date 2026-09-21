@@ -55,6 +55,10 @@ def maintainer_required(view):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_superuser:
             raise PermissionDenied("Maintainer access required.")
+        # A maintainer is a superset of staff, so the staff network boundary
+        # applies here too; otherwise it is the one staff write path left open.
+        if not client_ip_allowed(request, settings.STAFF_ALLOWED_IPS):
+            raise PermissionDenied("Staff access is not available from this network.")
         return view(request, *args, **kwargs)
 
     return wrapper

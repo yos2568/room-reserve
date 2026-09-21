@@ -107,7 +107,8 @@ def revalidate(notification: Notification, now) -> dict:
         if kind == KIND_BOOKING_REJECTED and booking.status != Booking.Status.REJECTED:
             raise MessageStale("Booking is no longer rejected.")
         if kind == KIND_BOOKING_CHANGED and (
-            booking.status != Booking.Status.SCHEDULED or now >= booking.slot_start
+            booking.status not in {Booking.Status.SCHEDULED, Booking.Status.PENDING_APPROVAL}
+            or now >= booking.slot_start
         ):
             raise MessageStale("Booking change no longer applies.")
         if kind == KIND_BOOKING_REMINDER and (
