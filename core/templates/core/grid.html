@@ -8,10 +8,11 @@
     <div class="max-w-3xl">
       <p class="page-kicker">{% trans "Faculty of Fine and Applied Arts · Western Music" %}</p>
       <h1 class="page-title">{% trans "Practice room availability" %}</h1>
-      <p class="page-intro">
+      {# On phones the intro, date line and arrow toolbar are hidden: the date strip below does the same job, and availability reaches the first screen. #}
+      <p class="page-intro max-sm:hidden">
         {% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Book a room for a focused one-hour practice session. Open Monday to Friday, {{ open }}:00–{{ close }}:00.{% endblocktrans %}
       </p>
-      <div class="page-meta">
+      <div class="page-meta max-sm:hidden">
         <span class="font-semibold text-slate-900">{{ local_date|date:"j F Y" }}</span>
         {% if is_today %}<span class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">{% trans "Today" %}</span>{% endif %}
         <span>{% trans "Live availability" %}</span>
@@ -19,7 +20,7 @@
     </div>
 
     {# Date navigation is a plain GET link, so it works with JavaScript disabled. #}
-    <div class="mt-5 flex flex-wrap items-center gap-2 sm:mt-6">
+    <div class="mt-5 flex flex-wrap items-center gap-2 max-sm:hidden sm:mt-6">
       <nav aria-label="{% trans 'Choose a date' %}" class="date-toolbar flex items-center gap-2">
         {% if prev_date %}
           <a class="date-arrow btn-secondary" href="?date={{ prev_date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}" aria-label="{% trans 'Previous day' %}">‹</a>

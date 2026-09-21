@@ -78,9 +78,13 @@
           </div>
         {% endwith %}
 
-        <ul class="flex flex-wrap gap-2">
+        {# Every cell carries its hour visibly: twelve identical buttons are unusable without it. The label is aria-hidden because each button's aria-label already names the hour. #}
+        <ul class="grid grid-cols-4 gap-2">
           {% for cell in row.cells %}
-            <li>{% include "core/partials/slot_cell.html" with cell=cell compact=True %}</li>
+            <li class="flex flex-col gap-1">
+              <span class="text-center text-xs font-medium tabular-nums text-slate-600" aria-hidden="true">{{ cell.local_start|date:"H:i" }}</span>
+              {% include "core/partials/slot_cell.html" with cell=cell compact=True %}
+            </li>
           {% endfor %}
         </ul>
       </section>

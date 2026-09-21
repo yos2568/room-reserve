@@ -43,7 +43,7 @@
       <caption class="sr-only">{% trans "Weekly room availability" %}</caption>
       <thead>
         <tr>
-          <th class="sticky start-0 z-10 bg-slate-50 p-3 text-start" scope="col">{% trans "Room" %}</th>
+          <th class="sticky start-0 z-10 min-w-[8.5rem] bg-slate-50 p-3 text-start" scope="col">{% trans "Room" %}</th>
           {% for day in week_days %}
             <th class="min-w-[130px] p-3 text-start {% if day.is_today %}bg-brand-50{% endif %}" scope="col">
               <a class="room-name" href="{% url 'core:home' %}?date={{ day.date|date:'Y-m-d' }}">{{ day.date|date:"D j M" }}</a>
@@ -55,7 +55,8 @@
       <tbody>
         {% for row in week_rows %}
           <tr class="border-t border-slate-200 align-top">
-            <th class="sticky start-0 z-10 bg-white p-3 text-start" scope="row">
+            {# The sticky room column needs a floor: without it the 980px table squeezed room names to a character per line on phones. #}
+            <th class="sticky start-0 z-10 min-w-[8.5rem] bg-white p-3 text-start" scope="row">
               <a class="room-name" href="{% url 'core:room_profile' room_id=row.room.pk %}">{{ row.room }}</a>
               <span class="room-meta">{{ row.room.capacity }} {% trans "seats" %}</span>
             </th>

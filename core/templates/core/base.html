@@ -35,7 +35,8 @@
           {% url 'core:home' as nav_home %}
           <a class="nav-link min-h-touch" {% if request.path == nav_home %}aria-current="page"{% endif %} href="{{ nav_home }}">{% trans "Rooms" %}</a>
           {% url 'core:room_board' as nav_room_board %}
-          <a class="nav-link min-h-touch" {% if request.path == nav_room_board %}aria-current="page"{% endif %} href="{{ nav_room_board }}">{% trans "Choose a room" %}</a>
+          {# Hidden on phones, where it was clipped; the account menu carries it. #}
+          <a class="nav-link min-h-touch max-sm:hidden" {% if request.path == nav_room_board %}aria-current="page"{% endif %} href="{{ nav_room_board }}">{% trans "Choose a room" %}</a>
           {% if user.is_authenticated %}
             {% url 'core:my_bookings' as nav_bookings %}
             <a class="nav-link min-h-touch" {% if request.path == nav_bookings %}aria-current="page"{% endif %} href="{{ nav_bookings }}">{% trans "My bookings" %}</a>
