@@ -139,7 +139,7 @@ def test_single_use_activation_token_allows_only_one_concurrent_redemption():
                 purpose="ACCOUNT_ACTIVATION",
             )
             results.append("success")
-        except Exception as exc:  # noqa: BLE001 - assert the clean loser below.
+        except Exception as exc:
             errors.append(exc)
         finally:
             connections.close_all()

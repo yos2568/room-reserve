@@ -498,9 +498,7 @@ def move_booking(request, pk: int):
     def alternatives():
         if not movable:
             return []
-        return suggest.for_slot(
-            booking.slot_start, moment, user=request.user, exclude_booking_id=booking.pk
-        )
+        return suggest.for_slot(booking.slot_start, moment, user=request.user, exclude_booking_id=booking.pk)
 
     outcome = None
     if request.method == "POST":

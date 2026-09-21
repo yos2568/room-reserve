@@ -22,17 +22,21 @@ SALT = "roomreserve.complaint"
 class ComplaintForm(forms.Form):
     submission = forms.CharField(widget=forms.HiddenInput)
     subject = forms.CharField(
-        label="หัวข้อ / Subject", max_length=150,
+        label="หัวข้อ / Subject",
+        max_length=150,
         widget=forms.TextInput(attrs={"class": "field"}),
     )
     room = forms.ModelChoiceField(
         label="ห้องที่เกี่ยวข้อง (ถ้ามี) / Room (optional)",
-        queryset=Room.objects.none(), required=False,
+        queryset=Room.objects.none(),
+        required=False,
         empty_label="ไม่ระบุห้อง / No specific room",
         widget=forms.Select(attrs={"class": "field"}),
     )
     message = forms.CharField(
-        label="รายละเอียด / Message", min_length=10, max_length=4000,
+        label="รายละเอียด / Message",
+        min_length=10,
+        max_length=4000,
         help_text="ระบุวัน เวลา และปัญหาที่พบ / Include the date, time, and what happened.",
         widget=forms.Textarea(attrs={"class": "field", "rows": 7}),
     )
@@ -70,9 +74,11 @@ def submit(request):
                 room = form.cleaned_data["room"]
                 with transaction.atomic():
                     outbox.enqueue(
-                        kind=KIND_COMPLAINT, recipient=None,
+                        kind=KIND_COMPLAINT,
+                        recipient=None,
                         recipient_email=settings.COMPLAINT_RECIPIENT_EMAIL,
-                        dedupe_key=key, language="th",
+                        dedupe_key=key,
+                        language="th",
                         payload={
                             "reference": data["reference"],
                             "sender_name": request.user.display_name,
@@ -83,13 +89,22 @@ def submit(request):
                             "message": form.cleaned_data["message"],
                         },
                     )
-                messages.success(request, f"รับเรื่องแล้วและรอส่งอีเมล / Queued for email delivery. เลขอ้างอิง: {data['reference']}")
+                messages.success(
+                    request,
+                    f"รับเรื่องแล้วและรอส่งอีเมล / Queued for email delivery. เลขอ้างอิง: {data['reference']}",
+                )
                 return redirect("core:complaint")
     elif request.method == "POST":
         status = 400
-    response = render(request, "core/complaint.html", {
-        "form": form, "complaint_email": settings.COMPLAINT_RECIPIENT_EMAIL,
-    }, status=status)
+    response = render(
+        request,
+        "core/complaint.html",
+        {
+            "form": form,
+            "complaint_email": settings.COMPLAINT_RECIPIENT_EMAIL,
+        },
+        status=status,
+    )
     response["Cache-Control"] = "no-store"
     if status == 429:
         response["Retry-After"] = "3600"

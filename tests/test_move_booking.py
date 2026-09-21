@@ -115,9 +115,7 @@ def test_a_started_booking_cannot_be_moved(frozen, student, rooms):
 
 
 def test_a_cancelled_booking_cannot_be_moved(frozen, student, rooms):
-    booking = factories.make_booking(
-        student, rooms[0], day=DAY, hour=HOUR, status=Booking.Status.CANCELLED
-    )
+    booking = factories.make_booking(student, rooms[0], day=DAY, hour=HOUR, status=Booking.Status.CANCELLED)
 
     outcome = move(student, booking, rooms[1])
 

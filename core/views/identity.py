@@ -47,7 +47,9 @@ def register(request):
     if request.user.is_authenticated:
         return redirect("core:my_bookings")
 
-    registration_type = (request.POST.get("account_type") or request.GET.get("type") or "student").strip().lower()
+    registration_type = (
+        (request.POST.get("account_type") or request.GET.get("type") or "student").strip().lower()
+    )
     if registration_type not in {"student", "faculty", "admin"}:
         registration_type = "student"
 
