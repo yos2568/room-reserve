@@ -283,7 +283,7 @@ the user screen (`user.declared_category_set`, audited), and `UNKNOWN` is not
 declarable: a student cannot claim our inability to classify them. Everyone,
 declared or not, sees restricted rooms' availability; only reserving is filtered.
 
-**D-31 — The emailed QR check-in link: convenience, not proof.**
+**D-31 — The emailed QR check-in link: convenience, not proof.** *(Superseded by D-37.)*
 Every advance reservation carries a secret token (`Booking.checkin_token`). The
 confirmation and reminder emails embed a QR code for `/check-in/<token>/`; a scan
 brings the owner to the same deliberate confirm button as everywhere else — same
@@ -373,3 +373,17 @@ deployment surface, so that stays a deployment check.
 
 **Not deleting records on the retention default.** The one-academic-year figure is
 an unendorsed default. Nothing deletes automatically until faculty approve it.
+
+**D-37 — Students check in only at the door's printed QR.**
+The emailed QR link (D-31) and the My bookings button both checked a student in
+from anywhere, which made the check-in rule easy to satisfy from bed. Self-service
+check-in now lives only at `/r/<room>/bookings/<booking>/check-in/`, the button on
+the room page the printed door poster opens; the service still enforces owner,
+room and window under the lock. Emails and My bookings tell the student to scan
+the door. Staff assisted check-in is unchanged. This raises the effort to cheat but
+does not prove presence: a photographed poster works remotely. Stronger options
+were weighed and deferred until the pilot shows a need — a changing TOTP code on a
+display at each door (roughly 600–1,200 THB per room), a scanner at the floor
+entrance reading a per-booking QR, or restricting check-in to the building's
+network. `Booking.checkin_token` is no longer written; the column can be dropped in
+a later migration.

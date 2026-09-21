@@ -2,9 +2,8 @@
 
 {% blocktrans with room=room_label date=slot_start_display %}Room {{ room }} on {{ date }}{% endblocktrans %}
 {% blocktrans with deadline=deadline_local %}Check in by {{ deadline }} or the room is released.{% endblocktrans %}
-{% if checkin_path %}{% blocktrans %}Scan the QR code below at the room, or open this link, to check in:{% endblocktrans %}
-{{ site_base_url }}{{ checkin_path }}
-{% endif %}
+{% blocktrans %}To check in, scan the QR code on the room door when you arrive. Checking in from this email is not possible.{% endblocktrans %}
+
 {% blocktrans %}If you cannot attend, cancel from My bookings before the hour starts.{% endblocktrans %}
 {% trans "Booking reference" %}: {{ booking_id }}
 

@@ -11,15 +11,17 @@ from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
-from django.views.decorators.http import require_GET
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_GET, require_POST
 
 from core.models import BLOCKING_STATUSES, Booking, Room
 from core.services import availability, clock, slots, suggest
+from core.services import checkin as checkin_service
 from core.services.eligibility import active_suspension
+from core.services.errors import OperationOutcome
 from core.services.policy import current_policy
 
-from ._helpers import now
+from ._helpers import add_outcome_message, now, operation_key, run_view_operation
 
 
 def _parse_date(raw: str | None, default: date) -> date:
@@ -337,6 +339,32 @@ def room_qr_landing(request, room_id: int):
             "operation_key": _new_key(),
         },
     )
+
+
+@login_required
+@require_POST
+def room_check_in(request, room_id: int, pk: int):
+    """Check in from the printed door QR: the only self-service check-in path (D-37).
+
+    The booking must be the signed-in student's and must be for this door's room;
+    the service re-checks ownership, room and the check-in window under the lock.
+    A photographed poster still works from anywhere, so this is a declaration
+    backed by staff spot checks, not proof of presence.
+    """
+    room = get_object_or_404(Room, pk=room_id)
+    booking = get_object_or_404(Booking.objects.select_related("room"), pk=pk, user=request.user)
+
+    outcome = run_view_operation(
+        request=request,
+        operation="check_in",
+        payload=checkin_service.build_payload(booking),
+        key=operation_key(request),
+        body=lambda ctx: OperationOutcome.success(
+            **checkin_service.check_in(ctx, booking=booking, room=room)
+        ),
+    )
+    add_outcome_message(request, outcome)
+    return redirect("core:my_bookings")
 
 
 def _new_key() -> str:

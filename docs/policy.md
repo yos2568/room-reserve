@@ -69,14 +69,20 @@ of authority (D-30):
 A student with neither sees the room's availability but cannot reserve it, and the
 roster screen flags rows whose instrument nobody has categorised.
 
-## Checking in with the emailed QR code
+## Checking in at the door
 
-A confirmation email carries a QR code for the reservation. Scanning it — from the
-phone, standing in the room — opens a one-booking page with a confirm button;
-pressing it performs the same check-in as the grid or the door poster. The link
-works only for the booking's owner, only during the check-in window, and only
-after the button. Like the printed poster, the code is a convenient way to
-*declare* presence, not a proof of it — staff may spot check.
+A student checks in by **scanning the QR code printed on the room's door**, which
+opens the room page with a check-in button for their booking. That is the only way
+a student checks themselves in (D-37): the booking emails and My bookings say where
+to check in but no longer check anyone in, because both worked from anywhere.
+
+The window is from the start of the hour until the grace deadline (15 minutes by
+default); after it, the booking becomes a no-show. The button works only for the
+signed-in owner's booking and only on that room's door page.
+
+A photo of the poster still works away from the room, so a scan is a declaration,
+not proof of presence. Staff spot checks are the backstop, and staff can check a
+student in by hand (for example if the student has no phone).
 
 ## The teaching timetable
 

@@ -6,7 +6,6 @@ and the email domain is reserved for documentation use.
 
 from __future__ import annotations
 
-import secrets
 from datetime import datetime
 
 from django.utils import timezone
@@ -168,10 +167,6 @@ def make_booking(
     }
     # Advance reservations carry the QR check-in token, exactly as the real
     # creation path does; walk-ins have nothing to check in to.
-    defaults["checkin_token"] = overrides.pop(
-        "checkin_token",
-        secrets.token_urlsafe(24) if source == Booking.Source.ADVANCE else None,
-    )
     if status == Booking.Status.IN_USE:
         defaults.setdefault("checked_in_at", slot_start)
     if status == Booking.Status.CANCELLED:

@@ -225,7 +225,7 @@ def test_a_student_cannot_check_in_another_students_booking(frozen, student, oth
 
     client = Client()
     client.force_login(student)
-    response = client.post(reverse("core:check_in", args=[booking.pk]))
+    response = client.post(reverse("core:room_check_in", args=[rooms[0].pk, booking.pk]))
 
     assert response.status_code == 404
     booking.refresh_from_db()

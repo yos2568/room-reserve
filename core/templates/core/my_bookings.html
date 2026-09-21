@@ -57,11 +57,10 @@
 
             <div class="flex flex-wrap items-center gap-2">
               {% if booking.status == 'SCHEDULED' and booking.deadline and moment < booking.deadline and moment >= booking.slot_start %}
-                <form method="post" action="{% url 'core:check_in' pk=booking.pk %}">
-                  {% csrf_token %}
-                  <input type="hidden" name="operation_key" value="{{ operation_key }}">
-                  <button class="btn-primary" type="submit">{% trans "Check in" %}</button>
-                </form>
+                {# Check-in happens only at the door (D-37); this page just says where. #}
+                <p class="rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-sm font-medium text-brand-700" role="status">
+                  {% blocktrans with room=booking.room deadline=booking.deadline|date:'H:i' %}Scan the QR code on the door of {{ room }} to check in, by {{ deadline }}.{% endblocktrans %}
+                </p>
               {% endif %}
               {% if moment < booking.slot_start %}
                 {% if booking.status == 'SCHEDULED' or booking.status == 'PENDING_APPROVAL' %}
@@ -81,7 +80,7 @@
               {% if booking.status == 'SCHEDULED' or booking.status == 'PENDING_APPROVAL' %}
                 <a class="btn-secondary" href="{% url 'core:booking_ics' pk=booking.pk %}">{% trans "Add to calendar" %}</a>
               {% endif %}
-              <a class="btn-secondary" href="{% url 'core:room_qr' room_id=booking.room.pk %}">{% trans "Room page" %}</a>
+              <a class="btn-secondary" href="{% url 'core:room_profile' room_id=booking.room.pk %}">{% trans "Room profile" %}</a>
             </div>
           </div>
         </li>

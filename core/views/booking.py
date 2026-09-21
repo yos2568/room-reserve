@@ -22,7 +22,6 @@ from core.models import Booking, RecurringReservation, Room
 from core.services import availability, clock, instruments, sanctions, slots, suggest
 from core.services import booking as booking_service
 from core.services import cancel as cancel_service
-from core.services import checkin as checkin_service
 from core.services import walkin as walkin_service
 from core.services.eligibility import active_suspension
 from core.services.errors import Code, OperationOutcome, message_for
@@ -42,69 +41,6 @@ def _decode_slot_or_404(raw: str):
     if slot_start is None:
         raise Http404("Unknown slot identifier")
     return slot_start
-
-
-def _qr_window_state(booking: Booking, moment) -> str:
-    """Which message the QR landing page should show, computed for display only.
-
-    The service re-checks every rule under the lock on POST; this only decides
-    which honest sentence to print before the student commits.
-    """
-    if booking.status == Booking.Status.IN_USE:
-        return "already"
-    if booking.status != Booking.Status.SCHEDULED:
-        return "finished"
-    if moment < booking.slot_start:
-        return "early"
-    if booking.deadline is not None and moment >= booking.deadline:
-        return "closed"
-    return "open"
-
-
-@login_required
-@require_http_methods(["GET", "POST"])
-def checkin_qr(request, token: str):
-    """Landing page for the QR code carried by the confirmation email (D-31).
-
-    Scanning brings the student to one booking's check-in page. The token binds
-    the link to that reservation, sign-in binds the confirmation to its owner,
-    and the confirm button keeps check-in a deliberate act — the code is a
-    convenience, never a proof of presence.
-    """
-    booking = get_object_or_404(Booking.objects.select_related("room", "user"), checkin_token=token)
-    if booking.user_id != request.user.pk:
-        # A token is that student's key: another account learns nothing here.
-        raise Http404
-
-    outcome = None
-    if request.method == "POST":
-        payload = checkin_service.build_payload(booking)
-        outcome = run_view_operation(
-            request=request,
-            operation="check_in",
-            payload=payload,
-            key=operation_key(request),
-            body=lambda ctx: _success(**checkin_service.check_in(ctx, booking=booking, room=booking.room)),
-        )
-        add_outcome_message(request, outcome)
-        if outcome.ok:
-            return redirect("core:my_bookings")
-        booking.refresh_from_db()
-
-    return render(
-        request,
-        "core/checkin_qr.html",
-        {
-            "booking": booking,
-            "room": booking.room,
-            "window_state": _qr_window_state(booking, now()),
-            "policy": current_policy(),
-            "moment": now(),
-            "operation_key": _new_key(),
-            "outcome": outcome,
-        },
-        status=409 if outcome is not None and not outcome.ok else 200,
-    )
 
 
 def _new_key() -> str:
@@ -577,23 +513,4 @@ def cancel_recurring(request, pk: int):
         outcome,
         success_message="รายการจองรายสัปดาห์ถูกยกเลิกแล้ว / Weekly reservations cancelled.",
     )
-    return redirect("core:my_bookings")
-
-
-@login_required
-@require_POST
-def check_in(request, pk: int):
-    booking = get_object_or_404(Booking.objects.select_related("room"), pk=pk)
-    if booking.user_id != request.user.pk:
-        raise Http404
-
-    payload = checkin_service.build_payload(booking)
-    outcome = run_view_operation(
-        request=request,
-        operation="check_in",
-        payload=payload,
-        key=operation_key(request),
-        body=lambda ctx: _success(**checkin_service.check_in(ctx, booking=booking, room=booking.room)),
-    )
-    add_outcome_message(request, outcome)
     return redirect("core:my_bookings")

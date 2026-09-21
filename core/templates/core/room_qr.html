@@ -27,7 +27,7 @@
     </dl>
 
     {% if can_check_in %}
-      <form method="post" action="{% url 'core:check_in' pk=my_booking.pk %}" class="mt-4">
+      <form method="post" action="{% url 'core:room_check_in' room_id=room.pk pk=my_booking.pk %}" class="mt-4">
         {% csrf_token %}
         <input type="hidden" name="operation_key" value="{{ operation_key }}">
         <button class="btn-primary" type="submit">

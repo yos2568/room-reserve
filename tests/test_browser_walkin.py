@@ -127,8 +127,8 @@ def test_a_stale_check_in_button_is_refused_and_reconciles_the_no_show(
 ):
     """The "too late" feedback, driven the way it actually happens (A12/A13).
 
-    A student opens My bookings inside the window and presses Check in after it
-    has closed. The button is long gone on a fresh page — so this keeps the page
+    A student opens the door QR page inside the window and presses Check in after
+    it has closed. The button is long gone on a fresh page — so this keeps the page
     open across the boundary and presses the stale one. The server must re-read
     the row under the lock, refuse, and reconcile the expired hold into a no-show.
     """
@@ -138,7 +138,7 @@ def test_a_stale_check_in_button_is_refused_and_reconciles_the_no_show(
     browser_clock.at(WALK_IN_HOUR, 5)
 
     sign_in(page, base, student.institutional_id, FACTORY_PASSWORD)
-    visit(page, base, "my-bookings/")
+    page.goto(f"{base}/th/r/{rooms[2].pk}/", wait_until="load")
     button = page.locator(f"form[action*='/{booking.pk}/check-in/'] button[type=submit]")
     expect(button).to_have_count(1)
 

@@ -16,13 +16,12 @@ from datetime import datetime
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
 from core.models import Booking, Invitation, Notification, Suspension
 
-from . import clock, posters
+from . import clock
 
 logger = logging.getLogger(__name__)
 
@@ -131,12 +130,6 @@ def revalidate(notification: Notification, now) -> dict:
                 "participant_names": booking.participant_names,
             },
         )
-        # The QR check-in link travels with the confirmation and the reminder
-        # (D-31). The token is resolved to a path at render time, inside the
-        # notification's language, from the booking row as it exists when the
-        # message is actually sent.
-        if kind in {KIND_BOOKING_CONFIRMATION, KIND_BOOKING_REMINDER} and booking.checkin_token:
-            context["checkin_token"] = booking.checkin_token
         return context
 
     if kind in {KIND_EMAIL_VERIFICATION, KIND_INVITATION, KIND_PASSWORD_RESET}:
@@ -186,8 +179,6 @@ def _render_context(notification: Notification, context: dict) -> dict:
         },
     )
     enriched.setdefault("recipient", notification.recipient)
-    if enriched.get("checkin_token"):
-        enriched["checkin_path"] = reverse("core:checkin_qr", args=[enriched["checkin_token"]])
     return enriched
 
 
@@ -200,22 +191,6 @@ def render(notification: Notification, context: dict) -> tuple[str, str]:
     return subject, body
 
 
-def render_html(notification: Notification, context: dict) -> str | None:
-    """The HTML alternative, when the kind has one (D-31).
-
-    The booking confirmation embeds the QR check-in code inline, so a student
-    can scan it straight from the email at the door. Only kinds that carry a
-    ``checkin_token`` get a QR; everything else falls back to plain text only.
-    """
-    if not context.get("checkin_token"):
-        return None
-    language = notification.language or "th"
-    with translation.override(language):
-        enriched = _render_context(notification, context)
-        enriched["qr_data_uri"] = posters.qr_data_uri(enriched["site_base_url"] + enriched["checkin_path"])
-        return render_to_string(f"core/email/{notification.kind}.html", enriched)
-
-
 def deliver(notification: Notification, now) -> None:
     """Send one notification. Raises on failure so the caller can back off."""
     if not settings.OUTBOX_ENABLED:
@@ -223,7 +198,6 @@ def deliver(notification: Notification, now) -> None:
 
     context = revalidate(notification, now)
     subject, body = render(notification, context)
-    html = render_html(notification, context)
 
     recipient = notification.recipient
     message = EmailMultiAlternatives(
@@ -233,8 +207,6 @@ def deliver(notification: Notification, now) -> None:
         to=[notification.recipient_email or recipient.email],
         reply_to=[context["reply_email"]] if notification.kind == KIND_COMPLAINT else None,
     )
-    if html:
-        message.attach_alternative(html, "text/html")
     # A stable Message-ID lets a provider deduplicate an accidental double send.
     message.extra_headers = {"X-RoomReserve-Event": notification.dedupe_key}
     message.send(fail_silently=False)

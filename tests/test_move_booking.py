@@ -50,20 +50,18 @@ def test_move_changes_the_room_and_keeps_one_booking(frozen, student, rooms):
     booking.refresh_from_db()
     assert booking.room_id == rooms[1].pk
     assert booking.status == Booking.Status.SCHEDULED
-    # The identity of the reservation survives: same row, same check-in token.
+    # The identity of the reservation survives: same row.
     assert Booking.objects.filter(user=student, slot_date=DAY).count() == 1
     assert booking.pk == outcome.data["booking_id"]
 
 
-def test_move_keeps_the_check_in_token_and_deadline(frozen, student, rooms):
+def test_move_keeps_the_deadline(frozen, student, rooms):
     booking = scheduled(student, rooms[0])
-    token_before = booking.checkin_token
     deadline_before = booking.deadline
 
     assert move(student, booking, rooms[1]).ok
 
     booking.refresh_from_db()
-    assert booking.checkin_token == token_before, "a move must not invalidate a printed QR link"
     assert booking.deadline == deadline_before, "the hour did not change, so neither does the grace"
 
 

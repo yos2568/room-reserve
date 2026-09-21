@@ -9,7 +9,6 @@ never silently turned into an attendance declaration.
 from __future__ import annotations
 
 import logging
-import secrets
 from datetime import date, timedelta
 
 from django.conf import settings
@@ -148,10 +147,6 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
         title=ctx.payload.get("title", ""),
         purpose=ctx.payload.get("purpose", ""),
         participant_names=ctx.payload.get("participant_names", ""),
-        # Secret token for the QR check-in link carried by the confirmation
-        # email (D-31). Unguessable, unique per reservation, useless outside
-        # the check-in window and to anyone but the owner.
-        checkin_token=secrets.token_urlsafe(24),
     )
 
     ctx.audit(
@@ -281,7 +276,6 @@ def create_recurring_booking(ctx, *, room: Room, slot_start) -> dict:
             title=details["title"],
             purpose=details["purpose"],
             participant_names=details["participant_names"],
-            checkin_token=secrets.token_urlsafe(24),
         )
         booking_ids.append(occurrence.pk)
         ctx.audit(

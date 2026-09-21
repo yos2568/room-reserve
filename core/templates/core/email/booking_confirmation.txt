@@ -12,9 +12,8 @@
 {% else %}
 {% blocktrans with deadline=deadline_local %}Check in at the room between the start of the hour and {{ deadline }}.{% endblocktrans %}
 {% blocktrans %}If you do not check in, the room is released to other students and a strike is recorded.{% endblocktrans %}
-{% if checkin_path %}{% blocktrans %}Scan the QR code below at the room, or open this link, to check in:{% endblocktrans %}
-{{ site_base_url }}{{ checkin_path }}
-{% endif %}{% endif %}
+{% blocktrans %}To check in, scan the QR code on the room door when you arrive. Checking in from this email is not possible.{% endblocktrans %}
+{% endif %}
 
 {% blocktrans %}The session ends at the end of the hour. There is no extra hour and no early self-checkout.{% endblocktrans %}
 {% trans "Booking reference" %}: {{ booking_id }}

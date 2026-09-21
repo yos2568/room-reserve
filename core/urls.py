@@ -18,6 +18,13 @@ urlpatterns = [
     path("lobby/", views.public.lobby, name="lobby"),
     path("rooms/<int:room_id>/", views.public.room_profile, name="room_profile"),
     path("r/<int:room_id>/", views.public.room_qr_landing, name="room_qr"),
+    # Self-service check-in lives only behind the printed door QR (D-37): the
+    # emailed link and the My bookings button no longer check anyone in.
+    path(
+        "r/<int:room_id>/bookings/<int:pk>/check-in/",
+        views.public.room_check_in,
+        name="room_check_in",
+    ),
     # Identity -----------------------------------------------------------------
     path("register/", views.identity.register, name="register"),
     path("register/done/", views.identity.register_done, name="register_done"),
@@ -41,12 +48,8 @@ urlpatterns = [
     path("my-bookings/<int:pk>/calendar.ics", views.booking.booking_ics, name="booking_ics"),
     path("my-bookings/<int:pk>/cancel/", views.booking.cancel_booking, name="cancel_booking"),
     path("my-bookings/series/<int:pk>/cancel/", views.booking.cancel_recurring, name="cancel_recurring"),
-    path("my-bookings/<int:pk>/check-in/", views.booking.check_in, name="check_in"),
     path("my-bookings/<int:pk>/edit/", views.booking.edit_booking, name="edit_booking"),
     path("my-bookings/<int:pk>/move/", views.booking.move_booking, name="move_booking"),
-    # QR target from the confirmation email (D-31); the locale prefix comes from
-    # i18n_patterns, so the scanned URL keeps the student's language.
-    path("check-in/<str:token>/", views.booking.checkin_qr, name="checkin_qr"),
     # Staff operations ---------------------------------------------------------
     path("staff/today/", views.staff.today, name="staff_today"),
     path("staff/room-admin/", views.staff.room_admin_dashboard, name="room_admin"),
