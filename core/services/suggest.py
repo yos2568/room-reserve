@@ -52,6 +52,8 @@ class Suggestions:
     can_act: bool
     quota_remaining: int
     quota_exhausted: bool
+    # The student already holds the maximum number of unfinished hours (D-38).
+    upcoming_full: bool = False
 
     def __bool__(self) -> bool:
         return bool(self.free_now or self.hours)
@@ -260,7 +262,8 @@ def suggestions(
     remaining_quota = quota.quota_remaining(user, local_date) if user else None
     # Anonymous visitors see the public suggestions but never the quota note:
     # quota is per account, and there is no account to count.
-    exhausted = remaining_quota is not None and remaining_quota <= 0
+    upcoming_full = bool(user) and quota.upcoming_remaining(user, now) <= 0
+    exhausted = (remaining_quota is not None and remaining_quota <= 0) or upcoming_full
     return Suggestions(
         free_now=[]
         if exhausted
@@ -284,5 +287,6 @@ def suggestions(
         ),
         can_act=_viewer_can_act(user, now),
         quota_remaining=max(0, remaining_quota or 0),
-        quota_exhausted=exhausted,
+        quota_exhausted=exhausted and not upcoming_full,
+        upcoming_full=upcoming_full,
     )

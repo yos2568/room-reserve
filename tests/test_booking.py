@@ -37,15 +37,16 @@ def test_same_day_future_booking_succeeds(frozen, student, rooms):
     assert booking.slot_date == factories.bangkok(2026, 9, 14).date()
 
 
-def test_exactly_seven_days_ahead_succeeds(frozen, student, rooms):
-    target = day_offset(frozen, 7)
+def test_exactly_the_horizon_ahead_succeeds(frozen, student, rooms):
+    # The window is two days (D-38): Monday's frozen moment reaches Wednesday.
+    target = day_offset(frozen, 2)
     slot_start = slots.slot_start_for(target, 11)
     outcome = helpers.advance_booking(student, rooms[0], slot_start)
     assert outcome.ok, outcome.code
 
 
-def test_beyond_seven_days_fails(frozen, student, rooms):
-    target = day_offset(frozen, 8)
+def test_beyond_the_horizon_fails(frozen, student, rooms):
+    target = day_offset(frozen, 3)
     slot_start = slots.slot_start_for(target, 11)
     outcome = helpers.advance_booking(student, rooms[0], slot_start)
     assert not outcome.ok
@@ -74,7 +75,7 @@ def test_past_off_hour_is_reported_as_elapsed(frozen, student, rooms):
     assert outcome.code == Code.SLOT_ELAPSED
 
 
-def test_weekend_rejected(frozen, student, rooms):
+def test_weekend_rejected(frozen, wide_horizon, student, rooms):
     saturday = factories.bangkok(2026, 9, 19).date()
     assert saturday.weekday() == 5, "fixture date should be a Saturday"
     slot_start = slots.slot_start_for(saturday, 11)

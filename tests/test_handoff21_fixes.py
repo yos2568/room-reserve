@@ -1,14 +1,12 @@
 """Regressions for the defects found reviewing handoff21sep.md.
 
 Each test pins one fix: approval rooms refuse walk-ins, view-only and approval
-rooms are never suggested as walk-ins, the weekly-repeat cap is checked before
-any dates are built, seed_rooms keeps a staff room-profile edit, and a room move
-email names both rooms.
+rooms are never suggested as walk-ins, seed_rooms keeps a staff room-profile
+edit, and a room move email names both rooms. (The weekly-repeat cap test was
+retired with weekly repeat itself, D-38.)
 """
 
 from __future__ import annotations
-
-from unittest import mock
 
 import pytest
 
@@ -82,30 +80,6 @@ def test_refusal_alternatives_skip_a_view_only_room(frozen, student, rooms):
 
     assert view_only not in alternatives
     assert alternatives, "the other rooms are still offered"
-
-
-# --- The weekly-repeat cap holds before any work ------------------------------------
-
-
-def test_an_absurd_repeat_until_is_refused_without_building_dates(frozen, student, rooms):
-    slot_start = slots.slot_start_for(DAY, 15)
-    payload = booking_service.build_payload(
-        rooms[0], slot_start, {"title": "Series"}, repeat_weekly=True, repeat_until="9999-12-31"
-    )
-    with mock.patch.object(
-        booking_service, "_recurring_dates", side_effect=AssertionError("dates built before the cap")
-    ):
-        outcome = run_operation(
-            actor=student,
-            operation="advance_booking",
-            payload=payload,
-            body=lambda ctx: OperationOutcome.success(
-                **booking_service.create_advance_booking(ctx, room=rooms[0], slot_start=slot_start)
-            ),
-        )
-
-    assert not outcome.ok
-    assert outcome.code == Code.INVALID_INPUT
 
 
 # --- seed_rooms keeps what staff set on the room-admin screen -----------------------

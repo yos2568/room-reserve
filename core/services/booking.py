@@ -9,9 +9,7 @@ never silently turned into an attendance declaration.
 from __future__ import annotations
 
 import logging
-from datetime import date, timedelta
 
-from django.conf import settings
 from django.db.models import Q
 
 from core.models import (
@@ -51,9 +49,6 @@ def build_payload(
     room: Room,
     slot_start,
     details: dict | None = None,
-    *,
-    repeat_weekly: bool = False,
-    repeat_until: str | None = None,
 ) -> dict:
     """The idempotency payload for an advance booking.
 
@@ -65,8 +60,6 @@ def build_payload(
         "room_id": room.pk,
         "room_number": room.number,
         "slot": slots.encode_slot(slot_start),
-        "repeat_weekly": bool(repeat_weekly),
-        "repeat_until": (repeat_until or "").strip(),
         **normalise_details(details),
     }
 
@@ -105,7 +98,7 @@ def validate_advance_target(*, user, room: Room, slot_start, now, enforce_horizo
 
     assert_may_reserve_room(user, room, now)
     assert_slot_open(slot_start, room)
-    assert_quota_and_adjacency(user, slot_start, room=room)
+    assert_quota_and_adjacency(user, slot_start, room=room, now=now)
 
 
 def _created_kind(status) -> str:
@@ -115,9 +108,6 @@ def _created_kind(status) -> str:
 
 def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
     """Create the SCHEDULED booking. Called inside the protocol's savepoint."""
-    if ctx.payload.get("repeat_weekly"):
-        return create_recurring_booking(ctx, room=room, slot_start=slot_start)
-
     user = ctx.actor
     now = ctx.now
     validate_advance_target(user=user, room=room, slot_start=slot_start, now=now)
@@ -196,133 +186,6 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
         "status": booking.status,
         "deadline": deadline.isoformat(),
     }
-
-
-def _recurring_dates(first_date: date, repeat_until: date) -> list[date]:
-    dates = []
-    current = first_date
-    while current <= repeat_until:
-        dates.append(current)
-        current += timedelta(days=7)
-    return dates
-
-
-def _parse_repeat_until(raw: str, first_date: date) -> date:
-    try:
-        repeat_until = date.fromisoformat(raw)
-    except (TypeError, ValueError) as exc:
-        raise OperationRejected(Code.INVALID_INPUT) from exc
-    if repeat_until < first_date:
-        raise OperationRejected(Code.INVALID_INPUT)
-    # Arithmetic, not a list: the cap must hold before any work is done, because
-    # this runs under the booking-wide lock and ``repeat_until`` comes from a form.
-    if (repeat_until - first_date).days // 7 > settings.RECURRING_MAX_WEEKS:
-        raise OperationRejected(Code.INVALID_INPUT)
-    return repeat_until
-
-
-def create_recurring_booking(ctx, *, room: Room, slot_start) -> dict:
-    """Create a bounded weekly series atomically, with ordinary booking rows."""
-    from . import clock
-
-    user = ctx.actor
-    first_local = clock.local_time(slot_start)
-    repeat_until = _parse_repeat_until(ctx.payload.get("repeat_until", ""), first_local.date())
-    dates = _recurring_dates(first_local.date(), repeat_until)
-    if len(dates) < 2:
-        raise OperationRejected(Code.INVALID_INPUT)
-
-    details = normalise_details(ctx.payload)
-    status = Booking.Status.PENDING_APPROVAL if room.requires_approval else Booking.Status.SCHEDULED
-    policy = current_policy()
-    series = RecurringReservation.objects.create(
-        user=user,
-        room=room,
-        weekday=first_local.weekday(),
-        start_hour=first_local.hour,
-        start_date=dates[0],
-        end_date=dates[-1],
-        status=RecurringReservation.Status.ACTIVE,
-        **details,
-    )
-    booking_ids = []
-    for local_date in dates:
-        occurrence_start = slots.slot_start_for(local_date, first_local.hour)
-        validate_advance_target(
-            user=user,
-            room=room,
-            slot_start=occurrence_start,
-            now=ctx.now,
-            # The anchor is the slot the student chose and obeys the horizon like
-            # any booking; only the repeats beyond it are allowed past it.
-            enforce_horizon=local_date == dates[0],
-        )
-        if Booking.objects.filter(
-            room=room,
-            slot_start=occurrence_start,
-            status__in=list(BLOCKING_STATUSES),
-        ).exists():
-            raise OperationRejected(Code.SLOT_TAKEN)
-        occurrence = Booking.objects.create(
-            user=user,
-            room=room,
-            recurrence=series,
-            slot_start=occurrence_start,
-            slot_end=slots.slot_end_for(occurrence_start),
-            deadline=advance_deadline(occurrence_start, policy.checkin_grace_minutes),
-            status=status,
-            source=Booking.Source.ADVANCE,
-            policy_version=policy,
-            title=details["title"],
-            purpose=details["purpose"],
-            participant_names=details["participant_names"],
-        )
-        booking_ids.append(occurrence.pk)
-        ctx.audit(
-            action="booking.created",
-            entity_type="Booking",
-            entity_id=occurrence.pk,
-            actor=user,
-            changes={
-                "recurrence": series.pk,
-                "room": room.number,
-                "slot_start": occurrence_start,
-                "status": status,
-            },
-        )
-        enqueue(
-            kind=_created_kind(status),
-            recipient=user,
-            dedupe_key=f"{_created_kind(status)}:{occurrence.pk}",
-            payload={
-                "booking_id": occurrence.pk,
-                "room_number": room.number,
-                "room_label": str(room),
-                "slot_start": occurrence_start.isoformat(),
-                "slot_end": occurrence.slot_end.isoformat(),
-                "slot_start_local": slots.format_local(occurrence_start),
-                "deadline_local": slots.format_local(occurrence.deadline),
-                "source": occurrence.source,
-                "grace_minutes": policy.checkin_grace_minutes,
-                "title": occurrence.title,
-                "purpose": occurrence.purpose,
-                "participant_names": occurrence.participant_names,
-                "status": occurrence.status,
-            },
-        )
-    ctx.audit(
-        action="recurring_reservation.created",
-        entity_type="RecurringReservation",
-        entity_id=series.pk,
-        actor=user,
-        changes={
-            "room": room.number,
-            "occurrences": booking_ids,
-            "start_date": dates[0],
-            "end_date": dates[-1],
-        },
-    )
-    return {"series_id": series.pk, "booking_ids": booking_ids, "status": status}
 
 
 def update_booking_details(ctx, *, booking: Booking, details: dict | None = None) -> dict:

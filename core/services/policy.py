@@ -18,6 +18,7 @@ from core.models import PolicyVersion
 EDITABLE_POLICY_FIELDS = (
     "horizon_days",
     "daily_quota",
+    "max_upcoming_hours",
     "checkin_grace_minutes",
     "strike_window_days",
     "strike_threshold",
@@ -31,6 +32,7 @@ def snapshot_from_settings() -> dict[str, Any]:
     return {
         "horizon_days": settings.HORIZON_DAYS,
         "daily_quota": settings.DAILY_QUOTA,
+        "max_upcoming_hours": settings.MAX_UPCOMING_HOURS,
         "checkin_grace_minutes": settings.CHECKIN_GRACE_MINUTES,
         "strike_window_days": settings.STRIKE_WINDOW_DAYS,
         "strike_threshold": settings.STRIKE_THRESHOLD,
@@ -94,6 +96,7 @@ def _validate(snapshot: dict[str, Any], *, base: dict[str, Any]) -> dict[str, An
 
     positive_int("horizon_days", minimum=1, maximum=60)
     positive_int("daily_quota", minimum=1, maximum=10)
+    positive_int("max_upcoming_hours", minimum=1, maximum=20)
     positive_int("checkin_grace_minutes", minimum=1, maximum=59)
     positive_int("strike_window_days", minimum=1, maximum=365)
     positive_int("strike_threshold", minimum=1, maximum=10)

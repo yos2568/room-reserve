@@ -36,6 +36,17 @@ def frozen(db):
 
 
 @pytest.fixture
+def wide_horizon(settings):
+    """A 7-day booking window, for tests about later dates rather than the window.
+
+    The deployment window is 2 days (D-38), which puts the fixture week's weekend
+    and next Monday out of reach before the rule under test is even checked. The
+    policy is created lazily from settings, so this must run before any booking.
+    """
+    settings.HORIZON_DAYS = 7
+
+
+@pytest.fixture
 def rooms(db):
     return factories.make_rooms(9)
 

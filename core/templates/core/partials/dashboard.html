@@ -3,6 +3,11 @@
 <section class="mb-4 space-y-3" aria-labelledby="suggest-heading">
   <h2 id="suggest-heading" class="sr-only">{% trans "Suggestions" %}</h2>
 
+  {% if suggestions.upcoming_full %}
+    <p class="card border-amber-600 bg-amber-50 text-sm" role="status">
+      {% trans "You already hold the maximum number of upcoming hours. You can book another once one of them has finished." %}
+    </p>
+  {% endif %}
   {% if suggestions.quota_exhausted %}
     <p class="card border-amber-600 bg-amber-50 text-sm" role="status">
       {% trans "You have used your bookings for today, so nothing more can be reserved. Existing bookings are unaffected." %}

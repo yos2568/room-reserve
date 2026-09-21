@@ -2,14 +2,12 @@
 
 Each test pins one fix: the maintainer-only room-admin grant obeys the staff
 network allowlist, a details edit on a pending booking still emails the
-student, approving a moved booking still sends its confirmation, the weekly
-repeat's anchor obeys the booking horizon, and a malformed room id in a move is
-a 404 rather than a 500.
+student, approving a moved booking still sends its confirmation, and a malformed
+room id in a move is a 404 rather than a 500. (The weekly-repeat horizon fix was
+retired with weekly repeat itself, D-38.)
 """
 
 from __future__ import annotations
-
-from datetime import timedelta
 
 import pytest
 from django.test import Client, override_settings
@@ -18,7 +16,7 @@ from django.urls import reverse
 from core.models import Booking, Notification, RoomAdministrator, User
 from core.services import booking as booking_service
 from core.services import clock, notifications, slots
-from core.services.errors import Code, OperationOutcome
+from core.services.errors import OperationOutcome
 from core.services.protocol import run_operation
 from tests import factories
 
@@ -132,39 +130,7 @@ def test_approving_a_moved_booking_sends_a_new_confirmation(frozen, student, sta
     assert Notification.objects.filter(kind="booking_confirmation", recipient=student).count() == 2
 
 
-# --- 4. A weekly series may not start beyond the horizon ----------------------------
-
-
-def test_a_weekly_series_anchored_beyond_the_horizon_is_refused(frozen, student, rooms):
-    far = DAY + timedelta(days=60)
-    outcome = _advance(
-        student,
-        rooms[0],
-        slots.slot_start_for(far, 15),
-        repeat_weekly=True,
-        repeat_until=(far + timedelta(days=7)).isoformat(),
-    )
-
-    assert not outcome.ok
-    assert outcome.code == Code.OUTSIDE_HORIZON
-    assert not Booking.objects.filter(user=student).exists()
-
-
-def test_a_weekly_series_inside_the_horizon_still_repeats_past_it(frozen, student, rooms):
-    with override_settings(RECURRING_MAX_WEEKS=3):
-        outcome = _advance(
-            student,
-            rooms[0],
-            slots.slot_start_for(DAY + timedelta(days=1), 15),
-            repeat_weekly=True,
-            repeat_until=(DAY + timedelta(days=15)).isoformat(),
-        )
-
-    assert outcome.ok, outcome.code
-    assert Booking.objects.filter(user=student).count() == 3
-
-
-# --- 5. A malformed room id is a 404 ------------------------------------------------
+# --- 4. A malformed room id is a 404 ------------------------------------------------
 
 
 def test_a_move_with_a_non_numeric_room_id_is_a_404(frozen, student, rooms):

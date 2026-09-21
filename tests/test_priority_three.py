@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pytest
-from django.test import Client, override_settings
+from django.test import Client
 from django.urls import reverse
 from django.utils import translation
 
@@ -98,19 +100,19 @@ def test_room_approval_is_scoped_and_sends_confirmation_after_approval(frozen, s
     assert AuditEvent.objects.filter(action="booking.approved", entity_id=str(booking.pk)).exists()
 
 
-def test_recurring_reservations_materialise_and_cancel_future_occurrences(frozen, student, rooms):
-    with override_settings(RECURRING_MAX_WEEKS=2):
-        outcome = create_booking(
-            student,
-            rooms[0],
-            hour=11,
-            repeat_weekly=True,
-            repeat_until="2026-09-21",
-        )
-    assert outcome.ok, outcome.code
-    series = RecurringReservation.objects.get(pk=outcome.data["series_id"])
-    assert series.occurrences.count() == 2
-    assert series.occurrences.filter(status=Booking.Status.SCHEDULED).count() == 2
+def test_an_existing_weekly_series_can_still_be_cancelled(frozen, student, rooms):
+    # Creating series was removed with the 2-day window (D-38); a series that
+    # already exists must still be cancellable from My bookings.
+    series = RecurringReservation.objects.create(
+        user=student,
+        room=rooms[0],
+        weekday=DAY.weekday(),
+        start_hour=11,
+        start_date=DAY,
+        end_date=DAY + timedelta(days=7),
+    )
+    for day in (DAY, DAY + timedelta(days=7)):
+        factories.make_booking(student, rooms[0], day=day, hour=11, recurrence=series)
 
     client = Client()
     client.force_login(student)

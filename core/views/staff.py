@@ -1073,6 +1073,7 @@ def create_policy_version(request):
     snapshot = {
         "horizon_days": _int_or_none(request.POST.get("horizon_days")),
         "daily_quota": _int_or_none(request.POST.get("daily_quota")),
+        "max_upcoming_hours": _int_or_none(request.POST.get("max_upcoming_hours")),
         "checkin_grace_minutes": _int_or_none(request.POST.get("checkin_grace_minutes")),
         "strike_window_days": _int_or_none(request.POST.get("strike_window_days")),
         "strike_threshold": _int_or_none(request.POST.get("strike_threshold")),

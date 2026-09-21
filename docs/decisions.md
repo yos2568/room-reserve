@@ -387,3 +387,18 @@ display at each door (roughly 600–1,200 THB per room), a scanner at the floor
 entrance reading a per-booking QR, or restricting check-in to the building's
 network. `Booking.checkin_token` is no longer written; the column can be dropped in
 a later migration.
+
+**D-38 — Book two days ahead, hold at most four upcoming hours; no weekly repeat.**
+The department's rule: a student may reserve only two days ahead and hold at most
+four hours at once; when one of those hours finishes, they may book another. The
+horizon default drops from 7 to 2 days, and a new versioned policy value,
+`max_upcoming_hours` (default 4, staff-editable on the Policy screen), caps the
+bookings a student holds whose hour has not ended — `PENDING_APPROVAL`,
+`SCHEDULED` and `IN_USE`, walk-ins included. Cancelled and no-show hours never
+count; a finished hour stops counting the moment it ends. The existing limit of
+two bookings per day stays alongside it, so no one takes four hours of one day.
+Moving a booking to another room does not run the check, because it does not add
+an hour. Weekly repeat booking (up to four weeks ahead) contradicted a two-day
+window and was removed; series created earlier can still be cancelled. Existing
+databases keep their current policy version until staff create a new one; a
+fresh deployment starts with these defaults.

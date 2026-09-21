@@ -10,7 +10,6 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, timedelta
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse
@@ -26,7 +25,7 @@ from core.services import walkin as walkin_service
 from core.services.eligibility import active_suspension
 from core.services.errors import Code, OperationOutcome, message_for
 from core.services.policy import current_policy
-from core.services.quota import quota_remaining, quota_used
+from core.services.quota import quota_remaining, quota_used, upcoming_hours
 
 from ._helpers import (
     add_outcome_message,
@@ -81,13 +80,6 @@ def _booking_details(request) -> dict[str, str]:
     )
 
 
-def _booking_options(request) -> dict[str, object]:
-    return {
-        "repeat_weekly": request.POST.get("repeat_weekly") == "on",
-        "repeat_until": (request.POST.get("repeat_until") or "").strip(),
-    }
-
-
 @login_required
 @require_http_methods(["GET", "POST"])
 def book_slot(request, room_id: int, slot: str):
@@ -127,12 +119,10 @@ def book_slot(request, room_id: int, slot: str):
             "moment": moment,
             "quota_used": quota_used(request.user, clock.local_date(slot_start)),
             "quota_remaining": quota_remaining(request.user, clock.local_date(slot_start)),
+            "upcoming_used": upcoming_hours(request.user, now()),
             "operation_key": _new_key(),
             "outcome": outcome,
             "details": {"title": "", "purpose": "", "participant_names": ""},
-            "repeat_weekly": False,
-            "repeat_until": "",
-            "recurring_max_weeks": settings.RECURRING_MAX_WEEKS,
         },
         status=409 if outcome is not None and not outcome.ok else 200,
     )
@@ -145,8 +135,7 @@ def confirm_booking(request, room_id: int, slot: str):
     room = get_object_or_404(Room, pk=room_id)
     slot_start = _decode_slot_or_404(slot)
     details = _booking_details(request)
-    options = _booking_options(request)
-    payload = booking_service.build_payload(room, slot_start, details, **options)
+    payload = booking_service.build_payload(room, slot_start, details)
 
     outcome = run_view_operation(
         request=request,
@@ -202,12 +191,11 @@ def confirm_booking(request, room_id: int, slot: str):
             "moment": now(),
             "quota_used": quota_used(request.user, clock.local_date(slot_start)),
             "quota_remaining": quota_remaining(request.user, clock.local_date(slot_start)),
+            "upcoming_used": upcoming_hours(request.user, now()),
             "operation_key": _new_key(),
             "outcome": outcome,
             "alternatives": alternatives,
             "details": details,
-            **options,
-            "recurring_max_weeks": settings.RECURRING_MAX_WEEKS,
         },
         status=409,
     )

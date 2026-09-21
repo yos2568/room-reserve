@@ -1,4 +1,4 @@
-"""Daily quota and same/adjacent hour rules (V3 section 3.3).
+"""Daily quota, the upcoming-hours cap, and same/adjacent hour rules (V3 section 3.3, D-38).
 
     Status      quota charge   blocks same/adjacent hour
     SCHEDULED        1              yes
@@ -43,6 +43,19 @@ def blocking_bookings(user, slot_start):
     ).filter(Q(slot_start=slot_start) | Q(slot_start=slot_start - SLOT) | Q(slot_start=slot_start + SLOT))
 
 
+# Held hours for the upcoming cap (D-38): a booking counts until its hour ends.
+UPCOMING_STATUSES = ("PENDING_APPROVAL", "SCHEDULED", "IN_USE")
+
+
+def upcoming_hours(user, now) -> int:
+    """Hours the student holds that have not finished yet, walk-ins included."""
+    return Booking.objects.filter(user=user, status__in=UPCOMING_STATUSES, slot_end__gt=now).count()
+
+
+def upcoming_remaining(user, now) -> int:
+    return max(0, current_policy().max_upcoming_hours - upcoming_hours(user, now))
+
+
 def no_show_reclaim(user, room, slot_start) -> bool:
     """True when the user forfeited exactly this room and hour as a no-show."""
     return Booking.objects.filter(
@@ -53,10 +66,12 @@ def no_show_reclaim(user, room, slot_start) -> bool:
     ).exists()
 
 
-def assert_quota_and_adjacency(user, slot_start, *, room=None, local_date=None) -> None:
-    """Raise a clean rejection when quota or adjacency forbids a new booking."""
+def assert_quota_and_adjacency(user, slot_start, *, room=None, local_date=None, now=None) -> None:
+    """Raise a clean rejection when quota, the upcoming cap or adjacency forbids a new booking."""
     if local_date is None:
         local_date = clock.local_date(slot_start)
+    if now is None:
+        now = clock.now()
 
     policy = current_policy()
 
@@ -65,6 +80,9 @@ def assert_quota_and_adjacency(user, slot_start, *, room=None, local_date=None) 
 
     if quota_used(user, local_date) >= policy.daily_quota:
         raise OperationRejected(Code.QUOTA_EXCEEDED)
+
+    if upcoming_hours(user, now) >= policy.max_upcoming_hours:
+        raise OperationRejected(Code.UPCOMING_LIMIT, limit=policy.max_upcoming_hours)
 
     if room is not None and no_show_reclaim(user, room, slot_start):
         raise OperationRejected(Code.NO_SHOW_RECLAIM)

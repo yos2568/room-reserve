@@ -58,6 +58,13 @@ class PolicyVersion(models.Model):
         return int(self.snapshot.get("daily_quota", 2))
 
     @property
+    def max_upcoming_hours(self) -> int:
+        # Versions created before D-38 have no such key; they get the deployment default.
+        from django.conf import settings
+
+        return int(self.snapshot.get("max_upcoming_hours", settings.MAX_UPCOMING_HOURS))
+
+    @property
     def horizon_days(self) -> int:
         return int(self.snapshot.get("horizon_days", 7))
 

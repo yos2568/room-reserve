@@ -4160,3 +4160,17 @@ msgid ""
 "To check in, scan the QR code on the room door when you arrive. Checking in "
 "from this email is not possible."
 msgstr "เมื่อถึงห้อง ให้สแกนคิวอาร์โค้ดที่ประตูห้องเพื่อลงชื่อเข้าใช้ ไม่สามารถลงชื่อเข้าใช้จากอีเมลนี้ได้"
+
+#: core/services/errors.py core/templates/core/partials/dashboard.html
+msgid ""
+"You already hold the maximum number of upcoming hours. You can book another "
+"once one of them has finished."
+msgstr "คุณจองชั่วโมงที่ยังไม่ถึงไว้ครบจำนวนสูงสุดแล้ว จองเพิ่มได้เมื่อมีชั่วโมงใดชั่วโมงหนึ่งสิ้นสุดลง"
+
+#: core/templates/core/book_confirm.html
+msgid "Upcoming hours held"
+msgstr "ชั่วโมงที่จองไว้และยังไม่ถึง"
+
+#: core/templates/core/staff/policy.html
+msgid "Max upcoming hours"
+msgstr "จำนวนชั่วโมงที่จองล่วงหน้าได้สูงสุด"

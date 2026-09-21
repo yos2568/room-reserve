@@ -84,7 +84,7 @@ def test_weekly_timetable_is_monday_to_friday_0800_to_2000(frozen):
     assert calendar.day_hours(SATURDAY) is None, "weekends are closed by default"
 
 
-def test_weekend_booking_rejected_without_an_override(frozen, student, rooms):
+def test_weekend_booking_rejected_without_an_override(frozen, wide_horizon, student, rooms):
     outcome = helpers.advance_booking(student, rooms[0], slots.slot_start_for(SATURDAY, 11))
     assert not outcome.ok
     assert outcome.code == Code.CLOSED
@@ -93,7 +93,7 @@ def test_weekend_booking_rejected_without_an_override(frozen, student, rooms):
 # --- Date overrides ------------------------------------------------------------
 
 
-def test_opening_override_opens_a_normally_closed_saturday(frozen, student, staff_user, rooms):
+def test_opening_override_opens_a_normally_closed_saturday(frozen, wide_horizon, student, staff_user, rooms):
     assert set_override(staff_user, SATURDAY, is_open=True, open_hour=10, close_hour=16).ok
 
     inside = helpers.advance_booking(student, rooms[0], slots.slot_start_for(SATURDAY, 11))

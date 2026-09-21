@@ -22,6 +22,7 @@ class Code:
     # Slot and calendar
     SLOT_TAKEN = "slot_taken"
     ADJACENCY_CONFLICT = "adjacency_conflict"
+    UPCOMING_LIMIT = "upcoming_limit"
     QUOTA_EXCEEDED = "quota_exceeded"
     OUTSIDE_HORIZON = "outside_horizon"
     SLOT_IN_PAST = "slot_in_past"
@@ -75,6 +76,9 @@ _MESSAGES = {
     Code.SLOT_TAKEN: _("That room and hour has just been taken."),
     Code.ADJACENCY_CONFLICT: _("You already have a booking in this hour or an adjacent hour."),
     Code.QUOTA_EXCEEDED: _("You have reached your limit of bookings for that day."),
+    Code.UPCOMING_LIMIT: _(
+        "You already hold the maximum number of upcoming hours. You can book another once one of them has finished."
+    ),
     Code.OUTSIDE_HORIZON: _("That date is further ahead than booking allows."),
     Code.SLOT_IN_PAST: _("That time has already started. Use “Use now” if the room is free."),
     Code.SLOT_ELAPSED: _("That hour has already finished."),
@@ -136,6 +140,7 @@ _REJECTION_STATUS = {
     Code.SLOT_TAKEN: 409,
     Code.ADJACENCY_CONFLICT: 409,
     Code.QUOTA_EXCEEDED: 409,
+    Code.UPCOMING_LIMIT: 409,
     Code.ROOM_NOT_FOR_INSTRUMENT: 409,
     Code.NOT_FOUND: 404,
     Code.INVALID_INPUT: 400,

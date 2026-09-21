@@ -75,7 +75,7 @@ def use_now(ctx, *, room: Room) -> dict:
     if code is not None:
         raise OperationRejected(code, room_id=room.pk, booking_id=getattr(blocker, "pk", None))
 
-    assert_quota_and_adjacency(user, slot_start, room=room)
+    assert_quota_and_adjacency(user, slot_start, room=room, now=now)
 
     # Provenance: if the previous holder of this slot forfeited it, record the link.
     released_from = (

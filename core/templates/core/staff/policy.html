@@ -9,6 +9,7 @@
     <dl class="mt-2 grid gap-1 text-sm sm:grid-cols-2">
       <div><dt class="inline font-medium">{% trans "Horizon (days)" %}:</dt> <dd class="inline">{{ current.horizon_days }}</dd></div>
       <div><dt class="inline font-medium">{% trans "Daily quota" %}:</dt> <dd class="inline">{{ current.daily_quota }}</dd></div>
+      <div><dt class="inline font-medium">{% trans "Max upcoming hours" %}:</dt> <dd class="inline">{{ current.max_upcoming_hours }}</dd></div>
       <div><dt class="inline font-medium">{% trans "Check-in grace (minutes)" %}:</dt> <dd class="inline">{{ current.checkin_grace_minutes }}</dd></div>
       <div><dt class="inline font-medium">{% trans "Strike window (days)" %}:</dt> <dd class="inline">{{ current.strike_window_days }}</dd></div>
       <div><dt class="inline font-medium">{% trans "Strike threshold" %}:</dt> <dd class="inline">{{ current.strike_threshold }}</dd></div>
@@ -28,6 +29,7 @@
       <input type="hidden" name="operation_key" value="{{ operation_key }}">
       <div><label class="label" for="horizon_days">{% trans "Horizon (days)" %}</label><input class="field !w-28" id="horizon_days" name="horizon_days" type="number" min="1" max="60" value="{{ current.horizon_days }}"></div>
       <div><label class="label" for="daily_quota">{% trans "Daily quota" %}</label><input class="field !w-28" id="daily_quota" name="daily_quota" type="number" min="1" max="10" value="{{ current.daily_quota }}"></div>
+      <div><label class="label" for="max_upcoming_hours">{% trans "Max upcoming hours" %}</label><input class="field !w-28" id="max_upcoming_hours" name="max_upcoming_hours" type="number" min="1" max="20" value="{{ current.max_upcoming_hours }}"></div>
       <div><label class="label" for="checkin_grace_minutes">{% trans "Grace (min)" %}</label><input class="field !w-28" id="checkin_grace_minutes" name="checkin_grace_minutes" type="number" min="1" max="59" value="{{ current.checkin_grace_minutes }}"></div>
       <div><label class="label" for="strike_window_days">{% trans "Strike window (days)" %}</label><input class="field !w-28" id="strike_window_days" name="strike_window_days" type="number" min="1" max="365" value="{{ current.strike_window_days }}"></div>
       <div><label class="label" for="strike_threshold">{% trans "Threshold" %}</label><input class="field !w-28" id="strike_threshold" name="strike_threshold" type="number" min="1" max="10" value="{{ current.strike_threshold }}"></div>

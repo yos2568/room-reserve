@@ -18,8 +18,10 @@ cannot retroactively invalidate a check-in that already happened.
 | Slot length | 60 minutes, on the hour | not editable (`SLOT_MINUTES`) |
 | Opening hours | Monday–Friday 08:00–20:00 (last start 19:00) | not editable |
 | Weekend | closed | not editable |
-| Booking horizon | 7 days ahead, including today | `POLICY_HORIZON_DAYS` |
+| Booking horizon | 2 days ahead, including today (D-38) | `POLICY_HORIZON_DAYS` |
 | Daily quota | 2 bookings per person per day, across all rooms | `POLICY_DAILY_QUOTA` |
+| Upcoming hours held | at most 4 hours not yet finished, walk-ins included; one frees up when its hour ends (D-38) | `POLICY_MAX_UPCOMING_HOURS` |
+| Weekly repeat | not offered; students book each week themselves (D-38) | — |
 | Check-in window | closes exactly 15 minutes after the hour starts | `POLICY_CHECKIN_GRACE_MINUTES` |
 | Strike window | 30 days | `POLICY_STRIKE_WINDOW_DAYS` |
 | Strike threshold | 3 unconsumed strikes | `POLICY_STRIKE_THRESHOLD` |

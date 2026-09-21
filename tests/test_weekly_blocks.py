@@ -60,7 +60,7 @@ def test_free_hours_of_the_same_day_stay_bookable(frozen, student, rooms):
     assert after.ok, after.code
 
 
-def test_block_recurs_every_matching_weekday(frozen, student, rooms):
+def test_block_recurs_every_matching_weekday(frozen, wide_horizon, student, rooms):
     factories.make_weekly_block(rooms[0], weekday=0, start_hour=10, end_hour=12)
 
     # This Monday is partly past (frozen at 10:40); the next one is refused too.
@@ -70,7 +70,7 @@ def test_block_recurs_every_matching_weekday(frozen, student, rooms):
     assert outcome.code == Code.CLASS_IN_SESSION
 
 
-def test_validity_window_bounds_the_block(frozen, student, rooms):
+def test_validity_window_bounds_the_block(frozen, wide_horizon, student, rooms):
     # Both rooms carry the same Friday class; on rooms[0] the semester window has
     # already ended, on rooms[1] it never ends. Friday 2026-09-18 is the only
     # Friday inside the 7-day horizon, so both bookings target the same hour.

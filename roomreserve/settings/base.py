@@ -159,8 +159,10 @@ OUTBOX_ENABLED = env_bool("OUTBOX_ENABLED", True)
 # These are application policy choices, NOT requirements of the source PDF
 # (V3 section 1). They are snapshotted into a PolicyVersion row on first use and
 # are editable through staff screens, except the fixed hourly slot geometry.
-HORIZON_DAYS = env_int("POLICY_HORIZON_DAYS", 7)
-RECURRING_MAX_WEEKS = env_int("RECURRING_MAX_WEEKS", 4)
+# Students book at most two days ahead and hold at most four upcoming or
+# in-progress hours at once; an hour frees up when it finishes (D-38).
+HORIZON_DAYS = env_int("POLICY_HORIZON_DAYS", 2)
+MAX_UPCOMING_HOURS = env_int("POLICY_MAX_UPCOMING_HOURS", 4)
 DAILY_QUOTA = env_int("POLICY_DAILY_QUOTA", 2)
 CHECKIN_GRACE_MINUTES = env_int("POLICY_CHECKIN_GRACE_MINUTES", 15)
 STRIKE_WINDOW_DAYS = env_int("POLICY_STRIKE_WINDOW_DAYS", 30)
