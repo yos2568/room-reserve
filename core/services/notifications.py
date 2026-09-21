@@ -39,8 +39,10 @@ KIND_NO_SHOW = "no_show"
 KIND_SANCTION_APPLIED = "sanction_applied"
 KIND_SANCTION_LIFTED = "sanction_lifted"
 KIND_ELIGIBILITY_DECISION = "eligibility_decision"
+KIND_COMPLAINT = "complaint"
 
 _SUBJECTS = {
+    KIND_COMPLAINT: "แจ้งข้อร้องเรียน / Room Reserve complaint",
     KIND_EMAIL_VERIFICATION: _("Confirm your Room Reserve email address"),
     KIND_INVITATION: _("Your Room Reserve invitation"),
     KIND_PASSWORD_RESET: _("Reset your Room Reserve password"),
@@ -227,7 +229,8 @@ def deliver(notification: Notification, now) -> None:
         subject=subject,
         body=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[recipient.email],
+        to=[notification.recipient_email or recipient.email],
+        reply_to=[context["reply_email"]] if notification.kind == KIND_COMPLAINT else None,
     )
     if html:
         message.attach_alternative(html, "text/html")

@@ -48,7 +48,7 @@
             <p>{{ incident.starts_at|date:"j F Y H:i" }}–{{ incident.ends_at|date:"j F Y H:i" }} · {{ incident.reason }}</p>
             <p class="text-slate-700">
               {% trans "Rooms" %}:
-              {% for room in incident.rooms.all %}{{ room }}{% if not forloop.last %}, {% endfor %}{% empty %}{% trans "all rooms" %}{% endfor %}
+              {% for room in incident.rooms.all %}{{ room }}{% if not forloop.last %}, {% endif %}{% empty %}{% trans "all rooms" %}{% endfor %}
             </p>
             {% if not incident.resolved_at %}
               <form method="post" action="{% url 'core:staff_void_incident' pk=incident.pk %}" class="mt-1 flex flex-wrap items-center gap-1">

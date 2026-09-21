@@ -334,6 +334,25 @@ verified — and read-only: `TEACHER_READ_ONLY` is stated in
 button hides without per-view special cases. Widening a teacher's permissions
 later is one gate to move, deliberately.
 
+**D-35 — Room 10 is an active general practice room.**
+The updated department floor-plan artwork supplied on 2026-09-21 labels a tenth
+numbered stall. The operational room set is therefore ten numbered stalls (1–10)
+plus rooms 303 and 304: twelve active rooms in total. Room 10 uses the same
+08:00–20:00 Monday–Friday opening schedule and general reservation rules as rooms
+1–9. It is included by `ROOM_COUNT=10`; its label is explicit only to normalise
+the historical row previously named "ห้องซ้อมใหญ่". This supersedes the D-28
+sentence that described placeholder room 10 as deactivated; the historical row is
+reactivated rather than deleted when `seed_rooms` is run.
+
+**D-36 — Room 301 is a timetable-only teaching room; rooms 303 and 304 require approval.**
+The supplied first-semester report identifies A301 as the main teaching room with
+recurring classes across Monday–Friday. Its approximate empty hours are shown in
+the timetable and room board for planning, but room 301 does not accept advance
+reservations or walk-ins. Rooms 303 and 304 remain visible to students; a request
+for either room is stored as pending until an assigned room administrator or
+operational staff approves it. The server enforces both rules, including direct
+requests that bypass the interface.
+
 ---
 
 ## Rejected alternatives

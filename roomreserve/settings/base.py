@@ -170,36 +170,92 @@ REMINDER_LEAD_MINUTES = env_int("POLICY_REMINDER_LEAD_MINUTES", 30)
 SLOT_MINUTES = 60
 OPENING_SLOT_START_HOUR = 8
 LAST_SLOT_START_HOUR = 19
-# The practice rooms are the nine numbered stalls on floor 3 of the Arts
-# Building (ห้อง 1–9 on the department's floor plan). The two larger teaching
-# rooms at the back of the floor join them via ROOM_OVERRIDES, because they
-# carry building room numbers rather than stall numbers.
-ROOM_COUNT = 9
+# The practice rooms are the ten numbered stalls on floor 3 of the Arts
+# Building (ห้อง 1–10 on the department's floor plan). Room 301 is the main
+# teaching room, and rooms 303/304 are the two larger rooms at the back. They
+# join the numbered stalls via ROOM_OVERRIDES because they carry building room
+# numbers rather than stall numbers.
+ROOM_COUNT = 10
 
 # Per-room configuration applied by `manage.py seed_rooms`, keyed by room number.
-# V3 says "nine rooms"; the department added rooms 303 and 304 from the floor
-# plan, which is recorded as a deviation from V3 in docs/decisions.md (D-28).
-# Room 303 is kept for piano and percussion students to *reserve* — anyone may
-# walk in once an hour has started and the room is still free. Room 304 is a
-# general practice room with the same weekday opening hours as the other rooms.
+# V3 says "nine rooms"; the department's current floor plan contains ten
+# numbered stalls plus rooms 303 and 304. The amendment is recorded in
+# docs/decisions.md and docs/acceptance-matrix.md.
+# Room 10's label is explicit so an older historical row named "ห้องซ้อมใหญ่"
+# is normalised to the numbered room shown by the current floor plan. It remains
+# a general room with the default audience and schedule.
+# Room 301 is a general room outside the recurring teaching blocks below. Room
+# 303 is kept for piano and percussion students to *reserve* — anyone may walk
+# in once an hour has started and the room is still free. Room 304 is a general
+# practice room with the same weekday opening hours as the other rooms.
 ROOM_OVERRIDES = {
+    "301": {
+        "label": "ห้อง 301 (ห้องเรียนหลัก)",
+        "position": 0,
+        "availability_only": True,
+    },
+    "10": {
+        "label": "ห้องซ้อม 10",
+    },
     "303": {
         "label": "ห้อง 303",
         "position": 10,
         "reservation_scope": "LISTED",
         "categories": ("PIANO", "PERCUSSION"),
+        "requires_approval": True,
     },
     "304": {
         "label": "ห้อง 304 (ห้องบรรยาย 1)",
         "position": 11,
+        "requires_approval": True,
     },
 }
 
-# Recurring weekly teaching blocks for room 304, read from the supplied A304
-# timetable. Blank hours remain bookable; only the class spans are blocked.
-# Weekday is Monday=0 and end_hour is exclusive. Room 304 still follows the
+# Recurring weekly teaching blocks for rooms 301 and 304, read from the supplied
+# first-semester timetable report. The source gives approximate hour ranges from
+# the original 08:00–16:00 grid, so only those reported class spans are blocked;
+# blank hours remain bookable. Weekday is Monday=0 and end_hour is exclusive.
+# Room 304 still follows the
 # standard Monday–Friday 08:00–20:00 opening hours outside these class spans.
 ROOM_WEEKLY_BLOCKS = {
+    "301": [
+        {
+            "weekday": 0,
+            "start_hour": 13,
+            "end_hour": 15,
+            "reason": "PIANO III, IV · ผศ.ดร.รามสูร",
+        },
+        {
+            "weekday": 1,
+            "start_hour": 8,
+            "end_hour": 10,
+            "reason": "THEO MUS E TRG I",
+        },
+        {
+            "weekday": 1,
+            "start_hour": 12,
+            "end_hour": 15,
+            "reason": "ENSEMBLE",
+        },
+        {
+            "weekday": 2,
+            "start_hour": 13,
+            "end_hour": 15,
+            "reason": "PIANO I · ผศ.ดร.รามสูร",
+        },
+        {
+            "weekday": 3,
+            "start_hour": 13,
+            "end_hour": 15,
+            "reason": "CHORUS / THEORY OF 20TH CENTURY MUSIC",
+        },
+        {
+            "weekday": 4,
+            "start_hour": 13,
+            "end_hour": 15,
+            "reason": "ORCHESTRATION I",
+        },
+    ],
     "304": [
         {
             "weekday": 0,
@@ -237,6 +293,7 @@ SITE_BASE_URL = env_str("SITE_BASE_URL", "http://localhost:8000")
 SUPPORT_CONTACT_NAME = env_str("SUPPORT_CONTACT_NAME", "คุณสิตานันท์ (พี่ดิว)")
 SUPPORT_CONTACT_PHONE = env_str("SUPPORT_CONTACT_PHONE", "02-218-4604")
 SUPPORT_CONTACT_EMAIL = env_str("SUPPORT_CONTACT_EMAIL", "Sitanun.S@chula.ac.th")
+COMPLAINT_RECIPIENT_EMAIL = env_str("COMPLAINT_RECIPIENT_EMAIL", "Sitanun.S@chula.ac.th")
 
 # --- Outbox delivery ----------------------------------------------------------
 OUTBOX_MAX_ATTEMPTS = env_int("OUTBOX_MAX_ATTEMPTS", 6)

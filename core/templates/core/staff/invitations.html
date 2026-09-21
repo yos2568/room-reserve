@@ -15,15 +15,11 @@
   <section class="card">
     <h2 class="text-base font-semibold">{% trans "Invite an account" %}</h2>
     <p class="mt-1 text-xs text-slate-700">
-      {% blocktrans %}Staff identities are supplied by the department owner. This cannot grant superuser, and re-inviting never resets an existing password.{% endblocktrans %}
+      {% blocktrans %}Faculty and staff identities are supplied by the department owner. They use their email instead of a student ID; this cannot grant technical superuser access, and re-inviting never resets an existing password.{% endblocktrans %}
     </p>
     <form method="post" action="{% url 'core:staff_create_invitation' %}" class="mt-2 flex flex-wrap items-end gap-2">
       {% csrf_token %}
       <input type="hidden" name="operation_key" value="{{ operation_key }}">
-      <div>
-        <label class="label" for="institutional_id">{% trans "Institutional ID" %}</label>
-        <input class="field" id="institutional_id" name="institutional_id" required>
-      </div>
       <div>
         <label class="label" for="email">{% trans "Email" %}</label>
         <input class="field" id="email" name="email" type="email" required>

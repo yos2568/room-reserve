@@ -3,76 +3,113 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f6f5f1">
+  <meta name="theme-color" content="#153964">
   <title>{% block title %}{% trans "Room Reserve" %}{% endblock %} · {% trans "Practice room booking" %}</title>
   <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
   {# htmx is vendored locally: the deployment must not depend on a CDN. #}
   <script src="{% static 'js/htmx.min.js' %}" defer></script>
   {% block head_extra %}{% endblock %}
 </head>
-<body class="min-h-screen bg-paper text-slate-900 antialiased">
+<body class="site-body min-h-screen bg-paper text-slate-900 antialiased">
   <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:m-2 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:shadow">
     {% trans "Skip to main content" %}
   </a>
 
-  {# Sticky + state-aware: scroll-state queries add depth while stuck (D-32). #}
+  {% comment %}
+    Sticky + state-aware: scroll-state queries add depth while stuck (D-32).
+    Compact wordmark + two primary links stay visible at every width; every
+    other destination (Week view, Lobby status, Rules, Help, Privacy, Staff,
+    Room admin, language, sign out) lives in the account disclosure so no
+    link is ever removed — only regrouped (2026-09-20 reference restyle).
+  {% endcomment %}
   <header class="site-header">
     <div class="site-header-inner">
-      <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2.5 sm:px-6">
-        <a href="{% url 'core:home' %}" class="flex items-center gap-2.5 text-base font-semibold tracking-tight text-brand-700">
-          <img src="{% static 'img/faa-logo.png' %}" alt="{% trans 'Faculty of Fine and Applied Arts, Chulalongkorn University' %}" class="h-10 w-auto">
+      <div class="site-header-layout mx-auto flex max-w-7xl items-center gap-x-3 px-3 py-2.5 sm:px-6">
+        <a href="{% url 'core:home' %}" class="site-brand flex shrink-0 items-center gap-2 text-base font-semibold tracking-tight" aria-label="{% trans 'Room Reserve home' %}">
+          <span class="site-brand-mark" aria-hidden="true">FAA</span>
+          <span class="site-brand-divider" aria-hidden="true"></span>
           <span>{% trans "Room Reserve" %}</span>
         </a>
-        <nav aria-label="{% trans 'Main navigation' %}" class="flex flex-wrap items-center gap-x-1 gap-y-1 text-sm">
+
+        <nav aria-label="{% trans 'Main navigation' %}" class="site-nav flex min-w-0 flex-1 items-center gap-x-1 text-sm">
           {% url 'core:home' as nav_home %}
-          <a class="nav-link min-h-touch" {% if request.path == nav_home %}aria-current="page"{% endif %} href="{{ nav_home }}">{% trans "Availability" %}</a>
-          {% url 'core:week' as nav_week %}
-          <a class="nav-link min-h-touch" {% if request.path == nav_week %}aria-current="page"{% endif %} href="{{ nav_week }}">{% trans "Week view" %}</a>
-          {% url 'core:lobby' as nav_lobby %}
-          <a class="nav-link min-h-touch" {% if request.path == nav_lobby %}aria-current="page"{% endif %} href="{{ nav_lobby }}">{% trans "Lobby status" %}</a>
+          <a class="nav-link min-h-touch" {% if request.path == nav_home %}aria-current="page"{% endif %} href="{{ nav_home }}">{% trans "Rooms" %}</a>
+          {% url 'core:room_board' as nav_room_board %}
+          <a class="nav-link min-h-touch" {% if request.path == nav_room_board %}aria-current="page"{% endif %} href="{{ nav_room_board }}">{% trans "Choose a room" %}</a>
           {% if user.is_authenticated %}
             {% url 'core:my_bookings' as nav_bookings %}
             <a class="nav-link min-h-touch" {% if request.path == nav_bookings %}aria-current="page"{% endif %} href="{{ nav_bookings }}">{% trans "My bookings" %}</a>
-            {% if user.is_operational_staff or user.is_superuser %}
-              {% url 'core:staff_today' as nav_staff %}
-              <a class="nav-link min-h-touch" {% if request.path == nav_staff %}aria-current="page"{% endif %} href="{{ nav_staff }}">{% trans "Staff" %}</a>
-            {% endif %}
-            {% if user.is_room_admin %}
-              {% url 'core:room_admin' as nav_room_admin %}
-              <a class="nav-link min-h-touch" {% if request.path == nav_room_admin %}aria-current="page"{% endif %} href="{{ nav_room_admin }}">{% trans "Room admin" %}</a>
-            {% endif %}
           {% endif %}
-          {% url 'core:rules' as nav_rules %}
-          <a class="nav-link min-h-touch" {% if request.path == nav_rules %}aria-current="page"{% endif %} href="{{ nav_rules }}">{% trans "Rules" %}</a>
-          {% url 'core:help' as nav_help %}
-          <a class="nav-link min-h-touch" {% if request.path == nav_help %}aria-current="page"{% endif %} href="{{ nav_help }}">{% trans "Help" %}</a>
-          {% url 'core:privacy' as nav_privacy %}
-          <a class="nav-link min-h-touch" {% if request.path == nav_privacy %}aria-current="page"{% endif %} href="{{ nav_privacy }}">{% trans "Privacy" %}</a>
         </nav>
 
-        <div class="ms-auto flex flex-wrap items-center gap-2 text-sm">
-          {# Language toggle: a plain GET form, so it works without JavaScript. #}
-          <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <label class="sr-only" for="language-select">{% trans "Language" %}</label>
-            <select id="language-select" name="language" class="rounded-full border border-slate-300 bg-white/70 px-2.5 py-1">
-              <option value="th" {% if LANGUAGE_CODE == 'th' %}selected{% endif %}>ไทย</option>
-              <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
-            </select>
-            <button type="submit" class="btn-secondary !min-h-touch !rounded-full !px-3 !py-1 text-xs">{% trans "Switch" %}</button>
-          </form>
-
-          {% if user.is_authenticated %}
-            <span class="hidden text-slate-600 sm:inline">{{ user.display_name }}</span>
-            <form method="post" action="{% url 'core:logout' %}">
-              {% csrf_token %}
-              <button type="submit" class="btn-secondary !min-h-touch !rounded-full !px-3 !py-1 text-xs">{% trans "Sign out" %}</button>
-            </form>
-          {% else %}
-            <a class="btn-secondary !min-h-touch !rounded-full !px-3 !py-1 text-xs" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
-            <a class="btn-primary !min-h-touch !rounded-full !px-3 !py-1 text-xs" href="{% url 'core:register' %}">{% trans "Register" %}</a>
+        <div class="site-tools ms-auto flex shrink-0 items-center gap-2 text-sm">
+          {% if not user.is_authenticated %}
+            <a class="btn-secondary !hidden !min-h-touch !rounded-full !px-3 !py-1 text-xs sm:!inline-flex" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
+            <a class="btn-primary !hidden !min-h-touch !rounded-full !px-3 !py-1 text-xs sm:!inline-flex" href="{% url 'core:register' %}">{% trans "Register" %}</a>
           {% endif %}
+
+          {# Native disclosure: every remaining link, keyboard- and screen-reader-operable with no JavaScript. #}
+          <details class="account-menu">
+            <summary class="account-menu-toggle" aria-label="{% trans 'Menu and account' %}">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"></circle><path d="M4.5 20c1.4-3.6 4.4-5.6 7.5-5.6s6.1 2 7.5 5.6"></path></svg>
+            </summary>
+            <div class="account-menu-panel">
+              {% if user.is_authenticated %}
+                <p class="account-menu-name">{{ user.display_name }}</p>
+              {% endif %}
+              <div class="account-menu-links">
+                {% url 'core:room_board' as nav_room_board_menu %}
+                <a class="account-menu-link" {% if request.path == nav_room_board_menu %}aria-current="page"{% endif %} href="{{ nav_room_board_menu }}">{% trans "Choose a room" %}</a>
+                {% url 'core:week' as nav_week %}
+                <a class="account-menu-link" {% if request.path == nav_week %}aria-current="page"{% endif %} href="{{ nav_week }}">{% trans "Week view" %}</a>
+                {% url 'core:lobby' as nav_lobby %}
+                <a class="account-menu-link" {% if request.path == nav_lobby %}aria-current="page"{% endif %} href="{{ nav_lobby }}">{% trans "Lobby status" %}</a>
+                {% if user.is_authenticated %}
+                  {% if user.is_operational_staff or user.is_superuser %}
+                    {% url 'core:staff_today' as nav_staff %}
+                    <a class="account-menu-link" {% if request.path == nav_staff %}aria-current="page"{% endif %} href="{{ nav_staff }}">{% trans "Staff" %}</a>
+                  {% endif %}
+                  {% if user.is_room_admin %}
+                    {% url 'core:room_admin' as nav_room_admin %}
+                    <a class="account-menu-link" {% if request.path == nav_room_admin %}aria-current="page"{% endif %} href="{{ nav_room_admin }}">{% trans "Room admin" %}</a>
+                  {% endif %}
+                {% endif %}
+                {% url 'core:rules' as nav_rules %}
+                <a class="account-menu-link" {% if request.path == nav_rules %}aria-current="page"{% endif %} href="{{ nav_rules }}">{% trans "Rules" %}</a>
+                {% url 'core:help' as nav_help %}
+                <a class="account-menu-link" {% if request.path == nav_help %}aria-current="page"{% endif %} href="{{ nav_help }}">{% trans "Help" %}</a>
+                {% url 'core:privacy' as nav_privacy %}
+                <a class="account-menu-link" href="{% url 'core:complaint' %}">แจ้งข้อร้องเรียน / Report a concern</a>
+                <a class="account-menu-link" {% if request.path == nav_privacy %}aria-current="page"{% endif %} href="{{ nav_privacy }}">{% trans "Privacy" %}</a>
+              </div>
+
+              <div class="account-menu-divider" role="separator"></div>
+
+              {# Language toggle: a plain GET-following POST form, so it works without JavaScript. #}
+              <form action="{% url 'set_language' %}" method="post" class="account-menu-lang">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <label class="sr-only" for="language-select">{% trans "Language" %}</label>
+                <select id="language-select" name="language" class="site-language rounded-full border px-2.5 py-1">
+                  <option value="th" {% if LANGUAGE_CODE == 'th' %}selected{% endif %}>ไทย</option>
+                  <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+                </select>
+                <button type="submit" class="btn-secondary !min-h-touch !rounded-full !px-3 !py-1 text-xs">{% trans "Switch" %}</button>
+              </form>
+
+              {% if user.is_authenticated %}
+                <form method="post" action="{% url 'core:logout' %}" class="mt-2">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-secondary !min-h-touch w-full !rounded-full !px-3 !py-1 text-xs">{% trans "Sign out" %}</button>
+                </form>
+              {% else %}
+                <div class="mt-2 flex gap-2 sm:hidden">
+                  <a class="btn-secondary !min-h-touch flex-1 !rounded-full !px-3 !py-1 text-center text-xs" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
+                  <a class="btn-primary !min-h-touch flex-1 !rounded-full !px-3 !py-1 text-center text-xs" href="{% url 'core:register' %}">{% trans "Register" %}</a>
+                </div>
+              {% endif %}
+            </div>
+          </details>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-"""Write nine printable QR posters to a directory.
+"""Write one printable QR poster per active room to a directory.
 
 Produces a self-contained HTML file (one A4 page per room) plus the raw PNG for
 each room, so the sheet can be printed from a browser without the app running.

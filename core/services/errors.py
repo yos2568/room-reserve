@@ -50,6 +50,8 @@ class Code:
     TERMINAL_STATUS = "terminal_status"
     CANCEL_AFTER_START = "cancel_after_start"
     RESERVATION_HELD = "reservation_held"
+    SAME_ROOM = "same_room"
+    RECURRING_OCCURRENCE = "recurring_occurrence"
 
     # Identity
     DUPLICATE_ACCOUNT = "duplicate_account"
@@ -104,6 +106,10 @@ _MESSAGES = {
     Code.TERMINAL_STATUS: _("That booking has already finished and cannot be changed."),
     Code.CANCEL_AFTER_START: _("A booking cannot be cancelled after it has started."),
     Code.RESERVATION_HELD: _("Another student still holds this room for the current hour."),
+    Code.SAME_ROOM: _("That booking is already in this room."),
+    Code.RECURRING_OCCURRENCE: _(
+        "This booking belongs to a weekly series. Cancel the series to change rooms."
+    ),
     Code.DUPLICATE_ACCOUNT: _("Those details are already registered. Please sign in instead."),
     Code.INVALID_TOKEN: _("That link is not valid."),
     Code.TOKEN_EXPIRED: _("That link has expired. Request a new one."),

@@ -48,6 +48,21 @@ def test_staff_can_invite_a_teacher(frozen, staff_user):
     assert event.changes["teacher"] is True
 
 
+def test_faculty_invitation_can_use_email_without_student_id(frozen, staff_user):
+    user, _, _ = identity_service.invite_account(
+        institutional_id="",
+        email="faculty.without.id@chula.ac.th",
+        name="อาจารย์ไม่มีรหัสนิสิต",
+        actor=staff_user,
+        staff=False,
+        teacher=True,
+    )
+
+    assert user.username == user.email == "faculty.without.id@chula.ac.th"
+    assert user.is_teacher
+    assert user.declared_category == ""
+
+
 def test_regular_staff_invitation_is_unchanged(frozen, staff_user):
     user, _, _ = identity_service.invite_account(
         institutional_id="669980002",

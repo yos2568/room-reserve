@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --faa-ink: #10264a;
+  --faa-muted: #566a86;
+  --faa-paper: #edf5fd;
+  --faa-surface: #ffffff;
+  --faa-line: #d7e3ef;
+  --faa-brand: #c31749;
+  --faa-brand-dark: #9b1238;
+  --faa-brand-soft: #fff0f5;
+  --faa-navy: #153964;
+  --faa-focus: #2563eb;
+}
+
 /* --- Modern platform foundations (D-32, per GoogleChrome/modern-web-guidance) ---
 
    Every effect below is progressive: browsers without the feature render the
@@ -29,9 +42,36 @@
   }
 
   .site-header-inner {
-    border-bottom: 1px solid #e2e8f0;
-    background: rgb(255 255 255 / 0.82);
-    transition: box-shadow 0.3s ease, background-color 0.3s ease;
+    border-bottom: 1px solid rgb(255 255 255 / 0.13);
+    background: var(--faa-navy);
+    transition: box-shadow 0.25s ease, background-color 0.25s ease;
+  }
+
+  .site-header-layout {
+    min-height: 3.5rem;
+  }
+
+  .site-brand {
+    flex-shrink: 0;
+    color: #ffffff;
+  }
+
+  .site-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+
+  .site-brand-divider {
+    width: 1px;
+    height: 1.3rem;
+    background: rgb(255 255 255 / 0.38);
   }
 
   @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -43,23 +83,143 @@
 
   @container site-header scroll-state(stuck: top) {
     .site-header-inner {
-      background: rgb(255 255 255 / 0.94);
-      box-shadow: 0 4px 20px rgb(15 23 42 / 0.08);
+      background: rgb(21 57 100 / 0.97);
+      box-shadow: 0 6px 24px rgb(6 31 63 / 0.18);
     }
   }
 
   /* --- Navigation pills ------------------------------------------------------ */
   .nav-link {
-    @apply inline-flex items-center rounded-full px-3 py-1.5 font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900;
+    @apply inline-flex items-center rounded-md px-3 py-1.5 font-medium text-white/80 transition-colors duration-150 hover:bg-white/10 hover:text-white;
+  }
+
+  .site-nav {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    white-space: nowrap;
+  }
+
+  .site-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .nav-link[aria-current="page"] {
+    @apply bg-white/10 text-white shadow-[inset_0_-2px_0_#ffffff];
+  }
+
+  /* Direct children only: the navy/glass look is for controls sitting right on
+     the header bar. Nested inside .account-menu-panel (a white surface), the
+     same classes must fall back to their normal light-panel appearance. */
+  .site-tools > .btn-secondary {
+    @apply border-white/30 bg-white/10 text-white shadow-none hover:border-white/50 hover:bg-white/20;
+  }
+
+  .site-tools > .btn-primary {
+    @apply shadow-none;
+  }
+
+  .site-language {
+    @apply border-white/30 bg-white/10 text-white;
+  }
+
+  .account-menu-panel .site-language {
+    @apply border-slate-300 bg-white text-slate-900;
+  }
+
+  /* --- Account / "more" disclosure — the single avatar-style control that
+     holds every secondary destination (native <details>, no JS required). --- */
+  .account-menu {
+    position: relative;
+  }
+
+  .account-menu-toggle {
+    display: inline-flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    min-height: 2.25rem;
+    min-width: 2.25rem;
+    cursor: pointer;
+    list-style: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgb(255 255 255 / 0.32);
+    background: rgb(255 255 255 / 0.12);
+    color: #ffffff;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .account-menu-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .account-menu-toggle::after {
+    display: none;
+  }
+
+  .account-menu-toggle:hover {
+    background: rgb(255 255 255 / 0.2);
+    border-color: rgb(255 255 255 / 0.5);
+  }
+
+  .account-menu[open] .account-menu-toggle {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: var(--faa-navy);
+  }
+
+  .account-menu-panel {
+    position: absolute;
+    inset-inline-end: 0;
+    top: calc(100% + 0.5rem);
+    z-index: 50;
+    width: 16rem;
+    max-width: calc(100vw - 1.5rem);
+    border-radius: 0.9rem;
+    border: 1px solid var(--faa-line);
+    background: #ffffff;
+    padding: 0.75rem;
+    color: var(--faa-ink);
+    box-shadow: 0 18px 38px rgb(16 38 74 / 0.22);
+  }
+
+  .account-menu-name {
+    padding: 0.1rem 0.4rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--faa-navy);
+  }
+
+  .account-menu-links {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .account-menu-link {
+    @apply min-h-touch rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-950;
+    display: flex;
+    align-items: center;
+  }
+
+  .account-menu-link[aria-current="page"] {
     @apply bg-brand-50 text-brand-700;
+  }
+
+  .account-menu-divider {
+    margin: 0.5rem 0.1rem;
+    border-top: 1px solid var(--faa-line);
+  }
+
+  .account-menu-lang {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
   }
 
   /* --- Touch targets stay comfortable at 360px; focus is always visible. ----- */
   .btn {
-    @apply inline-flex min-h-touch min-w-touch items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:scale-[0.98];
+    @apply inline-flex min-h-touch min-w-touch items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:scale-[0.98];
   }
   .btn-primary {
     @apply btn bg-brand-600 text-white shadow-sm hover:bg-brand-700 hover:shadow-md disabled:opacity-60 disabled:hover:shadow-none;
@@ -81,7 +241,578 @@
     @apply mb-1 block text-sm font-medium text-slate-800;
   }
   .card {
-    @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm;
+    @apply rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+  }
+  .page-hero {
+    @apply relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7;
+    background-image: linear-gradient(110deg, rgb(255 255 255 / 1) 0%, rgb(255 255 255 / 0.96) 62%, rgb(239 246 255 / 0.98) 100%);
+  }
+  .page-hero::after {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    width: 0.45rem;
+    background: var(--faa-brand);
+    content: "";
+  }
+  .page-kicker {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-brand-700;
+  }
+  .page-title {
+    @apply mt-1 text-2xl font-bold tracking-tight text-[#10264a] sm:text-3xl;
+  }
+  .page-intro {
+    @apply mt-2 max-w-2xl text-sm leading-6 text-slate-700;
+  }
+  .page-meta {
+    @apply mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600;
+  }
+  .date-strip {
+    @apply flex flex-wrap gap-2;
+  }
+  .date-chip {
+    @apply inline-flex min-h-touch items-center rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm transition-colors duration-150 hover:border-brand-600 hover:bg-brand-50 hover:text-brand-700;
+  }
+  .date-chip[aria-current="date"] {
+    @apply border-brand-600 bg-brand-600 text-white shadow-md hover:bg-brand-700 hover:text-white;
+  }
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-slate-500;
+  }
+  .status-dot {
+    @apply inline-block h-2.5 w-2.5 rounded-full;
+  }
+  .legend {
+    @apply flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600;
+  }
+  .legend-swatch {
+    display: inline-block;
+    height: 0.85rem;
+    width: 0.85rem;
+    border-radius: 0.2rem;
+    border: 1px solid rgb(16 38 74 / 0.12);
+  }
+  .legend-swatch-free {
+    background: #e4f0fb;
+    border-color: #bcd7f2;
+  }
+  .legend-swatch-booked {
+    background: var(--faa-brand);
+    border-color: var(--faa-brand-dark);
+  }
+  .legend-swatch-class {
+    background: #cbd5e1;
+    border-color: #94a3b8;
+  }
+  .legend-swatch-closed {
+    border-color: #cbd5e1;
+    background-image: repeating-linear-gradient(135deg, #cbd5e1 0 4px, #f1f5f9 4px 8px);
+  }
+  .legend-swatch-restricted {
+    background: #ede9fe;
+    border-color: #c4b5fd;
+  }
+
+  .availability-hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  .availability-hero > .max-w-3xl {
+    /* A flex item's automatic min-width otherwise collapses toward zero
+       under the page's overflow-wrap: anywhere, breaking the heading
+       character-by-character before the row is allowed to wrap. */
+    min-width: 16rem;
+    flex: 1 1 20rem;
+  }
+
+  .availability-hero::after {
+    width: 0;
+  }
+
+  .date-toolbar {
+    flex: 0 0 auto;
+    align-items: stretch;
+    border: 1px solid var(--faa-line);
+    border-radius: 0.75rem;
+    background: #ffffff;
+    padding: 0.25rem;
+    box-shadow: 0 4px 12px rgb(16 38 74 / 0.06);
+  }
+
+  .date-toolbar .btn {
+    min-height: 2.75rem;
+  }
+
+  .date-toolbar .date-arrow {
+    min-width: 2.75rem;
+    padding-inline: 0.5rem;
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .date-display {
+    display: inline-flex;
+    min-height: 2.75rem;
+    min-width: 10rem;
+    align-items: center;
+    justify-content: center;
+    border-inline: 1px solid var(--faa-line);
+    padding-inline: 0.8rem;
+    color: var(--faa-navy);
+    font-size: 0.875rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .date-display svg {
+    flex-shrink: 0;
+    color: var(--faa-muted);
+    margin-inline-end: 0.4rem;
+  }
+
+  .week-link {
+    @apply min-h-touch inline-flex items-center rounded-md px-2 text-sm font-medium text-slate-600 underline-offset-2 transition-colors duration-150 hover:text-brand-700 hover:underline;
+  }
+
+  .filter-panel {
+    border-radius: 1rem;
+    padding: 0.85rem 1.1rem;
+  }
+
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .filter-field {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: 1 1 12rem;
+    min-width: 9rem;
+  }
+
+  .filter-field-icon {
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    color: var(--faa-muted);
+    pointer-events: none;
+  }
+
+  .filter-select {
+    @apply min-h-touch w-full rounded-full border border-slate-300 bg-white py-2 text-sm text-slate-900 shadow-sm transition-colors focus:border-brand-600 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-brand-600;
+    padding-inline-start: 2.1rem;
+    padding-inline-end: 0.9rem;
+    appearance: none;
+  }
+
+  select.filter-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23566a86' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m5 8 5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1rem;
+    padding-inline-end: 2.1rem;
+  }
+
+  .filter-input::placeholder {
+    color: #8598b3;
+  }
+
+  .filter-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.75rem;
+    margin-inline-start: auto;
+  }
+
+  .filter-clear {
+    @apply min-h-touch inline-flex items-center text-sm font-medium text-brand-700 underline-offset-2 hover:underline;
+  }
+
+  .room-board-date {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .room-board-controls {
+    border-color: var(--faa-line);
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .room-time-strip {
+    display: flex;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding: 0.15rem 0.1rem 0.35rem;
+    scrollbar-width: thin;
+  }
+
+  .room-time-chip {
+    display: inline-flex;
+    min-height: 44px;
+    min-width: 4.25rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--faa-line);
+    border-radius: 999px;
+    background: #fff;
+    padding: 0.45rem 0.8rem;
+    color: var(--faa-ink);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .room-time-chip:hover,
+  .room-time-chip.is-selected {
+    border-color: var(--faa-brand);
+    background: var(--faa-brand);
+    color: #fff;
+  }
+
+  .room-board-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem 1rem;
+    color: var(--faa-muted);
+    font-size: 0.78rem;
+  }
+
+  .room-board-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .room-board-dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 999px;
+    background: #cbd5e1;
+  }
+
+  .room-board-dot.is-available { background: #059669; }
+  .room-board-dot.is-reserved { background: var(--faa-brand); }
+  .room-board-dot.is-class { background: #7c3aed; }
+  .room-board-dot.is-view-only { background: #64748b; }
+  .room-board-dot.is-closed { background: #94a3b8; }
+
+  .room-board-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.8rem;
+  }
+
+  .room-board-card {
+    min-height: 13rem;
+    border: 1px solid var(--faa-line);
+    border-top: 4px solid #94a3b8;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 1rem;
+    box-shadow: 0 8px 24px rgba(16, 38, 74, 0.07);
+  }
+
+  .room-board-card.is-available { border-top-color: #059669; }
+  .room-board-card.is-in-use,
+  .room-board-card.is-reserved { border-top-color: var(--faa-brand); }
+  .room-board-card.is-class { border-top-color: #7c3aed; }
+  .room-board-card.is-view-only { border-top-color: #64748b; }
+
+  .room-board-number {
+    color: var(--faa-navy);
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .room-board-name {
+    margin-top: 0.3rem;
+    overflow: hidden;
+    color: var(--faa-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .room-board-status {
+    border-radius: 999px;
+    background: #f1f5f9;
+    padding: 0.35rem 0.55rem;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .is-available .room-board-status { background: #ecfdf5; color: #047857; }
+  .is-in-use .room-board-status,
+  .is-reserved .room-board-status { background: var(--faa-brand-soft); color: var(--faa-brand-dark); }
+  .is-class .room-board-status { background: #f5f3ff; color: #6d28d9; }
+  .is-view-only .room-board-status { background: #f1f5f9; color: #475569; }
+
+  .room-board-meta {
+    margin-top: 1rem;
+    color: var(--faa-ink);
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .room-board-reason {
+    min-height: 2.5rem;
+    margin-top: 0.25rem;
+    color: var(--faa-muted);
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+
+  .account-notice {
+    border-radius: 0.75rem;
+    background: rgb(255 255 255 / 0.82);
+  }
+
+  .schedule-heading {
+    padding-inline: 0.25rem;
+  }
+  .floor-plan-panel {
+    @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+  .floor-plan-panel summary {
+    @apply flex min-h-touch cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-slate-900 sm:px-5;
+  }
+  .floor-plan-panel summary::-webkit-details-marker {
+    display: none;
+  }
+  .floor-plan-panel summary::after {
+    display: none;
+  }
+  .floor-plan-panel[open] summary {
+    border-bottom: 1px solid var(--faa-line);
+    background: #f8fbff;
+  }
+  .floor-plan-panel summary > span:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .floor-plan-panel summary small {
+    color: var(--faa-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+  }
+  .summary-action {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid var(--faa-line);
+    border-radius: 0.6rem;
+    padding: 0.45rem 0.75rem;
+    color: var(--faa-navy);
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+  .floor-plan-content {
+    @apply grid gap-5 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,0.4fr)] sm:items-center sm:p-5;
+  }
+  .floor-plan-copy {
+    max-width: 17rem;
+    border-radius: 0.8rem;
+    background: #f2f7fd;
+    padding: 1rem;
+  }
+  .floor-plan-copy h2 {
+    margin-top: 0.35rem;
+    color: var(--faa-navy);
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .floor-plan-copy p:not(.section-label):not(.floor-plan-note) {
+    margin-top: 0.45rem;
+    color: #405572;
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+  .floor-plan-note {
+    margin-top: 1rem;
+    color: var(--faa-muted);
+    font-size: 0.72rem;
+  }
+  .floor-plan-stage {
+    display: flex;
+    min-height: 18rem;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 1rem;
+    background: linear-gradient(145deg, #e7f2fd, #f7fbff 62%, #eaf3fb);
+    padding: 1rem;
+  }
+  .floor-plan-image {
+    @apply mx-auto block max-h-[28rem] w-full max-w-[42rem] object-contain;
+    filter: drop-shadow(0 12px 18px rgb(16 38 74 / 0.13));
+  }
+  /* Room picker for an atomic move: the whole row is the hit target, and the
+     selected state is carried by the native radio so it survives without JS. */
+  .room-choice {
+    @apply flex min-h-touch cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 transition;
+  }
+  .room-choice:hover {
+    @apply border-brand-200 bg-brand-50/40;
+  }
+  .room-choice:focus-within {
+    @apply border-brand-500 ring-2 ring-brand-100;
+  }
+  .room-choice:has(input:checked) {
+    @apply border-brand-600 bg-brand-50;
+  }
+  .room-choice input {
+    @apply mt-0.5 h-4 w-4 shrink-0 accent-brand-700;
+  }
+  .room-choice-name {
+    @apply block font-semibold text-slate-900;
+  }
+  .room-choice-meta {
+    @apply mt-0.5 block text-xs text-slate-600;
+  }
+
+  .flow-panel {
+    @apply rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6;
+  }
+  .booking-summary {
+    @apply grid gap-3 border-b border-slate-200 pb-4 text-sm sm:grid-cols-2;
+  }
+  .booking-summary > div {
+    @apply rounded-md bg-slate-50 px-3 py-2;
+  }
+  .booking-summary dt {
+    @apply text-xs font-medium text-slate-500;
+  }
+  .booking-summary dd {
+    @apply mt-1 font-semibold text-slate-950;
+  }
+  .section-heading {
+    @apply text-lg font-semibold tracking-tight text-slate-950;
+  }
+  .availability-shell {
+    @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+  .availability-table thead {
+    background: #f3f7fc;
+    color: var(--faa-navy);
+  }
+  .availability-table thead th {
+    border-bottom: 1px solid var(--faa-line);
+    font-size: 0.72rem;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .availability-table tbody th {
+    border-inline-end: 1px solid var(--faa-line);
+  }
+  .availability-table tbody td {
+    border-inline-start: 1px solid #edf0f4;
+  }
+  .room-name {
+    @apply font-bold text-[#153964] underline-offset-2 hover:text-brand-700 hover:underline;
+  }
+  .room-meta {
+    @apply mt-0.5 block text-xs font-normal text-slate-500;
+  }
+  .cap-col {
+    border-inline-start: 1px solid #edf0f4;
+    color: var(--faa-muted);
+  }
+
+  /* --- Mobile room card: a decorative summary bar above the real, fully
+     interactive per-hour list (D-32 — the 360px flow must never hide a
+     control behind an extra tap). --- */
+  .room-card {
+    padding-bottom: 0.9rem;
+  }
+  .room-mini-bar {
+    display: flex;
+    gap: 2px;
+    margin-top: 0.6rem;
+    height: 0.9rem;
+    overflow: hidden;
+    border-radius: 0.3rem;
+  }
+  .room-mini-tick {
+    flex: 1 1 0%;
+    min-width: 0;
+  }
+  .room-mini-tick-free {
+    background: #cfe3f7;
+  }
+  .room-mini-tick-booked {
+    background: var(--faa-brand);
+  }
+  .room-mini-tick-class {
+    background: #cbd5e1;
+  }
+  .room-mini-tick-closed {
+    background-image: repeating-linear-gradient(135deg, #d8dee7 0 3px, #eef1f5 3px 6px);
+  }
+  .room-mini-tick-restricted {
+    background: #c4b5fd;
+  }
+  .room-mini-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.3rem;
+    color: var(--faa-muted);
+    font-size: 0.68rem;
+  }
+  .room-card > ul {
+    margin-top: 0.75rem;
+  }
+  .slot-state {
+    @apply flex min-h-9 w-full items-center justify-center rounded-md px-2 py-1.5 text-center text-[0.7rem] font-medium leading-tight;
+  }
+  .slot-state-free,
+  .slot-state-available {
+    @apply border border-blue-100 bg-[#e4f0fb] text-[#153964];
+  }
+  .slot-state-muted {
+    @apply border border-slate-200 bg-slate-100 text-slate-600;
+  }
+  .slot-state-class {
+    @apply border border-slate-300 bg-slate-200 text-slate-700;
+  }
+  .slot-state-closed {
+    @apply border border-slate-300 text-slate-500;
+    background-image: repeating-linear-gradient(135deg, #e2e8f0 0 6px, #f1f5f9 6px 12px);
+  }
+  .slot-state-brand {
+    @apply border border-brand-200 bg-brand-50 text-brand-700;
+  }
+  .slot-state-booked {
+    @apply border border-brand-200 bg-brand-100 font-semibold text-brand-700;
+  }
+  .slot-state-restricted {
+    @apply border border-violet-200 bg-violet-50 text-violet-800;
+  }
+  .stat-card {
+    @apply rounded-lg border border-slate-200 bg-slate-50/80 p-4;
+  }
+  .stat-value {
+    @apply mt-1 block text-2xl font-semibold tracking-tight text-slate-950;
   }
   .table-wrap {
     /* 360px screens scroll the table, never the whole page. */
@@ -119,6 +850,25 @@ body {
   overflow-wrap: anywhere;
 }
 
+body {
+  background-image: linear-gradient(180deg, rgb(224 239 253 / 0.9), rgb(239 246 253 / 0.92) 28rem, rgb(246 245 241 / 0.98) 60rem);
+  color: var(--faa-ink);
+  font-family: "Noto Sans Thai", Tahoma, ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+a,
+select,
+input,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+*:focus-visible {
+  outline: 3px solid var(--faa-focus);
+  outline-offset: 3px;
+}
+
 /* Availability rows tint softly as the pointer travels the grid. */
 .availability-table tbody tr {
   transition: background-color 120ms ease;
@@ -126,4 +876,15 @@ body {
 
 .availability-table tbody tr:hover {
   background: rgb(248 250 252 / 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

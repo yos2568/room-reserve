@@ -132,7 +132,7 @@ def _ics_escape(value: str) -> str:
 
 
 def _may_reserve(room: Room, user) -> bool:
-    return room.may_be_reserved_by(instruments.category_for_user(user))
+    return not room.availability_only and room.may_be_reserved_by(instruments.category_for_user(user))
 
 
 def _booking_details(request) -> dict[str, str]:
@@ -161,6 +161,13 @@ def book_slot(request, room_id: int, slot: str):
     moment = now()
     policy = current_policy()
 
+    if room.availability_only:
+        messages.warning(
+            request,
+            "ห้องนี้แสดงสถานะเพื่อดูข้อมูลเท่านั้น ไม่เปิดให้จองหรือเข้าใช้ / "
+            "This room is for availability viewing only; reservations and walk-ins are not available.",
+        )
+        return redirect(_grid_url(slot_start))
     if not _may_reserve(room, request.user):
         # Never present a form that the server is certain to refuse. The grid
         # explains the same thing on the cell itself, with the reason.
@@ -468,6 +475,65 @@ def booking_ics(request, pk: int):
     response = HttpResponse("\r\n".join(lines) + "\r\n", content_type="text/calendar; charset=utf-8")
     response["Content-Disposition"] = f'attachment; filename="roomreserve-{booking.pk}.ics"'
     return response
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def move_booking(request, pk: int):
+    """Move a booking to a different room at the same hour, atomically.
+
+    The alternatives shown on GET are advisory only. The service re-checks every
+    rule under the control lock, so a room that goes while the page is open is
+    refused there rather than here, and the student keeps the room they had.
+    """
+    booking = get_object_or_404(Booking.objects.select_related("room"), pk=pk, user=request.user)
+    moment = now()
+
+    movable = (
+        booking.status in {Booking.Status.SCHEDULED, Booking.Status.PENDING_APPROVAL}
+        and moment < booking.slot_start
+        and booking.recurrence_id is None
+    )
+
+    def alternatives():
+        if not movable:
+            return []
+        return suggest.for_slot(
+            booking.slot_start, moment, user=request.user, exclude_booking_id=booking.pk
+        )
+
+    outcome = None
+    if request.method == "POST":
+        room = get_object_or_404(Room, pk=request.POST.get("room_id") or 0, is_active=True)
+        outcome = run_view_operation(
+            request=request,
+            operation="move_booking",
+            payload=booking_service.build_move_payload(booking, room),
+            key=operation_key(request),
+            body=lambda ctx: _success(**booking_service.move_booking(ctx, booking=booking, room=room)),
+        )
+        if outcome.ok:
+            add_outcome_message(
+                request,
+                outcome,
+                success_message="ย้ายห้องเรียบร้อยแล้ว / Your booking moved to the new room.",
+            )
+            return redirect("core:my_bookings")
+        booking.refresh_from_db()
+
+    return render(
+        request,
+        "core/move_booking.html",
+        {
+            "booking": booking,
+            "movable": movable,
+            "rooms": alternatives(),
+            "operation_key": _new_key(),
+            "outcome": outcome,
+            "moment": moment,
+        },
+        status=409 if outcome is not None and not outcome.ok else 200,
+    )
 
 
 @login_required

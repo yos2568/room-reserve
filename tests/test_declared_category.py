@@ -52,6 +52,23 @@ def test_registration_without_declaration_leaves_it_blank(db, client):
     assert User.objects.get(username="669900002").declared_category == ""
 
 
+def test_public_faculty_registration_is_invitation_only_and_has_no_student_fields(db, client):
+    response = client.get(reverse("core:register") + "?type=faculty")
+
+    assert response.status_code == 200
+    assert b'id="id_institutional_id"' not in response.content
+    assert b'id="id_declared_category"' not in response.content
+    assert b"invitation" in response.content.lower()
+
+    response = client.post(
+        reverse("core:register"),
+        {"account_type": "faculty", "name": "อาจารย์", "email": "faculty@chula.ac.th"},
+    )
+    assert response.status_code == 302
+    assert response["Location"].endswith("/register/?type=faculty")
+    assert not User.objects.filter(email="faculty@chula.ac.th").exists()
+
+
 def test_registration_rejects_unknown_category(db, client):
     response = client.post(reverse("core:register"), register_payload("669900003", "TUBA"))
 

@@ -10,7 +10,7 @@ from core.models.identity import InstrumentCategory
 
 
 class Room(models.Model):
-    """A practice room. Most are general; the larger room is instrument-specific."""
+    """A room in the availability system; some are teaching or restricted rooms."""
 
     class ReservationScope(models.TextChoices):
         """Who may reserve the room *in advance*.
@@ -38,6 +38,10 @@ class Room(models.Model):
     requires_approval = models.BooleanField(
         default=False,
         help_text=_("Reservations for this room must be approved by a room administrator."),
+    )
+    availability_only = models.BooleanField(
+        default=False,
+        help_text=_("Show availability but do not allow reservations or walk-ins."),
     )
     is_active = models.BooleanField(_("active"), default=True)
     position = models.PositiveSmallIntegerField(default=0, help_text=_("Display order."))

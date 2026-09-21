@@ -4,13 +4,15 @@
 {% block staff_title %}{% trans "Statistics" %}{% endblock %}
 
 {% block staff_content %}
-  <section class="card">
-    <p class="text-sm">{% blocktrans with since=since|date:"j F Y" %}Counts cover bookings since {{ since }}.{% endblocktrans %}</p>
+  <section class="page-hero">
+    <p class="page-kicker">{% trans "Operational overview" %}</p>
+    <h2 class="page-title">{% trans "Room statistics" %}</h2>
+    <p class="page-intro">{% blocktrans with since=since|date:"j F Y" %}Counts cover bookings since {{ since }}. Use these figures to spot demand and follow-up needs.{% endblocktrans %}</p>
     <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <div class="rounded-lg bg-brand-50 p-3"><span class="block text-xs text-slate-600">{% trans "Reservations" %}</span><strong class="mt-1 block text-2xl text-brand-700">{{ totals.total }}</strong></div>
-      <div class="rounded-lg bg-emerald-50 p-3"><span class="block text-xs text-slate-600">{% trans "Used sessions" %}</span><strong class="mt-1 block text-2xl text-emerald-800">{{ totals.used }}</strong></div>
-      <div class="rounded-lg bg-amber-50 p-3"><span class="block text-xs text-slate-600">{% trans "No-shows" %}</span><strong class="mt-1 block text-2xl text-amber-800">{{ totals.no_show }}</strong></div>
-      <div class="rounded-lg bg-slate-100 p-3"><span class="block text-xs text-slate-600">{% trans "Use rate" %}</span><strong class="mt-1 block text-2xl text-slate-900">{{ totals.use_rate }}%</strong></div>
+      <div class="stat-card border-brand-200 bg-brand-50/70"><span class="block text-xs text-slate-600">{% trans "Reservations" %}</span><strong class="stat-value text-brand-700">{{ totals.total }}</strong></div>
+      <div class="stat-card border-emerald-200 bg-emerald-50/70"><span class="block text-xs text-slate-600">{% trans "Used sessions" %}</span><strong class="stat-value text-emerald-800">{{ totals.used }}</strong></div>
+      <div class="stat-card border-amber-200 bg-amber-50/70"><span class="block text-xs text-slate-600">{% trans "No-shows" %}</span><strong class="stat-value text-amber-800">{{ totals.no_show }}</strong></div>
+      <div class="stat-card"><span class="block text-xs text-slate-600">{% trans "Use rate" %}</span><strong class="stat-value">{{ totals.use_rate }}%</strong></div>
     </div>
     <div class="mt-4 flex flex-wrap items-center gap-2">
       <a class="btn-primary" href="{% url 'core:staff_stats_export' %}">{% trans "Download CSV" %}</a>

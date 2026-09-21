@@ -2,6 +2,7 @@
 {# The grid body. Rendered on first load and again by the HTMX refresh. #}
 <div id="availability-region"
      hx-get="{% url 'core:availability' %}?date={{ local_date|date:'Y-m-d' }}"
+     hx-include="#room-filter, #equipment-filter"
      hx-trigger="every 30s, refresh-availability from:body"
      hx-swap="outerHTML"
      aria-live="polite">
@@ -17,11 +18,12 @@
   {# --- Desktop / tablet: the full grid ------------------------------------- #}
   <div class="hidden md:block">
     <div class="table-wrap">
-      <table class="availability-table w-full border-collapse text-sm">
+      <table class="availability-table min-w-[54rem] w-full border-collapse text-sm">
         <caption class="sr-only">{% trans "Availability by room and hour" %}</caption>
         <thead>
           <tr>
-            <th scope="col" class="sticky start-0 bg-slate-50/90 p-2 text-start backdrop-blur-sm">{% trans "Room" %}</th>
+            <th scope="col" class="sticky start-0 z-10 bg-slate-50/95 p-3 text-start backdrop-blur-sm">{% trans "Room" %}</th>
+            <th scope="col" class="cap-col p-2 text-center font-medium">{% trans "Cap." %}</th>
             {% for column in grid.columns %}
               <th scope="col" class="p-2 text-center font-medium">
                 {{ column|date:"H:i" }}
@@ -32,12 +34,13 @@
         <tbody>
           {% for row in grid.rows %}
             <tr class="border-t border-slate-200">
-              <th scope="row" class="sticky start-0 bg-white p-2 text-start font-medium">
-                <a class="text-brand-700 underline-offset-2 hover:underline" href="{% url 'core:room_profile' room_id=row.room.pk %}">{{ row.room }}</a>
-                <span class="block text-xs font-normal text-slate-600">{{ row.room.capacity }} {% trans "seats" %}</span>
+              <th scope="row" class="sticky start-0 z-[1] bg-white p-3 text-start font-medium">
+                <a class="room-name" href="{% url 'core:room_profile' room_id=row.room.pk %}">{{ row.room }}</a>
               </th>
+              {# Its own header cell (not a <td>), so it never shifts the hour-cell index that browser tests address by position. #}
+              <th scope="row" class="cap-col text-center text-sm font-normal text-slate-600">{{ row.room.capacity }}</th>
               {% for cell in row.cells %}
-                <td class="p-1 align-middle">
+                <td class="p-1.5 align-middle">
                   {% include "core/partials/slot_cell.html" with cell=cell compact=True %}
                 </td>
               {% endfor %}
@@ -51,9 +54,30 @@
   {# --- Mobile: a readable list, never a page-wide horizontal scroll -------- #}
   <div class="space-y-3 md:hidden">
     {% for row in grid.rows %}
-      <section class="card">
-        <h3 class="mb-2 text-base font-semibold"><a class="text-brand-700 hover:underline" href="{% url 'core:room_profile' room_id=row.room.pk %}">{{ row.room }}</a></h3>
-        <p class="mb-2 text-xs text-slate-600">{{ row.room.capacity }} {% trans "seats" %}</p>
+      <section class="card room-card">
+        <div class="flex items-baseline justify-between gap-3">
+          <h3 class="text-base font-semibold"><a class="room-name" href="{% url 'core:room_profile' room_id=row.room.pk %}">{{ row.room }}</a></h3>
+          <p class="text-xs text-slate-500">{% blocktrans with capacity=row.room.capacity %}Capacity {{ capacity }}{% endblocktrans %}</p>
+        </div>
+
+        {# Decorative "at a glance" bar mirroring the same cell states as the list below; aria-hidden, since the accessible source of truth is the interactive list, unchanged. #}
+        <div class="room-mini-bar" aria-hidden="true">
+          {% for cell in row.cells %}
+            <span class="room-mini-tick
+              {% if cell.can_reserve or cell.can_use_now or cell.state == 'free_now' %}room-mini-tick-free
+              {% elif cell.state == 'restricted' or cell.state == 'view_only' %}room-mini-tick-restricted
+              {% elif cell.state == 'closed' and cell.block_reason %}room-mini-tick-class
+              {% elif cell.state == 'in_use' or cell.state == 'held' or cell.state == 'taken' %}room-mini-tick-booked
+              {% else %}room-mini-tick-closed{% endif %}"></span>
+          {% endfor %}
+        </div>
+        {% with last_cell=row.cells|last %}
+          <div class="room-mini-scale" aria-hidden="true">
+            <span>{{ row.cells.0.local_start|date:"H:i" }}</span>
+            <span>{{ last_cell.local_start|date:"H:i" }}</span>
+          </div>
+        {% endwith %}
+
         <ul class="flex flex-wrap gap-2">
           {% for cell in row.cells %}
             <li>{% include "core/partials/slot_cell.html" with cell=cell compact=True %}</li>

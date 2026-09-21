@@ -33,6 +33,7 @@ class SlotState(StrEnum):
     # hour has started and the room is free, so this state only ever applies to a
     # slot that has not begun.
     RESTRICTED = "restricted"
+    VIEW_ONLY = "view_only"
     TAKEN = "taken"
     OUTSIDE_HORIZON = "outside_horizon"
 
@@ -145,6 +146,7 @@ def room_day_cells(
             booking=booking,
             horizon_last=horizon_last,
             can_reserve_here=can_reserve_here,
+            availability_only=room.availability_only,
         )
         cells.append(
             SlotCell(
@@ -193,6 +195,7 @@ def _classify(
     horizon_last,
     block_reason="",
     can_reserve_here=True,
+    availability_only=False,
 ):
     if slot_end <= now:
         return SlotState.PAST
@@ -213,6 +216,8 @@ def _classify(
         return SlotState.TAKEN
     if block_reason:
         return SlotState.CLOSED
+    if availability_only:
+        return SlotState.VIEW_ONLY
     if slot_start <= now:
         # The hour has begun and nobody holds it. Open to everyone, whatever the
         # room's reservation audience: this is the release valve that keeps a
@@ -224,10 +229,18 @@ def _classify(
 
 
 def public_grid(
-    local_date, now, *, user=None, capacity_min: int | None = None, equipment_query: str = ""
+    local_date,
+    now,
+    *,
+    user=None,
+    capacity_min: int | None = None,
+    equipment_query: str = "",
+    room_number: str = "",
 ) -> dict:
     """The whole grid: active rooms down, hourly slots across."""
     room_query = Room.objects.filter(is_active=True)
+    if room_number:
+        room_query = room_query.filter(number=room_number)
     if capacity_min:
         room_query = room_query.filter(capacity__gte=capacity_min)
     if equipment_query:

@@ -328,8 +328,11 @@ anyone may walk in once the hour has started and the room is still free. Changin
 that is a staff action: **Configuration → Rooms → Who may reserve**. It is audited
 (`room.audience_changed`) and it never cancels an existing booking.
 
-The old placeholder room 10 (`ห้องซ้อมใหญ่`) never existed on the floor; `seed_rooms`
-deactivates it, and its bookings and history stay in the database untouched.
+Room 10 is now an active general practice room and is provisioned by `seed_rooms`
+alongside rooms 1–9. It follows the same weekday opening schedule and general
+reservation rules as the other general rooms. A historical placeholder row, if
+present in a database from an earlier revision, is reactivated rather than
+deleted so its history remains attached to the room.
 
 **If a piano or percussion student says they cannot reserve the room**, the cause is
 almost always one of two data problems, in this order:
@@ -368,9 +371,9 @@ frozen copy of the table drifts from the live one.
 (`roomreserve/settings/base.py`) plus `ROOM_COUNT`, then `manage.py seed_rooms`;
 or, for a room that already exists, the staff screen alone.
 
-## 9. The teaching timetable (rooms 303 and 304)
+## 9. The teaching timetable (rooms 301, 303 and 304)
 
-Rooms 303 and 304 host classes from the department's sheet
+Rooms 301, 303 and 304 host classes from the department's semester report
 (`ตารางห้อง อาคารศิลปกรรมชั้น3.pdf`). Those hours are `WeeklyBlock` rows —
 recurring, keyed by weekday and hour — configured in `ROOM_WEEKLY_BLOCKS` and
 applied by `manage.py seed_rooms`. A blocked hour refuses reservations *and*
@@ -389,9 +392,14 @@ already existed still checks in.
    them. If a class genuinely needs the hour back, contact the students or use a
    closure; both are visible on the audit trail.
 
-The currently configured class spans are Monday 10:00–12:00 Counterpoint,
-Tuesday 12:00–14:00 Skill-Piano, Thursday 10:00–12:00 Harmony, and Friday
-13:00–15:00 Wind Pedagogy. Blank hours remain reservable. There is no staff
+The currently configured class spans for room 301 are Monday 13:00–15:00 Piano
+III/IV, Tuesday 08:00–10:00 Theo Mus E Trg I and 12:00–15:00 Ensemble,
+Wednesday 13:00–15:00 Piano I, Thursday 13:00–15:00 Chorus/Theory, and Friday
+13:00–15:00 Orchestration I. Room 301 is availability-only: its free hours are
+shown but cannot be reserved or used as a walk-in. Room 304 remains blocked on
+Monday 10:00–12:00 Counterpoint, Tuesday 12:00–14:00 Skill-Piano, Thursday
+10:00–12:00 Harmony, and Friday 13:00–15:00 Wind Pedagogy; blank hours remain
+reservable by request. Rooms 303 and 304 reservations require approval. There is no staff
 screen for the timetable yet; it is deliberately a configuration change with a
 seed run, not a click, because a wrong schedule blocks a whole room for a
 semester.

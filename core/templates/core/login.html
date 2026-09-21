@@ -4,9 +4,14 @@
 {% block title %}{% trans "Sign in" %}{% endblock %}
 
 {% block content %}
-  <h1 class="text-xl font-semibold">{% trans "Sign in" %}</h1>
+  <div class="max-w-xl">
+    <section class="page-hero">
+      <p class="page-kicker">{% trans "Room Reserve" %}</p>
+      <h1 class="page-title">{% trans "Sign in" %}</h1>
+      <p class="page-intro">{% trans "Use your institutional account to reserve a room, check in, and manage your bookings." %}</p>
+    </section>
 
-  <form method="post" class="card mt-4 max-w-xl space-y-3">
+  <form method="post" class="flow-panel mt-4 space-y-4">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ next }}">
     <div>
@@ -27,4 +32,6 @@
     ·
     <a class="underline" href="{% url 'core:register' %}">{% trans "Register" %}</a>
   </p>
+  <p class="mt-3 text-sm">แจ้งปัญหาการเข้าสู่ระบบ / Sign-in problems: <a class="underline" href="mailto:{{ support_contact.email }}">{{ support_contact.email }}</a></p>
+  </div>
 {% endblock %}

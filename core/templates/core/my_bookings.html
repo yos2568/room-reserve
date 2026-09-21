@@ -4,9 +4,13 @@
 {% block title %}{% trans "My bookings" %}{% endblock %}
 
 {% block content %}
-  <h1 class="text-xl font-semibold">{% trans "My bookings" %}</h1>
+  <section class="page-hero">
+    <p class="page-kicker">{% trans "Your room activity" %}</p>
+    <h1 class="page-title">{% trans "My bookings" %}</h1>
+    <p class="page-intro">{% trans "Review upcoming sessions, edit details, check in, or download a calendar event." %}</p>
+  </section>
 
-  <div class="card mt-3 text-sm">
+  <div class="card mt-4 text-sm" role="status">
     <p>
       {% blocktrans with used=quota_used total=policy.daily_quota %}Bookings counted for today: {{ used }} of {{ total }}.{% endblocktrans %}
     </p>
@@ -26,7 +30,7 @@
     </p>
   </div>
 
-  <h2 class="mt-6 text-lg font-semibold">{% trans "Upcoming" %}</h2>
+  <h2 class="section-heading mt-7">{% trans "Upcoming" %}</h2>
   {% if upcoming %}
     <ul class="mt-2 space-y-3">
       {% for booking in upcoming %}
@@ -62,6 +66,9 @@
               {% if moment < booking.slot_start %}
                 {% if booking.status == 'SCHEDULED' or booking.status == 'PENDING_APPROVAL' %}
                   <a class="btn-secondary" href="{% url 'core:edit_booking' pk=booking.pk %}">{% trans "Edit details" %}</a>
+                  {% if not booking.recurrence_id %}
+                    <a class="btn-secondary" href="{% url 'core:move_booking' pk=booking.pk %}">{% trans "Change room" %}</a>
+                  {% endif %}
                   <form method="post" action="{% url 'core:cancel_booking' pk=booking.pk %}" class="flex items-center gap-2">
                     {% csrf_token %}
                     <input type="hidden" name="operation_key" value="{{ operation_key }}">
@@ -105,7 +112,7 @@
     </section>
   {% endif %}
 
-  <h2 class="mt-6 text-lg font-semibold">{% trans "History" %}</h2>
+  <h2 class="section-heading mt-7">{% trans "History" %}</h2>
   <p class="text-xs text-slate-600">{% trans "The last 60 days are shown here. This display limit is not a deletion policy." %}</p>
   {% if history %}
     <div class="table-wrap mt-2">
@@ -139,7 +146,7 @@
     <p class="card mt-2 text-sm">{% trans "No past bookings in the last 60 days." %}</p>
   {% endif %}
 
-  <h2 class="mt-6 text-lg font-semibold">{% trans "Strikes and sanctions" %}</h2>
+  <h2 class="section-heading mt-7">{% trans "Strikes and sanctions" %}</h2>
   <div class="card mt-2 text-sm">
     <p>
       {% blocktrans with count=strike_summary.eligible_count threshold=strike_summary.threshold window=strike_summary.window_days %}Strikes counting toward the next suspension: {{ count }} of {{ threshold }} within {{ window }} days.{% endblocktrans %}

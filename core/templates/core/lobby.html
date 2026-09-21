@@ -8,27 +8,34 @@
 {% endblock %}
 
 {% block content %}
-  <div class="flex flex-wrap items-end justify-between gap-4">
-    <div>
-      <p class="text-sm font-medium text-brand-700">{% trans "Live room board" %}</p>
-      <h1 class="mt-1 text-2xl font-semibold tracking-tight">{% trans "Practice room status" %}</h1>
-      <p class="mt-1 text-sm text-slate-700">{% trans "A simple view for the lobby. It refreshes automatically and never shows student names." %}</p>
+  <section class="page-hero">
+    <p class="page-kicker">{% trans "Live room board" %}</p>
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="page-title">{% trans "Practice room status" %}</h1>
+        <p class="page-intro">{% trans "A simple view for the lobby. It refreshes automatically and never shows student names." %}</p>
+      </div>
+      <div class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700" aria-live="polite">
+        <span class="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>{% trans "Updated" %} {{ moment|date:"H:i" }}
+      </div>
     </div>
-    <div class="rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700" aria-live="polite">
-      {% trans "Updated" %} {{ moment|date:"H:i" }}
-    </div>
+  </section>
+
+  <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+    <p class="section-label">{% trans "Current room status" %}</p>
+    <p class="text-xs text-slate-500">{% trans "Refreshes every 30 seconds" %}</p>
   </div>
 
-  <section class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="{% trans 'Room status' %}">
+  <section class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="{% trans 'Room status' %}">
     {% for row in rows %}
       <article class="card border-l-4 {% if row.status_key == 'available' %}border-l-emerald-600{% elif row.status_key == 'in_use' %}border-l-brand-600{% elif row.status_key == 'class' %}border-l-violet-600{% elif row.status_key == 'reserved' %}border-l-amber-500{% else %}border-l-slate-400{% endif %}">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <p class="text-sm text-slate-600">{% trans "Room" %}</p>
-            <h2 class="text-xl font-semibold">{{ row.room.number }}</h2>
+            <p class="section-label">{% trans "Room" %}</p>
+            <h2 class="mt-1 text-2xl font-semibold tracking-tight">{{ row.room.number }}</h2>
           </div>
-          <span class="rounded-full px-3 py-1 text-sm font-medium {% if row.status_key == 'available' %}bg-emerald-50 text-emerald-800{% elif row.status_key == 'in_use' %}bg-brand-50 text-brand-700{% elif row.status_key == 'class' %}bg-violet-50 text-violet-900{% elif row.status_key == 'reserved' %}bg-amber-50 text-amber-800{% else %}bg-slate-100 text-slate-700{% endif %}">
-            <span aria-hidden="true">●</span>
+          <span class="rounded-md px-3 py-1 text-sm font-medium {% if row.status_key == 'available' %}bg-emerald-50 text-emerald-800{% elif row.status_key == 'in_use' %}bg-brand-50 text-brand-700{% elif row.status_key == 'class' %}bg-violet-50 text-violet-900{% elif row.status_key == 'reserved' %}bg-amber-50 text-amber-800{% else %}bg-slate-100 text-slate-700{% endif %}">
+            <span class="mr-1.5 inline-block h-2 w-2 rounded-full bg-current" aria-hidden="true"></span>
             {% if row.status_key == 'available' %}{% trans "Available" %}{% elif row.status_key == 'in_use' %}{% trans "In use" %}{% elif row.status_key == 'class' %}{% trans "Class in session" %}{% elif row.status_key == 'reserved' %}{% trans "Reserved" %}{% else %}{% trans "Closed" %}{% endif %}
           </span>
         </div>

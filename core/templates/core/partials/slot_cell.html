@@ -4,10 +4,10 @@
   <a class="btn-primary w-full !px-2 text-xs"
      href="{% url 'core:book_slot' room_id=cell.room.pk slot=cell.slot_key %}"
      aria-label="{% blocktrans with room=cell.room time=cell.local_start|date:'H:i' %}Reserve {{ room }} at {{ time }}{% endblocktrans %}">
-    {% trans "Reserve" %}
+    {% if cell.room.requires_approval %}{% trans "Request" %}{% else %}{% trans "Reserve" %}{% endif %}
   </a>
 {% elif cell.can_reserve %}
-  <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-700">{% trans "Free" %}</span>
+  <span class="slot-state slot-state-free">{% trans "Free" %}</span>
 {% elif cell.can_use_now and suggestions.can_act or cell.can_use_now and not user.is_authenticated %}
   <a class="btn-primary w-full !px-2 text-xs {% if cell.is_short %}!bg-amber-600 hover:!bg-amber-700{% endif %}"
      href="{% url 'core:use_now' room_id=cell.room.pk slot=cell.slot_key %}"
@@ -15,37 +15,41 @@
     {% trans "Use now" %}{% if cell.is_short %} · {{ cell.remaining_minutes }}{% trans "min" %}{% endif %}
   </a>
 {% elif cell.state == "free_now" %}
-  <span class="btn-secondary w-full !px-2 text-xs">{% trans "Free" %}</span>
+  <span class="slot-state slot-state-available">{% trans "Free" %}</span>
 {% elif cell.state == "past" %}
-  <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-600">{% trans "Finished" %}</span>
+  <span class="slot-state slot-state-muted">{% trans "Finished" %}</span>
 {% elif cell.state == "closed" %}
   {# Closed by policy, or by the teaching timetable — the label says which, because an unexplained gap reads as a fault. #}
-  <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700"
+  <span class="slot-state {% if cell.block_reason %}slot-state-class{% else %}slot-state-closed{% endif %}"
         title="{% if cell.block_reason %}{{ cell.block_reason }}{% else %}{{ cell.closed_reason }}{% endif %}">
     {% if cell.block_reason %}{% trans "Class" %}{% else %}{% trans "Closed" %}{% endif %}
   </span>
 {% elif cell.state == "in_use" or cell.state == "held" %}
-  <span class="block w-full rounded bg-brand-100 px-2 py-2 text-center text-xs text-brand-700">
+  <span class="slot-state slot-state-brand">
     {% if cell.booking.status == 'PENDING_APPROVAL' %}{% trans "Awaiting approval" %}{% elif cell.is_mine %}{% trans "Yours" %}{% else %}{% trans "In use" %}{% endif %}
   </span>
 {% elif cell.state == "completed" %}
-  <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700">{% trans "Used" %}</span>
+  <span class="slot-state slot-state-muted">{% trans "Used" %}</span>
 {% elif cell.state == "taken" %}
   {% if cell.is_mine %}
     {# A booking that predates a class block survives it (D-28); the title says why the hour also shows a class. #}
-    <span class="block w-full rounded bg-brand-100 px-2 py-2 text-center text-xs text-brand-700"
+    <span class="slot-state slot-state-brand"
           {% if cell.block_reason %}title="{% blocktrans with reason=cell.block_reason %}Your booking stands. A class ({{ reason }}) is now timetabled for this hour.{% endblocktrans %}"{% endif %}>
       {% trans "Yours" %}
     </span>
   {% else %}
-    <span class="block w-full rounded bg-slate-200 px-2 py-2 text-center text-xs text-slate-700">{% trans "Booked" %}</span>
+    <span class="slot-state slot-state-booked">{% trans "Booked" %}</span>
   {% endif %}
 {% elif cell.state == "outside_horizon" %}
-  <span class="block w-full rounded bg-slate-100 px-2 py-2 text-center text-xs text-slate-500">{% trans "Too far ahead" %}</span>
+  <span class="slot-state slot-state-muted">{% trans "Too far ahead" %}</span>
 {% elif cell.state == "restricted" %}
   {# Free, but only reservable by the instruments this room is kept for. The label says which, because "unavailable" with no reason reads as a fault. #}
-  <span class="block w-full rounded bg-violet-50 px-2 py-2 text-center text-xs text-violet-800"
+  <span class="slot-state slot-state-restricted"
         title="{% trans 'This room is kept for piano and percussion students to reserve. Once the hour starts, anyone may use it if it is still free.' %}">
     {% trans "Piano & percussion only" %}
+  </span>
+{% elif cell.state == "view_only" %}
+  <span class="slot-state slot-state-muted" title="{% trans 'Availability is shown for reference; reservations and walk-ins are not available.' %}">
+    {% trans "View only" %}
   </span>
 {% endif %}

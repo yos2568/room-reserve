@@ -52,7 +52,7 @@ def test_the_public_grid_renders_every_room_and_every_hour(active_rooms, live_se
 
     table = browserlib.grid_table(page)
     expect(table.locator("tbody tr")).to_have_count(len(active_rooms))
-    expect(table.locator("thead th")).to_have_count(12 + 1)  # room column + 12 hours
+    expect(table.locator("thead th")).to_have_count(12 + 2)  # room + capacity columns + 12 hours
 
     # The morning hour under test offers a reservation, and it is a real link.
     cell = grid_cell(page, active_rooms[0], JOURNEY_HOUR)

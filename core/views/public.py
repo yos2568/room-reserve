@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET
@@ -42,12 +43,14 @@ def _grid_context(request, local_date: date, *, include_suggestions: bool = True
     user = request.user if request.user.is_authenticated else None
     capacity_min = _parse_capacity(request.GET.get("capacity"))
     equipment_query = (request.GET.get("equipment") or "").strip()[:80]
+    room_number = (request.GET.get("room") or "").strip()[:12]
     grid = availability.public_grid(
         local_date,
         moment,
         user=user,
         capacity_min=capacity_min,
         equipment_query=equipment_query,
+        room_number=room_number,
     )
     today = clock.local_date(moment)
 
@@ -72,6 +75,7 @@ def _grid_context(request, local_date: date, *, include_suggestions: bool = True
                 user=user,
                 capacity_min=capacity_min,
                 equipment_query=equipment_query,
+                room_number=room_number,
             )
             if include_suggestions
             else None
@@ -88,6 +92,8 @@ def _grid_context(request, local_date: date, *, include_suggestions: bool = True
         "closed_reason": _day_closed_reason(local_date),
         "capacity_min": capacity_min,
         "equipment_query": equipment_query,
+        "selected_room": room_number,
+        "room_options": Room.objects.filter(is_active=True).order_by("position", "number"),
         "capacity_options": _capacity_options(),
     }
 
@@ -105,6 +111,53 @@ def _capacity_options() -> list[int]:
     return sorted(configured | {1, 2, 4, 6, 8, 10})
 
 
+def _board_hour(raw: str | None, moment) -> int:
+    """Return a safe hourly choice for the room-selection board."""
+    try:
+        hour = int(raw or "")
+    except (TypeError, ValueError):
+        hour = clock.local_time(moment).hour
+    if not settings.OPENING_SLOT_START_HOUR <= hour <= settings.LAST_SLOT_START_HOUR:
+        return settings.OPENING_SLOT_START_HOUR
+    return hour
+
+
+@require_GET
+def room_board(request):
+    """Show every room at one selected date and hour, like a seat picker."""
+    moment = now()
+    local_date = _parse_date(request.GET.get("date"), clock.local_date(moment))
+    selected_hour = _board_hour(request.GET.get("time"), moment)
+    user = request.user if request.user.is_authenticated else None
+    grid = availability.public_grid(local_date, moment, user=user)
+    rows = []
+    for row in grid["rows"]:
+        cell = next(
+            (cell for cell in row["cells"] if clock.local_time(cell.slot_start).hour == selected_hour),
+            None,
+        )
+        rows.append({"room": row["room"], "cell": cell})
+
+    today = clock.local_date(moment)
+    policy = current_policy()
+    return render(
+        request,
+        "core/room_board.html",
+        {
+            "rows": rows,
+            "local_date": local_date,
+            "today_date": today,
+            "selected_hour": selected_hour,
+            "time_options": range(settings.OPENING_SLOT_START_HOUR, settings.LAST_SLOT_START_HOUR + 1),
+            "is_today": local_date == today,
+            "prev_date": local_date - timedelta(days=1) if local_date > today else None,
+            "next_date": local_date + timedelta(days=1)
+            if local_date < today + timedelta(days=policy.horizon_days)
+            else None,
+        },
+    )
+
+
 def _day_closed_reason(local_date: date) -> str:
     from core.services.calendar import day_hours
 
@@ -115,7 +168,7 @@ def _day_closed_reason(local_date: date) -> str:
 
 @require_GET
 def grid(request):
-    """The whole availability grid: nine rooms by twelve hourly slots."""
+    """The whole availability grid: configured rooms by twelve hourly slots."""
     moment = now()
     local_date = _parse_date(request.GET.get("date"), clock.local_date(moment))
     return render(request, "core/grid.html", _grid_context(request, local_date))
@@ -216,6 +269,8 @@ def week(request):
             "moment": moment,
             "capacity_min": _parse_capacity(request.GET.get("capacity")),
             "equipment_query": (request.GET.get("equipment") or "").strip()[:80],
+            "selected_room": (request.GET.get("room") or "").strip()[:12],
+            "room_options": Room.objects.filter(is_active=True).order_by("position", "number"),
             "capacity_options": _capacity_options(),
         },
     )

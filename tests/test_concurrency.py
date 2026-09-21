@@ -17,11 +17,11 @@ from datetime import timedelta
 import pytest
 from django.db import connections
 
-from core.models import Booking, Closure, Suspension, Violation
+from core.models import Booking, Closure, Suspension, User, Violation
 from core.services import booking as booking_service
 from core.services import checkin as checkin_service
-from core.services import clock, maintenance, slots
-from core.services.errors import Code
+from core.services import clock, identity, maintenance, slots
+from core.services.errors import Code, OperationRejected
 from core.services.protocol import run_operation
 from tests import factories
 from tests.helpers import _body
@@ -109,6 +109,58 @@ def test_twenty_users_race_for_one_slot():
     for worker in workers:
         if not worker.outcome.ok:
             assert worker.outcome.code in CLEAN_REJECTIONS, worker.outcome.code
+
+
+def test_single_use_activation_token_allows_only_one_concurrent_redemption():
+    """A single activation link cannot set two passwords at the same time."""
+    inviter = factories.make_user(
+        username="staff-token-race",
+        email="staff-token-race@student.chula.ac.th",
+        is_operational_staff=True,
+    )
+    user, _invitation, raw_token = identity.invite_account(
+        institutional_id="66009990001",
+        email="token-race@student.chula.ac.th",
+        name="Token Race",
+        actor=inviter,
+        staff=False,
+    )
+    barrier = threading.Barrier(2)
+    results = []
+    errors = []
+
+    def redeem(password):
+        try:
+            barrier.wait(timeout=10)
+            identity.set_initial_password(
+                user=User.objects.get(pk=user.pk),
+                password=password,
+                raw_token=raw_token,
+                purpose="ACCOUNT_ACTIVATION",
+            )
+            results.append("success")
+        except Exception as exc:  # noqa: BLE001 - assert the clean loser below.
+            errors.append(exc)
+        finally:
+            connections.close_all()
+
+    threads = [
+        threading.Thread(target=redeem, args=("a-long-enough-password-1",)),
+        threading.Thread(target=redeem, args=("another-long-password-2",)),
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=30)
+
+    assert all(not thread.is_alive() for thread in threads)
+    assert results == ["success"]
+    assert len(errors) == 1
+    assert isinstance(errors[0], OperationRejected)
+    assert errors[0].outcome.code == Code.TOKEN_USED
+
+    user.refresh_from_db()
+    assert user.check_password("a-long-enough-password-1") or user.check_password("another-long-password-2")
 
 
 # --- A10: one user, several slots, one allowance left -------------------------

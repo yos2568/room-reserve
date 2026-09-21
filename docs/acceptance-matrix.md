@@ -14,7 +14,7 @@ the reason. **Blocked** — a named external input is missing.
 
 | ID | Status | Evidence |
 |---|---|---|
-| A01 | **Passed** | `scripts/verify` check `clean_bootstrap`: a database created for the run, migrated from scratch, `seed_rooms` + `seed_demo`, then seven public routes fetched over HTTP and asserted 200 with `settings.ROOM_COUNT` active rooms (ten), exactly one restricted to piano and percussion, and a staff account. `local_mail_flow` sends a real message over SMTP to a catcher and reads it back. |
+| A01 | **Passed** | `scripts/verify` check `clean_bootstrap`: a database created for the run, migrated from scratch, `seed_rooms` + `seed_demo`, then seven public routes fetched over HTTP and asserted 200 with the configured active room set (twelve after the room-10 addition), exactly one restricted to piano and percussion, and a staff account. `local_mail_flow` sends a real message over SMTP to a catcher and reads it back. |
 | A02 | **Tested** | `tests/test_booking.py` (27) — same-day, exactly seven days, beyond the horizon, off-hours, weekends and holidays. |
 | A03 | **Tested** + browser | `tests/test_booking.py`, `tests/test_lifecycle.py` (18); `tests/test_browser_student.py::test_the_public_grid_renders_every_room_and_every_hour` renders the exact-hour cell. |
 | A04 | **Tested** + browser | `tests/test_lifecycle.py` — before start, at start, deadline − ε, at deadline; `tests/test_browser_walkin.py::test_a_stale_check_in_button_is_refused_and_reconciles_the_no_show` presses a stale Check in after the boundary. |
@@ -42,7 +42,7 @@ the reason. **Blocked** — a named external input is missing.
 | A26 | **Verified in a browser** | `tests/test_browser_privacy_posters.py::test_no_public_page_leaks_an_identity_or_a_secret` — nine anonymous pages scanned for a student's name, ID, email and the secret key; `::test_a_personal_response_is_not_publicly_cacheable` — `private, no-store` plus `Vary: Cookie` on personal responses. CSV formula payloads: `tests/test_permissions.py::test_csv_export_neutralises_formula_payloads` and `::test_roster_export_of_a_hostile_name_is_safe`. |
 | A27 | **Partly passed, partly manual** | Immutable image build, migration drift, `collectstatic` and restart persistence: `scripts/verify` checks `docker_image_build`, `migration_drift`, `collectstatic`, `restart_persistence`. Clean backup/restore into a fresh database with counts compared: check `backup_and_restore`. `manage.py check --deploy` against `prod.py` is **manual** (it needs real hostnames and TLS values to be meaningful). Migration/image rollback rehearsal is **manual** and unperformed. CI pushing an image to a registry is **blocked**: no registry credentials. |
 | A28 | **Tested** | `tests/test_scheduler.py` (18) — overlapping ticks skip, a mail outage is visible without a liveness restart loop, a documented incident exempts and corrects penalties. |
-| A29 | **Partly verified, partly manual** | `tests/test_browser_privacy_posters.py::test_one_poster_per_room_is_generated_and_each_carries_its_own_room` — one PNG per active room, each byte-identical to a code generated from that room's own target, each target fetched and confirmed to render that room; `::test_the_printable_sheet_renders_one_legible_poster_per_room` — one poster per room, with the printed module size computed from the rendered box. The assertion is **per active room, not nine**, because the department added a tenth room (see the deviation below). **Manual**: the physical door mapping, and reading a printed code with a scanner — no QR decoder is installed, and adding one only for a test would change the deployment surface. |
+| A29 | **Partly verified, partly manual** | `tests/test_browser_privacy_posters.py::test_one_poster_per_room_is_generated_and_each_carries_its_own_room` — one PNG per active room, each byte-identical to a code generated from that room's own target, each target fetched and confirmed to render that room; `::test_the_printable_sheet_renders_one_legible_poster_per_room` — one poster per room, with the printed module size computed from the rendered box. The assertion is **per active room, not nine**; the current configured set is twelve rooms after adding numbered stall 10 (see the deviation below). **Manual**: the physical door mapping, and reading a printed code with a scanner — no QR decoder is installed, and adding one only for a test would change the deployment surface. |
 | A30 | **Tested, performance unmeasured** | `tests/test_concurrency.py` runs 20 rounds with fresh fixtures and asserts zero invariant breaches (marked `slow`). **Not measured**: p95 mutation latency and the hardware it was measured on. The local machine is not the intended deployment hardware, so a number here would not be deployment evidence either way. |
 | — | **Blocked** | Deployment: real SMTP, a domain and TLS, a NAS/object-store backup destination, and external alerting. Pilot: about ten approved students and two weeks of real use. Neither can be manufactured. |
 
@@ -54,13 +54,14 @@ V3 is the sole product specification, so anything built that it does not describ
 recorded here rather than folded in silently. Both of these need the owner's
 decision on amending the specification text.
 
-**1. Eleven rooms, not nine.** The department's floor plan gives nine numbered
+**1. Twelve rooms, not nine.** The updated department floor plan gives ten numbered
 stalls plus two larger rooms: room 303 (reserved to piano and percussion students,
 D-28) and room 304 (general, but blocked during its class hours by the teaching
 timetable, also D-28). V3 states nine rooms and A29 requires nine posters.
 The code, the acceptance assertions and the runbook now follow the data
 (`ROOM_COUNT`, `ROOM_OVERRIDES`, one poster per active room) instead of the
-literal nine.
+literal nine. Room 10 is a normal general room and follows the same weekday
+08:00–20:00 opening schedule as stalls 1–9.
 
 V3 lines that need amending: `roomreserveapp.v3.md` §2 line 35 ("Nine upright-piano
 practice rooms"), §9 line 255 ("nine printable A4 QR posters"), §11 line 287
@@ -126,4 +127,3 @@ derives eligibility from the roster alone; because most roster rows cannot link
 restricted rooms once the account is approved, with the roster overriding it and
 staff able to correct it (D-30, superseding part of D-22). Evidence:
 `tests/test_declared_category.py`.
-

@@ -1,57 +1,71 @@
 {% extends "core/base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block title %}{% trans "Availability" %}{% endblock %}
 
 {% block content %}
-  <div class="flex flex-wrap items-end justify-between gap-3">
-    <div>
-      <h1 class="text-xl font-semibold">{% trans "Practice room availability" %}</h1>
-      <p class="text-sm text-slate-700">
-        {% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Monday to Friday, {{ open }}:00–{{ close }}:00. Each booking is one hour.{% endblocktrans %}
+  <section class="page-hero availability-hero">
+    <div class="max-w-3xl">
+      <p class="page-kicker">{% trans "Faculty of Fine and Applied Arts · Western Music" %}</p>
+      <h1 class="page-title">{% trans "Practice room availability" %}</h1>
+      <p class="page-intro">
+        {% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Book a room for a focused one-hour practice session. Open Monday to Friday, {{ open }}:00–{{ close }}:00.{% endblocktrans %}
       </p>
+      <div class="page-meta">
+        <span class="font-semibold text-slate-900">{{ local_date|date:"j F Y" }}</span>
+        {% if is_today %}<span class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">{% trans "Today" %}</span>{% endif %}
+        <span>{% trans "Live availability" %}</span>
+      </div>
     </div>
 
     {# Date navigation is a plain GET link, so it works with JavaScript disabled. #}
-    <nav aria-label="{% trans 'Choose a date' %}" class="flex items-center gap-2">
-      {% if prev_date %}
-        <a class="btn-secondary" href="?date={{ prev_date|date:'Y-m-d' }}">← {% trans "Previous day" %}</a>
-      {% endif %}
-      <span class="text-sm font-medium">
-        {{ local_date|date:"j F Y" }}{% if is_today %} · {% trans "today" %}{% endif %}
-      </span>
-      {% if next_date %}
-        <a class="btn-secondary" href="?date={{ next_date|date:'Y-m-d' }}">{% trans "Next day" %} →</a>
-      {% endif %}
-      <a class="btn-secondary" href="{% url 'core:week' %}?date={{ local_date|date:'Y-m-d' }}">{% trans "Week view" %}</a>
-    </nav>
-  </div>
+    <div class="mt-5 flex flex-wrap items-center gap-2 sm:mt-6">
+      <nav aria-label="{% trans 'Choose a date' %}" class="date-toolbar flex items-center gap-2">
+        {% if prev_date %}
+          <a class="date-arrow btn-secondary" href="?date={{ prev_date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}" aria-label="{% trans 'Previous day' %}">‹</a>
+        {% endif %}
+        <span class="date-display">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="2.5"></rect><path d="M8 3v4M16 3v4M3.5 10h17"></path></svg>
+          {{ local_date|date:"D, j M Y" }}
+        </span>
+        {% if next_date %}
+          <a class="date-arrow btn-secondary" href="?date={{ next_date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}" aria-label="{% trans 'Next day' %}">›</a>
+        {% endif %}
+      </nav>
+      {% if not is_today %}<a class="btn-secondary today-button" href="?date={{ days.0.date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}">{% trans "Today" %}</a>{% endif %}
+      <a class="week-link" href="{% url 'core:week' %}?date={{ local_date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}">{% trans "Week view" %}</a>
+    </div>
+  </section>
 
-  <form method="get" class="card mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+  <form method="get" class="filter-panel card mt-4" aria-label="{% trans 'Find a suitable room' %}">
     <input type="hidden" name="date" value="{{ local_date|date:'Y-m-d' }}">
-    <div>
-      <label class="label" for="capacity-filter">{% trans "Minimum capacity" %}</label>
-      <select class="field" id="capacity-filter" name="capacity">
-        <option value="">{% trans "Any capacity" %}</option>
-        {% for option in capacity_options %}
-          <option value="{{ option }}" {% if capacity_min == option %}selected{% endif %}>{{ option }}+</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
-      <label class="label" for="equipment-filter">{% trans "Equipment or facility" %}</label>
-      <input class="field" id="equipment-filter" name="equipment" value="{{ equipment_query }}" placeholder="{% trans 'e.g. piano' %}" autocomplete="off">
-    </div>
-    <div class="flex flex-wrap gap-2">
-      <button class="btn-primary" type="submit">{% trans "Filter rooms" %}</button>
-      <a class="btn-secondary" href="?date={{ local_date|date:'Y-m-d' }}">{% trans "Clear" %}</a>
+    <div class="filter-row">
+      <div class="filter-field">
+        <label class="sr-only" for="room-filter">{% trans "Room" %}</label>
+        <svg class="filter-field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V6.5L12 3l8 3.5V20"></path><path d="M8 20v-5h8v5M8 8h.01M12 8h.01M16 8h.01M8 11h.01M12 11h.01M16 11h.01"></path></svg>
+        <select class="filter-select" id="room-filter" name="room">
+          <option value="">{% trans "All rooms" %}</option>
+          {% for room in room_options %}
+            <option value="{{ room.number }}" {% if selected_room == room.number %}selected{% endif %}>{{ room.number }} — {{ room }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="sr-only" for="equipment-filter">{% trans "Equipment or facility" %}</label>
+        <svg class="filter-field-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m20 20-3.8-3.8"></path></svg>
+        <input class="filter-select filter-input" id="equipment-filter" name="equipment" value="{{ equipment_query }}" placeholder="{% trans 'e.g. piano' %}" autocomplete="off">
+      </div>
+      <div class="filter-actions">
+        <button class="btn-secondary !min-h-touch !px-4 !py-1.5 text-xs" type="submit">{% trans "Filter rooms" %}</button>
+        <a class="filter-clear" href="?date={{ local_date|date:'Y-m-d' }}">{% trans "Clear filters" %}</a>
+      </div>
     </div>
   </form>
 
-  <div class="mt-3 flex flex-wrap gap-2 text-xs">
+  <div class="date-strip mt-4" aria-label="{% trans 'Nearby dates' %}">
     {% for day in days %}
-      <a class="rounded border px-2 py-2 {% if day.is_selected %}border-brand-600 bg-brand-50 font-semibold{% else %}border-slate-300 bg-white{% endif %}"
-         href="?date={{ day.date|date:'Y-m-d' }}"
+      <a class="date-chip"
+         href="?date={{ day.date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}"
          {% if day.is_selected %}aria-current="date"{% endif %}>
         {{ day.date|date:"D j M" }}
       </a>
@@ -59,7 +73,7 @@
   </div>
 
   {% if user.is_authenticated %}
-    <p class="card mt-3 text-sm">
+    <p class="account-notice card mt-4 text-sm" role="status">
       {% if user.is_teacher %}
         <span class="font-medium">{% trans "Teacher account: you can view every schedule. Booking is available to students." %}</span>
       {% elif user.eligibility == 'PENDING' %}
@@ -71,7 +85,7 @@
       {% endif %}
     </p>
   {% else %}
-    <p class="card mt-3 text-sm">
+    <p class="account-notice card mt-4 text-sm" role="status">
       {% trans "Availability is public. Reserving or using a room needs an account." %}
       <a class="underline" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
       ·
@@ -79,9 +93,39 @@
     </p>
   {% endif %}
 
-  <div class="mt-4">
+  <div class="schedule-heading mt-5 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <p class="section-label">{% trans "Room timetable" %}</p>
+      <p class="mt-1 text-sm text-slate-600">{% trans "Choose an open hour to reserve, or open a room to see its profile." %}</p>
+    </div>
+    <div class="legend" aria-label="{% trans 'Availability legend' %}">
+      <span class="inline-flex items-center gap-1.5"><span class="legend-swatch legend-swatch-free" aria-hidden="true"></span>{% trans "Free" %}</span>
+      <span class="inline-flex items-center gap-1.5"><span class="legend-swatch legend-swatch-booked" aria-hidden="true"></span>{% trans "Booked" %}</span>
+      <span class="inline-flex items-center gap-1.5"><span class="legend-swatch legend-swatch-class" aria-hidden="true"></span>{% trans "Class" %}</span>
+      <span class="inline-flex items-center gap-1.5"><span class="legend-swatch legend-swatch-closed" aria-hidden="true"></span>{% trans "Closed" %}</span>
+      <span class="inline-flex items-center gap-1.5"><span class="legend-swatch legend-swatch-restricted" aria-hidden="true"></span>{% trans "Piano & percussion" %}</span>
+    </div>
+  </div>
+
+  <div class="availability-shell mt-3">
     {% include "core/partials/grid_table.html" %}
   </div>
+
+  <details class="floor-plan-panel mt-5" open>
+    <summary><span>{% trans "Room map" %}<small>{% trans "Tap a room to orient yourself before choosing a time" %}</small></span><span class="summary-action">{% trans "Collapse" %}⌃</span></summary>
+    <div class="floor-plan-content">
+      {# The supplied RGz3L illustration is the canonical floor-plan asset (2026-09-21); older variants stay in the repo unreferenced rather than deleted. #}
+      <div class="floor-plan-stage">
+        <img class="floor-plan-image" src="{% static 'img/floor-plan-dashboard.jpg' %}" width="1792" height="1008" loading="lazy" decoding="async" alt="{% trans 'Illustrated floor plan showing rooms 301, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 302, 303 and 304 with circulation areas' %}">
+      </div>
+      <div class="floor-plan-copy">
+        <p class="section-label">{% trans "Third-floor practice rooms" %}</p>
+        <h2>{% trans "Find your room" %}</h2>
+        <p>{% trans "Rooms are on the third floor. Numbers match the schedule above." %}</p>
+        <p class="floor-plan-note">{% trans "Illustrated schematic; not to scale." %}</p>
+      </div>
+    </div>
+  </details>
 
   <p class="mt-3 text-xs text-slate-600">
     {% trans "This page refreshes every 30 seconds. A change still has to be accepted by the server, so availability is a snapshot rather than a guarantee." %}

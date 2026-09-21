@@ -38,15 +38,40 @@ def _password_form_context(*, token: str, purpose: str, account=None, errors=Non
 
 @require_http_methods(["GET", "POST"])
 def register(request):
-    """Self-registration: ID + institutional email + name + declared instrument."""
+    """Show separated student and invited faculty/staff registration paths.
+
+    Students self-register with the roster identifiers needed for eligibility.
+    Faculty, operational staff and technical administrators are never allowed to
+    self-assign a privileged role; they use a staff-issued invitation instead.
+    """
     if request.user.is_authenticated:
         return redirect("core:my_bookings")
+
+    registration_type = (request.POST.get("account_type") or request.GET.get("type") or "student").strip().lower()
+    if registration_type not in {"student", "faculty", "admin"}:
+        registration_type = "student"
 
     instrument_choices = [
         (value, label) for value, label in InstrumentCategory.choices if value != InstrumentCategory.UNKNOWN
     ]
-    context = {"operation_key": None, "outcome": None, "instrument_choices": instrument_choices}
+    context = {
+        "operation_key": None,
+        "outcome": None,
+        "instrument_choices": instrument_choices,
+        "registration_type": registration_type,
+    }
     if request.method == "POST":
+        # Roles with operational or administrative privileges are invitation-only.
+        # Keeping this guard server-side prevents a crafted POST from turning the
+        # visual account selector into a privilege-escalation endpoint.
+        if registration_type != "student":
+            messages.info(
+                request,
+                "บัญชีอาจารย์ เจ้าหน้าที่ และผู้ดูแลระบบต้องได้รับคำเชิญจากเจ้าหน้าที่ / "
+                "Faculty, staff and administrator accounts require a staff-issued invitation.",
+            )
+            return redirect(f"{request.path}?type={registration_type}")
+
         institutional_id = (request.POST.get("institutional_id") or "").strip()
         email = (request.POST.get("email") or "").strip()
         name = (request.POST.get("name") or "").strip()

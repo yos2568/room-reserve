@@ -228,6 +228,10 @@ def sign_in(page: Page, base_url: str, institutional_id: str, password: str, lan
 
 
 def sign_out(page: Page) -> None:
+    """Sign-out lives behind the header's account disclosure; open it first."""
+    menu = page.locator(".account-menu")
+    if menu.get_attribute("open") is None:
+        menu.locator("summary").click()
     page.locator("form[action*='/logout/'] button[type=submit]").first.click()
     expect(page.locator("form[action*='/logout/']")).to_have_count(0)
 

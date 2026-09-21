@@ -171,7 +171,7 @@ def test_bookable_slot_starts_skip_class_hours(frozen, rooms):
     assert {12, 15}.issubset(hours)
 
 
-# --- Provisioning (stalls 1–9, rooms 303 and 304) --------------------------------
+# --- Provisioning (stalls 1–10, rooms 301, 303 and 304) ----------------------------
 
 
 def test_ensure_rooms_provisions_the_real_floor(frozen, db):
@@ -179,12 +179,41 @@ def test_ensure_rooms_provisions_the_real_floor(frozen, db):
 
     assert report["retired"] == 0
     active = {room.number: room for room in Room.objects.filter(is_active=True)}
-    assert set(active) == {"1", "2", "3", "4", "5", "6", "7", "8", "9", "303", "304"}
+    assert set(active) == {
+        "301",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "303",
+        "304",
+    }
 
     assert active["303"].is_restricted
     assert sorted(active["303"].allowed_category_values) == ["PERCUSSION", "PIANO"]
     assert not active["304"].is_restricted
     assert active["304"].label == "ห้อง 304 (ห้องบรรยาย 1)"
+    assert active["301"].label == "ห้อง 301 (ห้องเรียนหลัก)"
+    assert active["301"].availability_only
+    assert active["303"].requires_approval
+    assert active["304"].requires_approval
+
+    assert set(
+        WeeklyBlock.objects.filter(room=active["301"]).values_list("weekday", "start_hour", "end_hour")
+    ) == {
+        (0, 13, 15),  # Monday: Piano III, IV
+        (1, 8, 10),  # Tuesday: Theo Mus E Trg I
+        (1, 12, 15),  # Tuesday: Ensemble
+        (2, 13, 15),  # Wednesday: Piano I
+        (3, 13, 15),  # Thursday: Chorus / theory
+        (4, 13, 15),  # Friday: Orchestration I
+    }
 
     assert set(
         WeeklyBlock.objects.filter(room=active["304"]).values_list("weekday", "start_hour", "end_hour")
@@ -197,15 +226,30 @@ def test_ensure_rooms_provisions_the_real_floor(frozen, db):
     assert not WeeklyBlock.objects.filter(room=active["303"]).exists()
 
 
+def test_room_301_is_availability_only_and_cannot_be_reserved(frozen, student, db):
+    rooms_service.ensure_rooms()
+    room = Room.objects.get(number="301")
+
+    grid = availability.public_grid(NEXT_TUESDAY, clock.now(), user=student)
+    cell = cell_for(grid, room, 11)
+    assert cell.state == availability.SlotState.VIEW_ONLY
+    assert not cell.can_reserve
+    assert not cell.can_use_now
+
+    outcome = helpers.advance_booking(student, room, slots.slot_start_for(NEXT_TUESDAY, 11))
+    assert not outcome.ok
+    assert outcome.code == Code.CLOSED
+
+
 def test_ensure_rooms_is_idempotent_and_retires_strays(frozen, db):
     rooms_service.ensure_rooms()
-    stray = Room.objects.create(number="10", label="ห้องซ้อมใหญ่", position=10)
+    stray = Room.objects.create(number="11", label="ห้องซ้อมใหญ่", position=11)
 
     rooms_service.ensure_rooms()
 
     stray.refresh_from_db()
     assert not stray.is_active
-    assert Room.objects.filter(is_active=True).count() == 11
+    assert Room.objects.filter(is_active=True).count() == 13
     assert WeeklyBlock.objects.filter(room__number="304").count() == 4
 
 
@@ -260,4 +304,4 @@ def test_dropping_a_room_from_the_timetable_clears_its_blocks(frozen, db):
     report = rooms_service.ensure_rooms(weekly_blocks={})
 
     assert not WeeklyBlock.objects.exists()
-    assert report["blocks_cleared"] == 5
+    assert report["blocks_cleared"] == 11

@@ -4,81 +4,87 @@
 {% block title %}{% trans "Confirm reservation" %}{% endblock %}
 
 {% block content %}
-  <h1 class="text-xl font-semibold">{% trans "Confirm reservation" %}</h1>
+  <div class="max-w-2xl">
+    <section class="page-hero">
+      <p class="page-kicker">{% trans "Room booking" %}</p>
+      <h1 class="page-title">{% trans "Confirm reservation" %}</h1>
+      <p class="page-intro">{% trans "Review the room and time, then add a short purpose so staff can understand the reservation." %}</p>
+    </section>
 
-  {% if outcome and not outcome.ok %}
-    <div class="card mt-3 border-red-700 bg-red-50" role="alert">{{ outcome.message }}</div>
-    {% if alternatives %}
-      <div class="card mt-3 max-w-xl border-brand-600 bg-brand-50">
-        <h2 class="text-sm font-semibold">{% trans "Other rooms free at this hour" %}</h2>
-        <ul class="mt-2 flex flex-wrap gap-1.5">
-          {% for alt in alternatives %}
-            <li>
-              <a class="inline-flex items-center rounded-full border border-brand-600 bg-white px-3 py-1 text-xs font-medium text-brand-700 hover:bg-brand-600 hover:text-white"
-                 href="{% url 'core:book_slot' room_id=alt.pk slot=slot_key %}">{{ alt }}</a>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endif %}
-  {% endif %}
-
-  <div class="card mt-4 max-w-xl">
-    <dl class="space-y-1 text-sm">
-      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Room" %}</dt><dd>{{ room }}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Date" %}</dt><dd>{{ slot_start|date:"j F Y" }}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Hour" %}</dt><dd>{{ slot_start|date:"H:i" }}–{{ slot_end|date:"H:i" }}</dd></div>
-      <div class="flex justify-between gap-4">
-        <dt class="font-medium">{% trans "Arrive by" %}</dt>
-        <dd>{{ deadline|date:"H:i" }}</dd>
-      </div>
-      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Bookings that day" %}</dt><dd>{{ quota_used }} / {{ policy.daily_quota }}</dd></div>
-      {% if room.requires_approval %}
-        <div class="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-amber-800">
-          {% trans "This room requires administrator approval. Your request is not confirmed until you receive the approval email." %}
+    {% if outcome and not outcome.ok %}
+      <div class="card mt-4 border-red-700 bg-red-50" role="alert">{{ outcome.message }}</div>
+      {% if alternatives %}
+        <div class="card mt-3 border-brand-600 bg-brand-50">
+          <h2 class="text-sm font-semibold">{% trans "Other rooms free at this hour" %}</h2>
+          <ul class="mt-2 flex flex-wrap gap-1.5">
+            {% for alt in alternatives %}
+              <li>
+                <a class="chip border-brand-600 text-brand-700 hover:bg-brand-600 hover:text-white"
+                   href="{% url 'core:book_slot' room_id=alt.pk slot=slot_key %}">{{ alt }}</a>
+              </li>
+            {% endfor %}
+          </ul>
         </div>
       {% endif %}
-    </dl>
+    {% endif %}
 
-    <p class="mt-3 text-xs text-slate-700">
-      {% blocktrans with minutes=policy.checkin_grace_minutes %}Check in at the room between the start of the hour and {{ minutes }} minutes past it. After that the room is released to other students and a strike is recorded.{% endblocktrans %}
-    </p>
+    <div class="flow-panel mt-4">
+      <dl class="booking-summary">
+        <div><dt>{% trans "Room" %}</dt><dd>{{ room }}</dd></div>
+        <div><dt>{% trans "Date" %}</dt><dd>{{ slot_start|date:"j F Y" }}</dd></div>
+        <div><dt>{% trans "Hour" %}</dt><dd>{{ slot_start|date:"H:i" }}–{{ slot_end|date:"H:i" }}</dd></div>
+        <div><dt>{% trans "Arrive by" %}</dt><dd>{{ deadline|date:"H:i" }}</dd></div>
+        <div><dt>{% trans "Bookings that day" %}</dt><dd>{{ quota_used }} / {{ policy.daily_quota }}</dd></div>
+      </dl>
 
-    <div class="mt-4 border-t border-slate-200 pt-4">
-      <h2 class="text-base font-semibold">{% trans "Booking details" %}</h2>
-      <p class="mt-1 text-xs text-slate-600">{% trans "Optional. These details are shown to you and staff, not on the public availability grid." %}</p>
-    </div>
+      {% if room.requires_approval %}
+        <p class="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          {% trans "This room requires administrator approval. Your request is not confirmed until you receive the approval email." %}
+        </p>
+      {% endif %}
 
-    <form method="post" action="{% url 'core:confirm_booking' room_id=room.pk slot=slot_key %}" class="mt-3 space-y-3">
-      {% csrf_token %}
-      <input type="hidden" name="operation_key" value="{{ operation_key }}">
-      <div>
-        <label class="label" for="booking-title">{% trans "Title" %}</label>
-        <input class="field" id="booking-title" name="title" maxlength="120" value="{{ details.title }}" autocomplete="off">
+      <p class="mt-4 text-xs leading-5 text-slate-700">
+        {% blocktrans with minutes=policy.checkin_grace_minutes %}Check in at the room between the start of the hour and {{ minutes }} minutes past it. After that the room is released to other students and a strike is recorded.{% endblocktrans %}
+      </p>
+
+      <div class="mt-5 border-t border-slate-200 pt-5">
+        <h2 class="section-heading">{% trans "Booking details" %}</h2>
+        <p class="mt-1 text-xs text-slate-600">{% trans "Optional. These details are shown to you and staff, not on the public availability grid." %}</p>
       </div>
-      <div>
-        <label class="label" for="booking-purpose">{% trans "Purpose" %}</label>
-        <textarea class="field" id="booking-purpose" name="purpose" rows="3" maxlength="500">{{ details.purpose }}</textarea>
-      </div>
-      <div>
-        <label class="label" for="booking-participants">{% trans "Participants (optional)" %}</label>
-        <input class="field" id="booking-participants" name="participant_names" maxlength="500" value="{{ details.participant_names }}" autocomplete="off">
-        <p class="mt-1 text-xs text-slate-600">{% trans "Use names only when needed for coordination." %}</p>
-      </div>
-      <fieldset class="rounded border border-slate-200 bg-slate-50 p-3">
-        <legend class="px-1 text-sm font-medium">{% trans "Repeat weekly" %}</legend>
-        <label class="flex items-start gap-2 text-sm">
-          <input class="mt-1" type="checkbox" name="repeat_weekly" value="on" {% if repeat_weekly %}checked{% endif %}>
-          <span>{% blocktrans with weeks=recurring_max_weeks %}Create one booking each week, for up to {{ weeks }} weeks after the first booking.{% endblocktrans %}</span>
-        </label>
-        <div class="mt-2">
-          <label class="label" for="repeat-until">{% trans "Repeat until" %}</label>
-          <input class="field" id="repeat-until" name="repeat_until" type="date" value="{{ repeat_until }}">
+
+      <form method="post" action="{% url 'core:confirm_booking' room_id=room.pk slot=slot_key %}" class="mt-4 space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="operation_key" value="{{ operation_key }}">
+        <div>
+          <label class="label" for="booking-title">{% trans "Title" %}</label>
+          <input class="field" id="booking-title" name="title" maxlength="120" value="{{ details.title }}" autocomplete="off">
         </div>
-        <p class="mt-1 text-xs text-slate-600">{% trans "Every occurrence is checked for room availability and your daily booking limit before anything is created." %}</p>
-      </fieldset>
-      <button class="btn-primary" type="submit">{% trans "Confirm reservation" %}</button>
-      <a class="btn-secondary" href="{% url 'core:home' %}?date={{ slot_start|date:'Y-m-d' }}">{% trans "Cancel" %}</a>
-    </form>
+        <div>
+          <label class="label" for="booking-purpose">{% trans "Purpose" %}</label>
+          <textarea class="field" id="booking-purpose" name="purpose" rows="3" maxlength="500">{{ details.purpose }}</textarea>
+        </div>
+        <div>
+          <label class="label" for="booking-participants">{% trans "Participants (optional)" %}</label>
+          <input class="field" id="booking-participants" name="participant_names" maxlength="500" value="{{ details.participant_names }}" autocomplete="off">
+          <p class="mt-1 text-xs text-slate-600">{% trans "Use names only when needed for coordination." %}</p>
+        </div>
+        <fieldset class="rounded-md border border-slate-200 bg-slate-50 p-4">
+          <legend class="px-1 text-sm font-medium">{% trans "Repeat weekly" %}</legend>
+          <label class="flex items-start gap-2 text-sm">
+            <input class="mt-1" type="checkbox" name="repeat_weekly" value="on" {% if repeat_weekly %}checked{% endif %}>
+            <span>{% blocktrans with weeks=recurring_max_weeks %}Create one booking each week, for up to {{ weeks }} weeks after the first booking.{% endblocktrans %}</span>
+          </label>
+          <div class="mt-3">
+            <label class="label" for="repeat-until">{% trans "Repeat until" %}</label>
+            <input class="field" id="repeat-until" name="repeat_until" type="date" value="{{ repeat_until }}">
+          </div>
+          <p class="mt-1 text-xs text-slate-600">{% trans "Every occurrence is checked for room availability and your daily booking limit before anything is created." %}</p>
+        </fieldset>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn-primary" type="submit">{% trans "Confirm reservation" %}</button>
+          <a class="btn-secondary" href="{% url 'core:home' %}?date={{ slot_start|date:'Y-m-d' }}">{% trans "Cancel" %}</a>
+        </div>
+      </form>
+    </div>
   </div>
 {% endblock %}

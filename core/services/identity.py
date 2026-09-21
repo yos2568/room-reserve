@@ -353,16 +353,28 @@ def start_password_reset(email: str) -> None:
 
 
 def set_initial_password(*, user, password: str, raw_token: str, purpose: str) -> None:
-    """Set the account password after a successful token redemption."""
-    invitation = assert_redeemable(find_invitation(raw_token, purpose), purpose)
+    """Set the account password after a single-use token redemption.
 
-    if invitation.user_id != user.pk:
-        raise OperationRejected(Code.INVALID_TOKEN)
+    The invitation row is locked for the entire validation, password update and
+    consumption transaction. Without that lock, two concurrent requests can both
+    observe ``used_at`` as empty and both redeem the same link.
+    """
+    with transaction.atomic():
+        invitation = (
+            Invitation.objects.select_for_update()
+            .select_related("user")
+            .filter(token_digest=token_digest(raw_token), purpose=purpose)
+            .first()
+        )
+        invitation = assert_redeemable(invitation, purpose)
 
-    _store_password(user, password, via=purpose)
+        if invitation.user_id != user.pk:
+            raise OperationRejected(Code.INVALID_TOKEN)
 
-    invitation.used_at = clock.now()
-    invitation.save(update_fields=["used_at"])
+        _store_password(invitation.user, password, via=purpose)
+
+        invitation.used_at = clock.now()
+        invitation.save(update_fields=["used_at"])
 
 
 def complete_registration(*, raw_token: str, password: str) -> User:
@@ -378,11 +390,17 @@ def complete_registration(*, raw_token: str, password: str) -> User:
     The password is validated *before* the link is consumed, so a password that
     fails the validators leaves the link usable and the student can try again.
     """
-    purpose = Invitation.Purpose.EMAIL_VERIFICATION
-    invitation = assert_redeemable(find_invitation(raw_token, purpose), purpose)
-    user = invitation.user
-
     with transaction.atomic():
+        purpose = Invitation.Purpose.EMAIL_VERIFICATION
+        invitation = (
+            Invitation.objects.select_for_update()
+            .select_related("user")
+            .filter(token_digest=token_digest(raw_token), purpose=purpose)
+            .first()
+        )
+        invitation = assert_redeemable(invitation, purpose)
+        user = invitation.user
+
         _store_password(user, password, via=purpose)
 
         invitation.used_at = clock.now()
@@ -549,8 +567,13 @@ def invite_account(
     invites a faculty account (D-34): sign-in works, but the account is
     read-only — schedules only — until the owner widens its permissions.
     """
-    institutional_id = (institutional_id or "").strip()
     email = normalize_email(email)
+    institutional_id = (institutional_id or "").strip()
+    # Faculty and operational staff are not students: their email is their
+    # stable login identifier when the inviter does not supply a student ID.
+    # Technical superuser access is still never granted by this workflow.
+    if not institutional_id and (staff or teacher):
+        institutional_id = email
     if not institutional_id or not email:
         raise OperationRejected(Code.INVALID_INPUT)
 

@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Change room" %}{% endblock %}
+
+{% block content %}
+  <div class="max-w-2xl">
+    <section class="page-hero">
+      <p class="page-kicker">{{ booking.room }}</p>
+      <h1 class="page-title">{% trans "Change room" %}</h1>
+      <p class="page-intro">{{ booking.local_start|date:"j F Y" }} · {{ booking.local_start|date:"H:i" }}–{{ booking.local_end|date:"H:i" }}</p>
+    </section>
+
+    {% if outcome and not outcome.ok %}
+      <div class="card mt-4 border-red-700 bg-red-50" role="alert">{{ outcome.message }}</div>
+    {% endif %}
+
+    {% if not movable %}
+      <div class="card mt-4 border-amber-600 bg-amber-50" role="status">
+        {% if booking.recurrence_id %}
+          {% trans "This booking belongs to a weekly series. Cancel the series to change rooms." %}
+        {% else %}
+          {% trans "This booking can no longer be moved." %}
+        {% endif %}
+      </div>
+      <p class="mt-4"><a class="btn-secondary" href="{% url 'core:my_bookings' %}">{% trans "Back to my bookings" %}</a></p>
+    {% elif not rooms %}
+      <div class="card mt-4" role="status">
+        <p>{% trans "No other room is free at this hour. Your current booking is unchanged." %}</p>
+      </div>
+      <p class="mt-4"><a class="btn-secondary" href="{% url 'core:my_bookings' %}">{% trans "Back to my bookings" %}</a></p>
+    {% else %}
+      <p class="mt-4 text-sm text-slate-600">
+        {% trans "Pick a room below. Your hour stays the same, and you keep your current room until the new one is confirmed." %}
+      </p>
+
+      <form method="post" class="flow-panel mt-3 space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="operation_key" value="{{ operation_key }}">
+        <fieldset>
+          <legend class="label">{% trans "Rooms free at this hour" %}</legend>
+          <ul class="mt-2 space-y-2">
+            {% for room in rooms %}
+              <li>
+                <label class="room-choice">
+                  <input type="radio" name="room_id" value="{{ room.pk }}" {% if forloop.first %}checked{% endif %} required>
+                  <span>
+                    <span class="room-choice-name">{{ room }}</span>
+                    <span class="room-choice-meta">
+                      {% blocktrans with capacity=room.capacity %}Capacity {{ capacity }}{% endblocktrans %}
+                      {% if room.requires_approval %} · {% trans "Needs staff approval" %}{% endif %}
+                    </span>
+                  </span>
+                </label>
+              </li>
+            {% endfor %}
+          </ul>
+        </fieldset>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn-primary" type="submit">{% trans "Move my booking" %}</button>
+          <a class="btn-secondary" href="{% url 'core:my_bookings' %}">{% trans "Keep my current room" %}</a>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}

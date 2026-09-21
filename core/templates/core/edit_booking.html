@@ -5,15 +5,17 @@
 
 {% block content %}
   <div class="max-w-2xl">
-    <p class="text-sm font-medium text-brand-700">{{ booking.room }}</p>
-    <h1 class="mt-1 text-xl font-semibold">{% trans "Edit booking details" %}</h1>
-    <p class="mt-1 text-sm text-slate-700">{{ booking.local_start|date:"j F Y" }} · {{ booking.local_start|date:"H:i" }}–{{ booking.local_end|date:"H:i" }}</p>
+    <section class="page-hero">
+      <p class="page-kicker">{{ booking.room }}</p>
+      <h1 class="page-title">{% trans "Edit booking details" %}</h1>
+      <p class="page-intro">{{ booking.local_start|date:"j F Y" }} · {{ booking.local_start|date:"H:i" }}–{{ booking.local_end|date:"H:i" }}</p>
+    </section>
 
     {% if outcome and not outcome.ok %}
       <div class="card mt-4 border-red-700 bg-red-50" role="alert">{{ outcome.message }}</div>
     {% endif %}
 
-    <form method="post" class="card mt-4 space-y-4">
+    <form method="post" class="flow-panel mt-4 space-y-4">
       {% csrf_token %}
       <input type="hidden" name="operation_key" value="{{ operation_key }}">
       <div>

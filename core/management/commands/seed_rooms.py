@@ -1,9 +1,10 @@
 """Idempotently ensure the configured practice rooms exist.
 
 The rooms and their per-room configuration come from settings
-(``ROOM_COUNT`` / ``ROOM_OVERRIDES`` / ``ROOM_WEEKLY_BLOCKS``): the nine stalls,
-the piano-and-percussion room 303, and the teaching room 304 with its class
-hours are deployment configuration rather than literals buried in a command.
+(``ROOM_COUNT`` / ``ROOM_OVERRIDES`` / ``ROOM_WEEKLY_BLOCKS``): the ten stalls,
+the timetable-only teaching room 301, the piano-and-percussion room 303, and
+the approval-controlled teaching room 304 are deployment configuration rather
+than literals buried in a command.
 Rooms outside the configured set are deactivated, never deleted.
 """
 

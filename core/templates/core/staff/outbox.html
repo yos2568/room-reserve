@@ -51,7 +51,7 @@
           <tr class="border-b border-slate-200">
             <td class="p-2">{{ note.created_at|date:"j M Y H:i" }}</td>
             <td class="p-2">{{ note.kind }}</td>
-            <td class="p-2">{{ note.recipient.institutional_id }}</td>
+            <td class="p-2">{% if note.recipient_email %}{{ note.recipient_email }}{% else %}{{ note.recipient.institutional_id }}{% endif %}</td>
             <td class="p-2">{{ note.get_status_display }}</td>
             <td class="p-2">{{ note.attempts }}</td>
             <td class="p-2 text-xs">{{ note.last_error }}</td>

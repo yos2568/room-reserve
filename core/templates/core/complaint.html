@@ -1,0 +1,27 @@
+{% extends "core/base.html" %}
+{% block title %}แจ้งข้อร้องเรียน / Report a concern{% endblock %}
+{% block content %}
+<div class="max-w-2xl">
+  <section class="page-hero">
+    <h1 class="page-title">แจ้งข้อร้องเรียน</h1>
+    <p class="page-intro">Report a concern about practice rooms or the booking service.</p>
+    <p class="mt-2 text-sm">ส่งถึง / To: <a class="underline" href="mailto:{{ complaint_email }}">{{ complaint_email }}</a></p>
+  </section>
+  <form method="post" class="flow-panel mt-4 space-y-4">
+    {% csrf_token %}
+    {{ form.submission }}
+    {% if form.errors %}<div role="alert" class="text-red-800">กรุณาตรวจสอบข้อมูล / Please check the form. {{ form.non_field_errors }}{{ form.submission.errors }}</div>{% endif %}
+    <p class="text-sm">ชื่อและอีเมลติดต่อกลับ / Your name and reply address: <strong>{{ user.display_name }}</strong> · {{ user.email }}</p>
+    {% for field in form.visible_fields %}
+      <div>
+        <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="mt-1 text-sm" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+        {% if field.errors %}<div id="{{ field.auto_id }}_error" class="text-red-800">{{ field.errors }}</div>{% endif %}
+      </div>
+    {% endfor %}
+    <p class="text-sm">ข้อความ ชื่อ และอีเมลของคุณจะถูกส่งให้ผู้ดูแลและบันทึกในระบบ หลีกเลี่ยงรหัสผ่านและข้อมูลส่วนตัวที่ไม่จำเป็น<br>Your message and contact details are shared with the administrator and stored for follow-up. Do not include passwords or unnecessary personal details.</p>
+    <button class="btn-primary" type="submit">ส่งข้อร้องเรียน / Send complaint</button>
+  </form>
+</div>
+{% endblock %}

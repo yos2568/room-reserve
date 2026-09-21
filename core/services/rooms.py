@@ -204,7 +204,7 @@ def ensure_rooms(
         # settings reaches an existing database without a migration.
         if config:
             profile_updates = {}
-            for field in ("label", "capacity", "equipment", "requires_approval"):
+            for field in ("label", "capacity", "equipment", "requires_approval", "availability_only"):
                 if field in config and getattr(room, field) != config[field]:
                     setattr(room, field, config[field])
                     profile_updates[field] = config[field]

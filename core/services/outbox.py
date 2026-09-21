@@ -41,6 +41,7 @@ def enqueue(
     payload: dict | None = None,
     due_at=None,
     language: str | None = None,
+    recipient_email: str = "",
 ) -> tuple[Notification, bool]:
     """Insert one outbox row. Repeated calls with the same key are a no-op.
 
@@ -58,6 +59,7 @@ def enqueue(
         defaults={
             "kind": kind,
             "recipient": recipient,
+            "recipient_email": recipient_email,
             "language": language or getattr(recipient, "locale", None) or "th",
             "payload": payload or {},
             "due_at": due_at or now,

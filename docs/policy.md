@@ -26,7 +26,8 @@ cannot retroactively invalidate a check-in that already happened.
 | Automatic suspension | 7 days | `POLICY_AUTO_SUSPENSION_DAYS` |
 | Reminder lead | 30 minutes before the hour | `POLICY_REMINDER_LEAD_MINUTES` |
 | Institutional email | `student.chula.ac.th` | `INSTITUTION_EMAIL_DOMAIN` |
-| Rooms | 11 — stalls 1–9, room 303 instrument-specific, room 304 general | `ROOM_COUNT`, `ROOM_OVERRIDES` |
+| Rooms | 13 — room 301 view-only, stalls 1–10, room 303 instrument-specific, room 304 general | `ROOM_COUNT`, `ROOM_OVERRIDES` |
+| Class hours on 301 | Mon 13–15, Tue 08–10 and 12–15, Wed–Fri 13–15 (approximate first-semester report) | `ROOM_WEEKLY_BLOCKS` |
 | Class hours on 304 | Mon 10–12, Tue 12–14, Thu 10–12, Fri 13–15 | `ROOM_WEEKLY_BLOCKS` |
 
 These numbers are the department's operational defaults. They are **not** figures
@@ -79,7 +80,7 @@ after the button. Like the printed poster, the code is a convenient way to
 
 ## The teaching timetable
 
-Rooms 303 and 304 are teaching rooms as well as practice rooms: classes meet in
+Rooms 301, 303 and 304 are teaching rooms as well as practice rooms: classes meet in
 them every week (the department's sheet `ตารางห้อง อาคารศิลปกรรมชั้น3.pdf`). A class
 hour is blocked on the grid and labelled with the course, because an unexplained
 gap reads as a fault. Room 304's blocked hours are Monday 10:00–12:00
@@ -94,7 +95,9 @@ gap reads as a fault. Room 304's blocked hours are Monday 10:00–12:00
 - An explicit closure still wins over a class hour, exactly as it wins over the
   weekly opening hours.
 
-The hours live in `ROOM_WEEKLY_BLOCKS` and are applied by `manage.py seed_rooms`;
+Room 301's first-semester time ranges are approximate because the source report
+is reconstructed from hour-column geometry. The hours live in
+`ROOM_WEEKLY_BLOCKS` and are applied by `manage.py seed_rooms`;
 they are configuration, not code. There is no staff screen for them yet — a
 schedule change is a settings change and a seed run (see the runbook).
 

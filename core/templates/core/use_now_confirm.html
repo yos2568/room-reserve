@@ -4,7 +4,12 @@
 {% block title %}{% trans "Use this room now" %}{% endblock %}
 
 {% block content %}
-  <h1 class="text-xl font-semibold">{% trans "Use this room now" %}</h1>
+  <div class="max-w-2xl">
+    <section class="page-hero">
+      <p class="page-kicker">{% trans "Walk-in session" %}</p>
+      <h1 class="page-title">{% trans "Use this room now" %}</h1>
+      <p class="page-intro">{% trans "Confirm that you are at the room. The session ends at the current hour boundary." %}</p>
+    </section>
 
   {% if outcome and not outcome.ok %}
     <div class="card mt-3 border-red-700 bg-red-50" role="alert">{{ outcome.message }}</div>
@@ -30,12 +35,12 @@
     </div>
   {% endif %}
 
-  <div class="card mt-4 max-w-xl">
-    <dl class="space-y-1 text-sm">
-      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Room" %}</dt><dd>{{ room }}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Current hour" %}</dt><dd>{{ cell.slot_start|date:"H:i" }}–{{ cell.slot_end|date:"H:i" }}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Time remaining" %}</dt><dd>{{ remaining_minutes }} {% trans "min" %}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Bookings that day" %}</dt><dd>{{ quota_used }} / {{ policy.daily_quota }}</dd></div>
+  <div class="flow-panel mt-4 max-w-2xl">
+    <dl class="booking-summary">
+      <div><dt>{% trans "Room" %}</dt><dd>{{ room }}</dd></div>
+      <div><dt>{% trans "Current hour" %}</dt><dd>{{ cell.slot_start|date:"H:i" }}–{{ cell.slot_end|date:"H:i" }}</dd></div>
+      <div><dt>{% trans "Time remaining" %}</dt><dd>{{ remaining_minutes }} {% trans "min" %}</dd></div>
+      <div><dt>{% trans "Bookings that day" %}</dt><dd>{{ quota_used }} / {{ policy.daily_quota }}</dd></div>
     </dl>
 
     {% if short_warning %}
@@ -65,5 +70,6 @@
       </p>
       <a class="btn-secondary mt-2" href="{% url 'core:home' %}">{% trans "See which rooms are free" %}</a>
     {% endif %}
+  </div>
   </div>
 {% endblock %}

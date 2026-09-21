@@ -73,7 +73,10 @@ class Notification(models.Model):
         "core.User",
         on_delete=models.PROTECT,
         related_name="notifications",
+        null=True,
+        blank=True,
     )
+    recipient_email = models.EmailField(blank=True)
     language = models.CharField(max_length=5, default="th")
     payload = models.JSONField(default=dict)
     dedupe_key = models.CharField(max_length=191, unique=True)

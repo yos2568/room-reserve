@@ -6,14 +6,14 @@
 {% block content %}
   <div class="max-w-3xl">
     <a class="text-sm font-medium text-brand-700 hover:underline" href="{% url 'core:home' %}">← {% trans "Back to availability" %}</a>
-    <div class="card mt-4">
+    <div class="page-hero mt-4">
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p class="text-sm font-medium text-brand-700">{% trans "Room profile" %}</p>
-          <h1 class="mt-1 text-2xl font-semibold">{{ room }}</h1>
+          <p class="page-kicker">{% trans "Room profile" %}</p>
+          <h1 class="page-title">{{ room }}</h1>
         </div>
-        <div class="rounded-lg bg-brand-50 px-4 py-3 text-center">
-          <strong class="block text-2xl text-brand-700">{{ room.capacity }}</strong>
+        <div class="rounded-md border border-brand-200 bg-brand-50 px-4 py-3 text-center">
+          <strong class="block text-2xl font-semibold text-brand-700">{{ room.capacity }}</strong>
           <span class="text-xs text-slate-700">{% trans "approximate seats" %}</span>
         </div>
       </div>
@@ -30,7 +30,7 @@
       </div>
 
       <div class="mt-6 grid gap-3 border-t border-slate-200 pt-4 text-sm sm:grid-cols-2">
-        <div><span class="font-medium">{% trans "Reservation access" %}:</span> {% if room.is_restricted %}{% trans "Instrument categories listed by staff" %}{% else %}{% trans "Any eligible student" %}{% endif %}</div>
+        <div><span class="font-medium">{% trans "Reservation access" %}:</span> {% if room.availability_only %}{% trans "Availability display only" %}{% elif room.is_restricted %}{% trans "Instrument categories listed by staff" %}{% else %}{% trans "Any eligible student" %}{% endif %}</div>
         <div><span class="font-medium">{% trans "Approval" %}:</span> {% if room.requires_approval %}{% trans "Room administrator approval required" %}{% else %}{% trans "Instant confirmation" %}{% endif %}</div>
         <div><span class="font-medium">{% trans "Opening hours" %}:</span> {% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Monday to Friday, {{ open }}:00–{{ close }}:00{% endblocktrans %}</div>
       </div>

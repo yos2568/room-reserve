@@ -1,0 +1,114 @@
+{% extends "core/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Choose a room" %}{% endblock %}
+
+{% block content %}
+  <section class="page-hero room-board-hero">
+    <p class="page-kicker">{% trans "Room board" %}</p>
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="page-title">{% trans "Choose a room" %}</h1>
+        <p class="page-intro">{% trans "Pick a date and time to see which rooms are free, reserved, or in class." %}</p>
+      </div>
+      <a class="btn-secondary" href="{% url 'core:home' %}?date={{ local_date|date:'Y-m-d' }}">{% trans "Full timetable" %}</a>
+    </div>
+
+    <div class="room-board-date mt-5">
+      <nav aria-label="{% trans 'Choose a date' %}" class="date-toolbar flex items-center gap-2">
+        {% if prev_date %}
+          <a class="date-arrow btn-secondary" href="?date={{ prev_date|date:'Y-m-d' }}&time={{ selected_hour }}" aria-label="{% trans 'Previous day' %}">‹</a>
+        {% endif %}
+        <span class="date-display">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="2.5"></rect><path d="M8 3v4M16 3v4M3.5 10h17"></path></svg>
+          {{ local_date|date:"D, j M Y" }}
+        </span>
+        {% if next_date %}
+          <a class="date-arrow btn-secondary" href="?date={{ next_date|date:'Y-m-d' }}&time={{ selected_hour }}" aria-label="{% trans 'Next day' %}">›</a>
+        {% endif %}
+      </nav>
+      {% if not is_today %}
+        <a class="btn-secondary today-button" href="?date={{ today_date|date:'Y-m-d' }}&time={{ selected_hour }}">{% trans "Today" %}</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="room-board-controls card mt-4" aria-labelledby="room-board-time-heading">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="section-label">{% trans "Selected time" %}</p>
+        <h2 id="room-board-time-heading" class="text-xl font-semibold tabular-nums">{{ selected_hour|stringformat:"02d" }}:00</h2>
+      </div>
+      <p class="text-sm text-slate-600">{% trans "Choose an available room to continue." %}</p>
+    </div>
+    <nav class="room-time-strip mt-4" aria-label="{% trans 'Choose a time' %}">
+      {% for hour in time_options %}
+        <a class="room-time-chip {% if hour == selected_hour %}is-selected{% endif %}"
+           href="?date={{ local_date|date:'Y-m-d' }}&time={{ hour }}"
+           {% if hour == selected_hour %}aria-current="time"{% endif %}>
+          {{ hour|stringformat:"02d" }}:00
+        </a>
+      {% endfor %}
+    </nav>
+  </section>
+
+  <div class="room-board-legend mt-4" aria-label="{% trans 'Room status legend' %}">
+    <span><i class="room-board-dot is-available" aria-hidden="true"></i>{% trans "Available" %}</span>
+    <span><i class="room-board-dot is-reserved" aria-hidden="true"></i>{% trans "Reserved" %}</span>
+    <span><i class="room-board-dot is-class" aria-hidden="true"></i>{% trans "Class in session" %}</span>
+    <span><i class="room-board-dot is-view-only" aria-hidden="true"></i>{% trans "View only" %}</span>
+    <span><i class="room-board-dot is-closed" aria-hidden="true"></i>{% trans "Closed" %}</span>
+  </div>
+
+  <section class="room-board-grid mt-3" aria-label="{% trans 'Rooms at selected time' %}">
+    {% for row in rows %}
+      {% with cell=row.cell %}
+        <article class="room-board-card {% if cell.can_reserve or cell.state == 'free_now' %}is-available{% elif cell.state == 'in_use' %}is-in-use{% elif cell.state == 'held' or cell.state == 'taken' %}is-reserved{% elif cell.state == 'closed' and cell.block_reason %}is-class{% elif cell.state == 'view_only' %}is-view-only{% else %}is-closed{% endif %}">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="room-board-number">{{ row.room.number }}</p>
+              <h2 class="room-board-name">{{ row.room }}</h2>
+            </div>
+            <span class="room-board-status">
+              {% if cell.can_reserve and row.room.requires_approval %}{% trans "Approval required" %}
+              {% elif cell.can_reserve or cell.state == 'free_now' %}{% trans "Available" %}
+              {% elif cell.state == 'in_use' %}{% trans "In use" %}
+              {% elif cell.state == 'held' or cell.state == 'taken' %}{% trans "Reserved" %}
+              {% elif cell.state == 'closed' and cell.block_reason %}{% trans "Class in session" %}
+              {% elif cell.state == 'view_only' %}{% trans "View only" %}
+              {% elif cell.state == 'restricted' %}{% trans "Restricted" %}
+              {% elif cell.state == 'past' %}{% trans "Finished" %}
+              {% else %}{% trans "Closed" %}{% endif %}
+            </span>
+          </div>
+          {% if cell.block_reason %}
+            <p class="room-board-reason">{{ cell.block_reason }}</p>
+          {% elif cell.state == 'restricted' %}
+            <p class="room-board-reason">{% trans "Reserved in advance for piano and percussion students." %}</p>
+          {% elif cell.state == 'view_only' %}
+            <p class="room-board-reason">{% trans "Availability is shown for reference; reservations and walk-ins are not available." %}</p>
+          {% elif cell.state == 'past' %}
+            <p class="room-board-reason">{% trans "This time has finished." %}</p>
+          {% elif cell.state == 'closed' %}
+            <p class="room-board-reason">{% trans "Not available at this time." %}</p>
+          {% else %}
+            <p class="room-board-reason">{% trans "No student details are shown here." %}</p>
+          {% endif %}
+          <div class="mt-4">
+            {% if cell.can_reserve %}
+              <a class="btn-primary w-full" href="{% url 'core:book_slot' room_id=row.room.pk slot=cell.slot_key %}">{% if row.room.requires_approval %}{% trans "Request this room" %}{% else %}{% trans "Reserve this room" %}{% endif %}</a>
+            {% elif cell.can_use_now %}
+              <a class="btn-primary w-full" href="{% url 'core:use_now' room_id=row.room.pk slot=cell.slot_key %}">{% trans "Use now" %}</a>
+            {% else %}
+              <a class="btn-secondary w-full" href="{% url 'core:room_profile' room_id=row.room.pk %}">{% trans "View room" %}</a>
+            {% endif %}
+          </div>
+        </article>
+      {% endwith %}
+    {% empty %}
+      <p class="card text-slate-600">{% trans "No rooms are configured." %}</p>
+    {% endfor %}
+  </section>
+
+  <p class="mt-4 text-xs text-slate-600">{% trans "Availability is a live snapshot. The server checks the room again before confirming a reservation." %}</p>
+{% endblock %}

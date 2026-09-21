@@ -14,6 +14,7 @@ urlpatterns = [
     path("", views.public.grid, name="home"),
     path("availability/", views.public.availability_fragment, name="availability"),
     path("week/", views.public.week, name="week"),
+    path("choose-room/", views.public.room_board, name="room_board"),
     path("lobby/", views.public.lobby, name="lobby"),
     path("rooms/<int:room_id>/", views.public.room_profile, name="room_profile"),
     path("r/<int:room_id>/", views.public.room_qr_landing, name="room_qr"),
@@ -42,6 +43,7 @@ urlpatterns = [
     path("my-bookings/series/<int:pk>/cancel/", views.booking.cancel_recurring, name="cancel_recurring"),
     path("my-bookings/<int:pk>/check-in/", views.booking.check_in, name="check_in"),
     path("my-bookings/<int:pk>/edit/", views.booking.edit_booking, name="edit_booking"),
+    path("my-bookings/<int:pk>/move/", views.booking.move_booking, name="move_booking"),
     # QR target from the confirmation email (D-31); the locale prefix comes from
     # i18n_patterns, so the scanned URL keeps the student's language.
     path("check-in/<str:token>/", views.booking.checkin_qr, name="checkin_qr"),
@@ -134,5 +136,6 @@ urlpatterns = [
     # Content ------------------------------------------------------------------
     path("rules/", views.content.rules, name="rules"),
     path("help/", views.content.help_page, name="help"),
+    path("complaints/", views.complaints.submit, name="complaint"),
     path("privacy/", views.content.privacy, name="privacy"),
 ]

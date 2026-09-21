@@ -118,7 +118,7 @@ def test_a_restricted_room_with_no_categories_lets_nobody_reserve_it(frozen, db)
 
 
 def test_a_general_room_is_unaffected(frozen, general_room):
-    """The rule is per room: nine rooms still work exactly as before."""
+    """The rule is per room: general rooms still work exactly as before."""
     student = factories.make_user()
 
     outcome = helpers.advance_booking(student, general_room, slots.slot_start_for(DAY, NEXT_HOUR))

@@ -1,0 +1,13 @@
+{% autoescape off %}แจ้งข้อร้องเรียน / Room Reserve complaint
+
+เลขอ้างอิง / Reference: {{ reference }}
+ผู้แจ้ง / From: {{ sender_name }}
+อีเมล / Email: {{ reply_email }}
+Email verified: {{ email_verified|yesno:"Yes,No" }}
+ห้อง / Room: {{ room }}
+หัวข้อ / Subject: {{ subject }}
+
+{{ message }}
+
+ตอบกลับอีเมลนี้เพื่อติดต่อผู้แจ้ง / Reply to this email to contact the sender.
+{% endautoescape %}

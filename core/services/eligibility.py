@@ -67,6 +67,8 @@ def assert_may_use_room(user, room, now) -> None:
     assert_can_operate(user, now)
     if not room.is_active:
         raise OperationRejected(Code.CLOSED)
+    if room.availability_only:
+        raise OperationRejected(Code.CLOSED)
 
 
 def assert_may_reserve_room(user, room, now) -> None:

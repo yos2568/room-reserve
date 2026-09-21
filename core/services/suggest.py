@@ -64,15 +64,19 @@ def _viewer_can_act(user, now) -> bool:
     return account_block_code(user) is None and not is_suspended(user, now)
 
 
-def _viewer_conflicts(user) -> set:
-    """The slot starts this viewer already holds, plus their adjacent hours."""
+def _viewer_conflicts(user, *, exclude_booking_id: int | None = None) -> set:
+    """The slot starts this viewer already holds, plus their adjacent hours.
+
+    ``exclude_booking_id`` drops one of the viewer's own bookings from the set.
+    A room move keeps the hour and only changes the room, so the booking being
+    moved is exactly the row that would otherwise rule out every alternative.
+    """
     if user is None or not getattr(user, "pk", None):
         return set()
-    mine = list(
-        Booking.objects.filter(user=user, status__in=list(BLOCKING_STATUSES)).values_list(
-            "slot_start", flat=True
-        )
-    )
+    mine = Booking.objects.filter(user=user, status__in=list(BLOCKING_STATUSES))
+    if exclude_booking_id is not None:
+        mine = mine.exclude(pk=exclude_booking_id)
+    mine = list(mine.values_list("slot_start", flat=True))
     delta = slots.SLOT_DELTA
     conflicts = set()
     for start in mine:
@@ -80,7 +84,7 @@ def _viewer_conflicts(user) -> set:
     return conflicts
 
 
-def for_slot(slot_start, now, *, user) -> list:
+def for_slot(slot_start, now, *, user, exclude_booking_id: int | None = None) -> list:
     """Rooms still bookable by this viewer at one exact slot.
 
     Used when a booking is refused: the refusal names the rule, and this names
@@ -89,7 +93,7 @@ def for_slot(slot_start, now, *, user) -> list:
     is excluded even when a later state would allow it.
     """
     viewer_category = instruments.category_for_user(user)
-    conflicts = _viewer_conflicts(user)
+    conflicts = _viewer_conflicts(user, exclude_booking_id=exclude_booking_id)
     rooms = list(Room.objects.filter(is_active=True).prefetch_related("allowed_categories"))
 
     found = []
@@ -121,7 +125,15 @@ def room_has_blocker(room: Room, slot_start) -> bool:
     ).exists()
 
 
-def _free_now(local_date, now, *, user, capacity_min: int | None = None, equipment_query: str = "") -> list:
+def _free_now(
+    local_date,
+    now,
+    *,
+    user,
+    capacity_min: int | None = None,
+    equipment_query: str = "",
+    room_number: str = "",
+) -> list:
     """Rooms walkable-into right now, longest remaining first.
 
     The walk-in rule ignores the reservation audience on purpose, so this list
@@ -158,6 +170,8 @@ def _free_now(local_date, now, *, user, capacity_min: int | None = None, equipme
 
     cards = []
     room_query = Room.objects.filter(is_active=True)
+    if room_number:
+        room_query = room_query.filter(number=room_number)
     if capacity_min:
         room_query = room_query.filter(capacity__gte=capacity_min)
     if equipment_query:
@@ -186,6 +200,7 @@ def _hour_groups(
     user,
     capacity_min: int | None = None,
     equipment_query: str = "",
+    room_number: str = "",
     limit: int = 4,
 ) -> list:
     """The next bookable hours on ``local_date``, with the rooms open in each.
@@ -202,6 +217,7 @@ def _hour_groups(
         user=user,
         capacity_min=capacity_min,
         equipment_query=equipment_query,
+        room_number=room_number,
     )
 
     by_slot: dict[object, list] = {}
@@ -236,6 +252,7 @@ def suggestions(
     user,
     capacity_min: int | None = None,
     equipment_query: str = "",
+    room_number: str = "",
 ) -> Suggestions:
     """Everything the dashboard panel needs, in one call."""
     remaining_quota = quota.quota_remaining(user, local_date) if user else None
@@ -251,6 +268,7 @@ def suggestions(
             user=user,
             capacity_min=capacity_min,
             equipment_query=equipment_query,
+            room_number=room_number,
         ),
         hours=[]
         if exhausted
@@ -260,6 +278,7 @@ def suggestions(
             user=user,
             capacity_min=capacity_min,
             equipment_query=equipment_query,
+            room_number=room_number,
         ),
         can_act=_viewer_can_act(user, now),
         quota_remaining=max(0, remaining_quota or 0),

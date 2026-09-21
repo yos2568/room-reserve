@@ -30,7 +30,7 @@ from .eligibility import assert_may_reserve_room
 from .errors import Code, OperationRejected
 from .outbox import enqueue
 from .policy import current_policy
-from .quota import assert_quota_and_adjacency
+from .quota import assert_quota_and_adjacency, no_show_reclaim
 from .refs import reload_for_update
 
 logger = logging.getLogger(__name__)
@@ -376,6 +376,133 @@ def update_booking_details(ctx, *, booking: Booking, details: dict | None = None
     )
 
     return {"booking_id": booking.pk, "details_version": booking.details_version}
+
+
+def build_move_payload(booking: Booking, room: Room) -> dict:
+    return {
+        "action": "move_booking",
+        "booking_id": booking.pk,
+        "room_id": room.pk,
+    }
+
+
+def move_booking(ctx, *, booking: Booking, room: Room) -> dict:
+    """Move a future reservation to a different room, keeping the same hour.
+
+    The move is a single in-place update of ``room``, not a cancel followed by a
+    create. That matters for three reasons:
+
+    * It is atomic without any extra machinery. The whole operation already runs
+      under the ``BookingControl`` lock in one transaction, so if the target room
+      turns out to be taken the savepoint is discarded and the student keeps the
+      room they had. They can never end up holding nothing, which is exactly the
+      failure mode that makes cancel-then-rebook unsafe.
+    * ``booking_user_slot_unique`` is keyed on (user, slot_start), which the move
+      does not touch, while ``booking_room_slot_unique`` on (room, slot_start)
+      remains the final arbiter of a race the pre-check missed.
+    * Quota and adjacency are unchanged by definition: the date and the hour are
+      the same, and no booking is added or removed. Re-running those checks here
+      would reject the move against the student's own row.
+
+    An occurrence of a weekly series is refused: ``RecurringReservation`` records
+    the room for the series, so moving one occurrence would leave the series row
+    disagreeing with its own booking.
+    """
+    actor = ctx.actor
+    now = ctx.now
+    booking = reload_for_update(booking)
+
+    if booking.user_id != getattr(actor, "pk", None):
+        raise OperationRejected(Code.NOT_OWNER)
+
+    if (
+        booking.status not in {Booking.Status.SCHEDULED, Booking.Status.PENDING_APPROVAL}
+        or now >= booking.slot_start
+    ):
+        raise OperationRejected(Code.TERMINAL_STATUS, booking_id=booking.pk)
+
+    if booking.recurrence_id is not None:
+        raise OperationRejected(Code.RECURRING_OCCURRENCE, booking_id=booking.pk)
+
+    previous_room = booking.room
+    if previous_room.pk == room.pk:
+        raise OperationRejected(Code.SAME_ROOM, booking_id=booking.pk)
+
+    slot_start = booking.slot_start
+
+    # The target has to satisfy everything the original reservation had to, apart
+    # from the rules the hour already settled. Instrument restrictions and the
+    # room calendar are room-specific, so both are re-checked against the target.
+    assert_may_reserve_room(actor, room, now)
+    assert_slot_open(slot_start, room)
+
+    if no_show_reclaim(actor, room, slot_start):
+        raise OperationRejected(Code.NO_SHOW_RECLAIM)
+
+    if (
+        Booking.objects.filter(
+            room=room,
+            slot_start=slot_start,
+            status__in=list(BLOCKING_STATUSES),
+        )
+        .exclude(pk=booking.pk)
+        .exists()
+    ):
+        raise OperationRejected(Code.SLOT_TAKEN)
+
+    status = Booking.Status.PENDING_APPROVAL if room.requires_approval else Booking.Status.SCHEDULED
+
+    booking.room = room
+    booking.status = status
+    # Reused as the booking's change generation so the outbox dedupe key for a
+    # move cannot collide with an earlier detail edit on the same row.
+    booking.details_version += 1
+    booking.save(update_fields=["room", "status", "details_version"])
+
+    ctx.audit(
+        action="booking.moved",
+        entity_type="Booking",
+        entity_id=booking.pk,
+        actor=actor,
+        changes={
+            "from_room": previous_room.number,
+            "to_room": room.number,
+            "slot_start": slot_start,
+            "status": booking.status,
+            "details_version": booking.details_version,
+        },
+    )
+
+    kind = "booking_pending" if status == Booking.Status.PENDING_APPROVAL else "booking_changed"
+    enqueue(
+        kind=kind,
+        recipient=booking.user,
+        dedupe_key=f"{kind}:{booking.pk}:{booking.details_version}",
+        payload={
+            "booking_id": booking.pk,
+            "room_number": room.number,
+            "room_label": str(room),
+            "previous_room_number": previous_room.number,
+            "previous_room_label": str(previous_room),
+            "slot_start": slot_start.isoformat(),
+            "slot_end": booking.slot_end.isoformat(),
+            "slot_start_local": slots.format_local(slot_start),
+            "deadline_local": slots.format_local(booking.deadline),
+            "title": booking.title,
+            "purpose": booking.purpose,
+            "participant_names": booking.participant_names,
+            "details_version": booking.details_version,
+            "status": booking.status,
+        },
+    )
+
+    return {
+        "booking_id": booking.pk,
+        "room_id": room.pk,
+        "previous_room_id": previous_room.pk,
+        "status": booking.status,
+        "details_version": booking.details_version,
+    }
 
 
 def cancel_recurring_reservation(ctx, *, recurrence: RecurringReservation, reason: str = "") -> dict:
