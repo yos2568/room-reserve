@@ -232,14 +232,17 @@ def test_the_grid_state_reaches_the_page_without_rendering_an_empty_cell(frozen,
     both halves: the state reaches the template, and the copy is translated rather
     than silently falling back to English.
     """
-    from django.utils.translation import gettext as translate
+    from django.utils import translation
 
     student = student_in(InstrumentCategory.STRINGS)
     client.force_login(student)
 
-    body = client.get(reverse("core:home")).content.decode("utf-8")
-
-    label = translate("Piano & percussion only")
+    # Pin the page and the expected label to Thai rather than inheriting whatever
+    # language an earlier test left active in this thread.
+    with translation.override("th"):
+        url = reverse("core:home")
+        label = translation.gettext("Piano & percussion only")
+    body = client.get(url).content.decode("utf-8")
     assert label and label != "Piano & percussion only", "the label must be translated"
     assert label in body, "the restricted cell rendered nothing"
     assert f"/book/{big_room.pk}/" not in body, "no Reserve link for this viewer"

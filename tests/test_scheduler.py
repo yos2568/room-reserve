@@ -345,8 +345,8 @@ def test_voiding_incident_violations_clears_the_strikes_without_backdating_atten
 
 
 def test_a_voided_strike_no_longer_counts_towards_a_suspension(staff_user, rooms):
-    """No frozen clock here: sanctions_under_review() reads the real clock, and
-    the sanction must still be in force when it is queryable."""
+    """The review query runs at the same frozen moment as the reconcile, so the
+    suspension is still in force whatever today's real date is."""
     student = factories.make_user()
     for room, hour in zip(rooms[:3], (8, 10, 12), strict=False):
         factories.make_booking(student, room, slot_start=at_past(hour))
@@ -369,7 +369,9 @@ def test_a_voided_strike_no_longer_counts_towards_a_suspension(staff_user, rooms
     suspension.refresh_from_db()
     assert suspension.lifted_at is None
     assert suspension.pk in voided.data["suspensions_to_review"]
-    assert suspension.pk in set(incidents.sanctions_under_review().values_list("pk", flat=True))
+    with clock.frozen_clock(moment):
+        under_review = set(incidents.sanctions_under_review().values_list("pk", flat=True))
+    assert suspension.pk in under_review
 
 
 def test_a_no_show_outside_the_incident_window_keeps_its_strike(frozen, staff_user, rooms):

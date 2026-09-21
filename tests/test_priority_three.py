@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from django.test import Client, override_settings
 from django.urls import reverse
+from django.utils import translation
 
 from core.models import AuditEvent, Booking, Notification, RecurringReservation, RoomAdministrator
 from core.services import booking as booking_service
@@ -59,7 +60,11 @@ def test_lobby_status_does_not_expose_student_or_booking_details(frozen, student
         purpose="Private purpose",
         participant_names="Private participant",
     )
-    response = Client().get(reverse("core:lobby"))
+    # The label checked below is the English one, so ask for the English page;
+    # an unprefixed reverse() resolves to the default Thai locale.
+    with translation.override("en"):
+        url = reverse("core:lobby")
+    response = Client().get(url)
     body = response.content.decode()
     assert response.status_code == 200
     assert "In use" in body
