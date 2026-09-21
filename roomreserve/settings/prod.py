@@ -45,6 +45,7 @@ EMAIL_PORT = env_int("EMAIL_PORT", 587)
 EMAIL_HOST_USER = env_str("EMAIL_HOST_USER", required=True)
 EMAIL_HOST_PASSWORD = env_str("EMAIL_HOST_PASSWORD", required=True)
 DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", required=True)
+COMPLAINT_RECIPIENT_EMAIL = env_str("COMPLAINT_RECIPIENT_EMAIL", required=True)
 
 # Caddy terminates TLS and forwards the original scheme.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

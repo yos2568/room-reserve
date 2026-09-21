@@ -25,6 +25,7 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 DEFAULT_FROM_EMAIL = "roomreserve@localhost.test"
+COMPLAINT_RECIPIENT_EMAIL = "complaints@localhost.test"
 
 # The database cache table is created by `manage.py createcachetable`, which the
 # test database does not run, so tests use an in-process cache instead. Rate

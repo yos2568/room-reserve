@@ -4086,3 +4086,15 @@ msgid ""
 "Each number is the starting hour. Open the day view for full status labels "
 "and room actions."
 msgstr ""
+
+#: core/services/errors.py core/templates/core/partials/slot_cell.html
+msgid ""
+"This room needs staff approval, so it cannot be used as a walk-in. Request "
+"it in advance instead."
+msgstr "ห้องนี้ต้องได้รับการอนุมัติจากเจ้าหน้าที่ จึงไม่สามารถเข้าใช้แบบวอล์กอินได้ กรุณาส่งคำขอจองล่วงหน้าแทน"
+
+#: core/templates/core/email/booking_changed.txt
+#, python-format
+msgid ""
+"Your booking moved from room %(old)s to room %(new)s. The hour is unchanged."
+msgstr "การจองของคุณย้ายจากห้อง %(old)s ไปยังห้อง %(new)s เวลาเดิมไม่เปลี่ยนแปลง"

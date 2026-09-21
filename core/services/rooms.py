@@ -139,6 +139,17 @@ def _held_out_by_staff(room: Room) -> bool:
     return latest == "room.deactivated"
 
 
+# Fields the room-admin screen edits (update_profile). Settings seed them, but
+# once staff have changed a room's profile, their values win over a re-seed.
+STAFF_PROFILE_FIELDS = ("capacity", "equipment", "requires_approval")
+
+
+def _profile_managed_by_staff(room: Room) -> bool:
+    return AuditEvent.objects.filter(
+        entity_type="Room", entity_id=str(room.pk), action="room.profile_updated"
+    ).exists()
+
+
 def set_weekly_blocks(*, room: Room, entries) -> None:
     """Replace a room's recurring blocks with the configured entries.
 
@@ -204,7 +215,10 @@ def ensure_rooms(
         # settings reaches an existing database without a migration.
         if config:
             profile_updates = {}
+            staff_managed = _profile_managed_by_staff(room)
             for field in ("label", "capacity", "equipment", "requires_approval", "availability_only"):
+                if staff_managed and field in STAFF_PROFILE_FIELDS:
+                    continue
                 if field in config and getattr(room, field) != config[field]:
                     setattr(room, field, config[field])
                     profile_updates[field] = config[field]

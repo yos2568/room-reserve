@@ -42,10 +42,10 @@ def test_fixed_destination_reply_address_and_duplicate_submission(signed_in, stu
     for _ in range(2):
         assert signed_in.post(reverse("core:complaint"), data).status_code == 302
     note = Notification.objects.get(kind="complaint")
-    assert note.recipient_email == "Sitanun.S@chula.ac.th"
+    assert note.recipient_email == "complaints@localhost.test"
     assert note.payload["reply_email"] == student.email
     assert notifications.drain()["sent"] == 1
-    assert mail.outbox[0].to == ["Sitanun.S@chula.ac.th"]
+    assert mail.outbox[0].to == ["complaints@localhost.test"]
     assert mail.outbox[0].reply_to == [student.email]
     assert data["message"] in mail.outbox[0].body
     assert note.payload["reference"] in mail.outbox[0].body
@@ -53,7 +53,10 @@ def test_fixed_destination_reply_address_and_duplicate_submission(signed_in, stu
 
 def test_invalid_form_and_token_enqueue_nothing(signed_in):
     assert signed_in.post(reverse("core:complaint"), submission(signed_in, message="")).status_code == 400
-    assert signed_in.post(reverse("core:complaint"), submission(signed_in, submission="tampered")).status_code == 400
+    assert (
+        signed_in.post(reverse("core:complaint"), submission(signed_in, submission="tampered")).status_code
+        == 400
+    )
     assert not Notification.objects.exists()
 
 

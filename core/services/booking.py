@@ -214,7 +214,9 @@ def _parse_repeat_until(raw: str, first_date: date) -> date:
         raise OperationRejected(Code.INVALID_INPUT) from exc
     if repeat_until < first_date:
         raise OperationRejected(Code.INVALID_INPUT)
-    if len(_recurring_dates(first_date, repeat_until)) > settings.RECURRING_MAX_WEEKS + 1:
+    # Arithmetic, not a list: the cap must hold before any work is done, because
+    # this runs under the booking-wide lock and ``repeat_until`` comes from a form.
+    if (repeat_until - first_date).days // 7 > settings.RECURRING_MAX_WEEKS:
         raise OperationRejected(Code.INVALID_INPUT)
     return repeat_until
 

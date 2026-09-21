@@ -73,7 +73,9 @@ class SlotCell:
 
     @property
     def can_use_now(self) -> bool:
-        return self.state == SlotState.FREE_NOW
+        # A room that needs staff approval cannot be walked into: the walk-in
+        # would skip the approval its reservations go through.
+        return self.state == SlotState.FREE_NOW and not self.room.requires_approval
 
     @property
     def is_short(self) -> bool:

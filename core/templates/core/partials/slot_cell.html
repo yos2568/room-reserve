@@ -15,7 +15,8 @@
     {% trans "Use now" %}{% if cell.is_short %} · {{ cell.remaining_minutes }}{% trans "min" %}{% endif %}
   </a>
 {% elif cell.state == "free_now" %}
-  <span class="slot-state slot-state-available">{% trans "Free" %}</span>
+  <span class="slot-state slot-state-available"
+        {% if cell.room.requires_approval %}title="{% trans 'This room needs staff approval, so it cannot be used as a walk-in. Request it in advance instead.' %}"{% endif %}>{% trans "Free" %}</span>
 {% elif cell.state == "past" %}
   <span class="slot-state slot-state-muted">{% trans "Finished" %}</span>
 {% elif cell.state == "closed" %}

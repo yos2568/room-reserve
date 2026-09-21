@@ -6,7 +6,7 @@ comes from the account, including whether the reply email has been verified.
 It does not require booking eligibility, so users awaiting approval can report
 problems. People unable to sign in can use the direct support email on Login.
 
-Messages go to `COMPLAINT_RECIPIENT_EMAIL`, default `Sitanun.S@chula.ac.th`.
+Messages go to `COMPLAINT_RECIPIENT_EMAIL`. It has no default: production refuses to start without it, and dev/test use `complaints@localhost.test`. Set the real faculty contact only in the production environment.
 The sender cannot change this destination through the form. SMTP uses the
 configured application sender; Reply-To points to the account email.
 

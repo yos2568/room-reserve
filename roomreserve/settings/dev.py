@@ -19,6 +19,8 @@ ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", ["localhost", "127.0.0.1", "[::
 # outbox worker exercises a real SMTP conversation locally (V3 section 10).
 EMAIL_HOST = env_str("EMAIL_HOST", "localhost")
 EMAIL_PORT = env_int("EMAIL_PORT", 1025)
+# Dev mail goes to the local catcher; never a real inbox by default.
+COMPLAINT_RECIPIENT_EMAIL = env_str("COMPLAINT_RECIPIENT_EMAIL", "complaints@localhost.test")
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = False
 DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "roomreserve@localhost.test")

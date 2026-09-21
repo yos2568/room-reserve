@@ -6,7 +6,7 @@
 {% if participant_names %}{% trans "Participants" %}: {{ participant_names }}{% endif %}
 
 {% blocktrans with deadline=deadline_local %}Check in at the room between the start of the hour and {{ deadline }}.{% endblocktrans %}
-{% trans "Room and hour remain unchanged; only the booking details were updated." %}
+{% if previous_room_label %}{% blocktrans with old=previous_room_label new=room_label %}Your booking moved from room {{ old }} to room {{ new }}. The hour is unchanged.{% endblocktrans %}{% else %}{% trans "Room and hour remain unchanged; only the booking details were updated." %}{% endif %}
 {% trans "Booking reference" %}: {{ booking_id }}
 
 {% blocktrans with name=support_contact.name phone=support_contact.phone email=support_contact.email %}Contact {{ name }}, {{ phone }}, {{ email }}{% endblocktrans %}

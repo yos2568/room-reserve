@@ -293,7 +293,9 @@ SITE_BASE_URL = env_str("SITE_BASE_URL", "http://localhost:8000")
 SUPPORT_CONTACT_NAME = env_str("SUPPORT_CONTACT_NAME", "คุณสิตานันท์ (พี่ดิว)")
 SUPPORT_CONTACT_PHONE = env_str("SUPPORT_CONTACT_PHONE", "02-218-4604")
 SUPPORT_CONTACT_EMAIL = env_str("SUPPORT_CONTACT_EMAIL", "Sitanun.S@chula.ac.th")
-COMPLAINT_RECIPIENT_EMAIL = env_str("COMPLAINT_RECIPIENT_EMAIL", "Sitanun.S@chula.ac.th")
+# No default: a real person's address must never be the fallback for a test or
+# dev environment. Production requires it (settings/prod.py).
+COMPLAINT_RECIPIENT_EMAIL = env_str("COMPLAINT_RECIPIENT_EMAIL", "")
 
 # --- Outbox delivery ----------------------------------------------------------
 OUTBOX_MAX_ATTEMPTS = env_int("OUTBOX_MAX_ATTEMPTS", 6)

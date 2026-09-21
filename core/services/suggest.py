@@ -98,7 +98,7 @@ def for_slot(slot_start, now, *, user, exclude_booking_id: int | None = None) ->
 
     found = []
     for room in rooms:
-        if not room.may_be_reserved_by(viewer_category):
+        if room.availability_only or not room.may_be_reserved_by(viewer_category):
             continue
         try:
             calendar.assert_slot_open(slot_start, room)
@@ -169,7 +169,9 @@ def _free_now(
         )
 
     cards = []
-    room_query = Room.objects.filter(is_active=True)
+    # Neither kind can be walked into: availability-only rooms (301) are for
+    # viewing, and approval rooms go through staff (see walkin.use_now).
+    room_query = Room.objects.filter(is_active=True, availability_only=False, requires_approval=False)
     if room_number:
         room_query = room_query.filter(number=room_number)
     if capacity_min:

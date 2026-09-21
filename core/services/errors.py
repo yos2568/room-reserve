@@ -28,6 +28,7 @@ class Code:
     SLOT_ELAPSED = "slot_elapsed"
     CLOSED = "closed"
     CLASS_IN_SESSION = "class_in_session"
+    APPROVAL_ROOM_NO_WALK_IN = "approval_room_no_walk_in"
     ROOM_NOT_FOR_INSTRUMENT = "room_not_for_instrument"
     INVALID_SLOT = "invalid_slot"
     STALE_HOUR = "stale_hour"
@@ -78,6 +79,9 @@ _MESSAGES = {
     Code.SLOT_IN_PAST: _("That time has already started. Use “Use now” if the room is free."),
     Code.SLOT_ELAPSED: _("That hour has already finished."),
     Code.CLOSED: _("That room is closed for the selected time."),
+    Code.APPROVAL_ROOM_NO_WALK_IN: _(
+        "This room needs staff approval, so it cannot be used as a walk-in. Request it in advance instead."
+    ),
     Code.CLASS_IN_SESSION: _("A class meets in that room at that hour. Choose another hour or another room."),
     Code.ROOM_NOT_FOR_INSTRUMENT: _(
         "That room can only be reserved by piano and percussion students. Once the "
