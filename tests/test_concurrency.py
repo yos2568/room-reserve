@@ -465,9 +465,7 @@ def test_a_move_races_a_new_booking_for_the_same_cell():
         run_all(workers)
 
     move_worker, book_worker = workers
-    assert (move_worker.outcome.ok + book_worker.outcome.ok) == 1, [
-        worker.outcome.code for worker in workers
-    ]
+    assert (move_worker.outcome.ok + book_worker.outcome.ok) == 1, [worker.outcome.code for worker in workers]
     for worker in workers:
         if not worker.outcome.ok:
             assert worker.outcome.code in MOVE_REJECTIONS, worker.outcome.code
@@ -523,7 +521,4 @@ def test_many_movers_one_free_room_keeps_every_loser_housed():
         assert booking.room_id == rooms[index].pk
         assert booking.status == Booking.Status.SCHEDULED
 
-    assert (
-        Booking.objects.filter(slot_start=slot_start).exclude(status=Booking.Status.CANCELLED).count()
-        == 8
-    )
+    assert Booking.objects.filter(slot_start=slot_start).exclude(status=Booking.Status.CANCELLED).count() == 8

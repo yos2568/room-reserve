@@ -8,7 +8,7 @@
     <div class="max-w-3xl">
       <p class="page-kicker">{% trans "Faculty of Fine and Applied Arts · Western Music" %}</p>
       <h1 class="page-title">{% trans "Practice room availability" %}</h1>
-      {# On phones the intro, date line and arrow toolbar are hidden: the date strip below does the same job, and availability reaches the first screen. #}
+      {# On phones the intro, date line and arrow toolbar are hidden: the month calendar below does the same job. #}
       <p class="page-intro max-sm:hidden">
         {% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Book a room for a focused one-hour practice session. Open Monday to Friday, {{ open }}:00–{{ close }}:00.{% endblocktrans %}
       </p>
@@ -33,7 +33,7 @@
           <a class="date-arrow btn-secondary" href="?date={{ next_date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}" aria-label="{% trans 'Next day' %}">›</a>
         {% endif %}
       </nav>
-      {% if not is_today %}<a class="btn-secondary today-button" href="?date={{ days.0.date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}">{% trans "Today" %}</a>{% endif %}
+      {% if not is_today %}<a class="btn-secondary today-button" href="?date={{ today_date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}">{% trans "Today" %}</a>{% endif %}
       <a class="week-link" href="{% url 'core:week' %}?date={{ local_date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}">{% trans "Week view" %}</a>
     </div>
   </section>
@@ -63,14 +63,8 @@
     </div>
   </form>
 
-  <div class="date-strip mt-4" aria-label="{% trans 'Nearby dates' %}">
-    {% for day in days %}
-      <a class="date-chip"
-         href="?date={{ day.date|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}"
-         {% if day.is_selected %}aria-current="date"{% endif %}>
-        {{ day.date|date:"D j M" }}
-      </a>
-    {% endfor %}
+  <div class="mt-4">
+    {% include "core/partials/month_calendar.html" %}
   </div>
 
   {% if user.is_authenticated %}

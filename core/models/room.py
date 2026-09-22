@@ -170,9 +170,18 @@ class WeeklyBlock(models.Model):
                 | models.Q(valid_until__gte=models.F("valid_from")),
                 name="weekly_block_validity_window",
             ),
+            # Open-ended rows are the every-week classes. Dated rows may share a
+            # weekday and hour when they are different meetings, as with the two
+            # Counterpoint Mondays on room 304.
             models.UniqueConstraint(
                 fields=["room", "weekday", "start_hour"],
-                name="weekly_block_room_day_hour_unique",
+                condition=models.Q(valid_from__isnull=True, valid_until__isnull=True),
+                name="weekly_block_open_ended_unique",
+            ),
+            models.UniqueConstraint(
+                fields=["room", "weekday", "start_hour", "valid_from", "valid_until"],
+                condition=models.Q(valid_from__isnull=False, valid_until__isnull=False),
+                name="weekly_block_dated_unique",
             ),
         ]
         indexes = [models.Index(fields=["room", "weekday"], name="weekly_block_room_day_idx")]

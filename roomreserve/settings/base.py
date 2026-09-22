@@ -7,6 +7,7 @@ the module that requires it, so a missing value fails loudly (V3 section 10).
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 from django.utils.translation import gettext_lazy as _
@@ -162,6 +163,9 @@ OUTBOX_ENABLED = env_bool("OUTBOX_ENABLED", True)
 # Students book at most two days ahead and hold at most four upcoming or
 # in-progress hours at once; an hour frees up when it finishes (D-38).
 HORIZON_DAYS = env_int("POLICY_HORIZON_DAYS", 2)
+# How far the public timetable can be opened. Booking stays inside HORIZON_DAYS;
+# hours past that still render, marked too far ahead to reserve.
+CALENDAR_LAST_DATE = date(2030, 12, 31)
 MAX_UPCOMING_HOURS = env_int("POLICY_MAX_UPCOMING_HOURS", 4)
 DAILY_QUOTA = env_int("POLICY_DAILY_QUOTA", 2)
 CHECKIN_GRACE_MINUTES = env_int("POLICY_CHECKIN_GRACE_MINUTES", 15)
@@ -213,12 +217,12 @@ ROOM_OVERRIDES = {
     },
 }
 
-# Recurring weekly teaching blocks for rooms 301 and 304, read from the supplied
-# first-semester timetable report. The source gives approximate hour ranges from
-# the original 08:00–16:00 grid, so only those reported class spans are blocked;
-# blank hours remain bookable. Weekday is Monday=0 and end_hour is exclusive.
-# Room 304 still follows the
-# standard Monday–Friday 08:00–20:00 opening hours outside these class spans.
+# Teaching blocks for rooms 301 and 304, read from the semester 1/2569 sheet.
+# Weekday is Monday=0 and end_hour is exclusive. A block with valid_from and
+# valid_until set meets only inside that window; the others meet every week.
+# Blank hours on room 304 stay bookable inside Monday–Friday 08:00–20:00.
+# Monday Counterpoint is the two dates written on the A304 sheet in red
+# (28/9/69 and 16/11/69), not a weekly class.
 ROOM_WEEKLY_BLOCKS = {
     "301": [
         {
@@ -263,19 +267,29 @@ ROOM_WEEKLY_BLOCKS = {
             "weekday": 0,
             "start_hour": 10,
             "end_hour": 12,
-            "reason": "COUNTERPOINT · อ.ดร.ปริญญา",
+            "reason": "COUNTERPOINT · อ.ดร.ปริญญา ชูเชิดวัฒนศักดิ์",
+            "valid_from": date(2026, 9, 28),
+            "valid_until": date(2026, 9, 28),
+        },
+        {
+            "weekday": 0,
+            "start_hour": 10,
+            "end_hour": 12,
+            "reason": "COUNTERPOINT · อ.ดร.ปริญญา ชูเชิดวัฒนศักดิ์",
+            "valid_from": date(2026, 11, 16),
+            "valid_until": date(2026, 11, 16),
         },
         {
             "weekday": 1,
             "start_hour": 12,
             "end_hour": 14,
-            "reason": "SKILL-PIANO · ผศ.ดร.รามสูร",
+            "reason": "SKILL-PIANO · ผศ.ดร.รามสูร สีตลายน",
         },
         {
             "weekday": 3,
             "start_hour": 10,
             "end_hour": 12,
-            "reason": "HARMONY · อ.ดร.ปริญญา",
+            "reason": "HARMONY · อ.ดร.ปริญญา ชูเชิดวัฒนศักดิ์",
         },
         {
             "weekday": 4,

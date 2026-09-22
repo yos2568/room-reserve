@@ -8,10 +8,12 @@ as aware UTC timestamps.
 
 from __future__ import annotations
 
+import calendar
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
+from django.utils.formats import get_format
 
 BANGKOK = ZoneInfo("Asia/Bangkok")
 UTC = ZoneInfo("UTC")
@@ -86,6 +88,80 @@ def default_opening_hours(local_date: date) -> tuple[int, int] | None:
     if local_date.weekday() >= 5:
         return None
     return (settings.OPENING_SLOT_START_HOUR, settings.LAST_SLOT_START_HOUR + 1)
+
+
+def calendar_last_date(today: date | None = None) -> date:
+    """Last local date the timetable will open.
+
+    After this date the bound stays on today, so the calendar never becomes empty.
+    """
+    last = settings.CALENDAR_LAST_DATE
+    if today is not None and today > last:
+        return today
+    return last
+
+
+def clamp_view_date(raw: date, today: date) -> date | None:
+    """Return ``raw`` when it falls on today through the published last date."""
+    if raw < today or raw > calendar_last_date(today):
+        return None
+    return raw
+
+
+def _add_months(day: date, count: int) -> date:
+    month_index = day.month - 1 + count
+    year = day.year + month_index // 12
+    month = month_index % 12 + 1
+    return date(year, month, 1)
+
+
+def month_page(selected: date, today: date) -> dict:
+    """One month of the public calendar, bounded by today and the last date.
+
+    Weekday columns follow the active locale. A day is selectable when it can
+    be opened; booking permission is a separate check.
+    """
+    last = calendar_last_date(today)
+    # Django counts Sunday as 0. calendar.Calendar counts Monday as 0.
+    firstweekday = (int(get_format("FIRST_DAY_OF_WEEK")) + 6) % 7
+    page = calendar.Calendar(firstweekday=firstweekday)
+    weeks = []
+    for week in page.monthdatescalendar(selected.year, selected.month):
+        weeks.append(
+            [
+                {
+                    "date": day,
+                    "in_month": day.month == selected.month and day.year == selected.year,
+                    "is_selected": day == selected,
+                    "is_today": day == today,
+                    "selectable": today <= day <= last,
+                }
+                for day in week
+            ]
+        )
+
+    anchor = date(2024, 1, 7)  # a Sunday
+    header_start = anchor + timedelta(days=(firstweekday - anchor.weekday()) % 7)
+    first = date(selected.year, selected.month, 1)
+    prev_first = _add_months(first, -1)
+    prev_last_day = calendar.monthrange(prev_first.year, prev_first.month)[1]
+    prev_last = date(prev_first.year, prev_first.month, prev_last_day)
+    if prev_last < today:
+        prev_month = None
+    elif prev_first < today:
+        prev_month = today
+    else:
+        prev_month = prev_first
+    next_first = _add_months(first, 1)
+    return {
+        "month_start": first,
+        "weeks": weeks,
+        "headers": [header_start + timedelta(days=offset) for offset in range(7)],
+        "prev_month": prev_month,
+        "next_month": next_first if next_first <= last else None,
+        "today": today,
+        "last": last,
+    }
 
 
 def dates_within_horizon(now: datetime, horizon_days: int | None = None) -> list[date]:

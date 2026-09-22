@@ -143,9 +143,7 @@ class Student(HttpUser):
         return match.group(1) if match else None
 
     def _login(self) -> bool:
-        with self.client.get(
-            f"/{LANG}/login/", name="/login [GET]", catch_response=True
-        ) as page:
+        with self.client.get(f"/{LANG}/login/", name="/login [GET]", catch_response=True) as page:
             if page.status_code != 200:
                 page.failure(f"login page status {page.status_code}")
                 return False
@@ -320,15 +318,13 @@ class Student(HttpUser):
         ) as resp:
             _record_booking_status(resp.status_code)
             location = resp.headers.get("Location", "")
-            if resp.status_code == 302 and "my-bookings" in location:
-                resp.success()
-            elif resp.status_code == 409:
+            # A booking (302 to My bookings) and a clean rule refusal (409) are
+            # both correct answers; anything else is a real failure.
+            if (resp.status_code == 302 and "my-bookings" in location) or resp.status_code == 409:
                 resp.success()
             else:
                 snippet = " ".join((resp.text or "").split())[:160]
-                resp.failure(
-                    f"unexpected status {resp.status_code} booking {room_id}/{slot_key}: {snippet}"
-                )
+                resp.failure(f"unexpected status {resp.status_code} booking {room_id}/{slot_key}: {snippet}")
 
     @task(5)
     def browse_and_book_open_slot(self):
@@ -390,9 +386,11 @@ def _summary(environment, **kwargs):
         f"p95_ms={stats.get_response_time_percentile(0.95) or 0:.0f} "
         f"p99_ms={stats.get_response_time_percentile(0.99) or 0:.0f}"
     )
-    print("booking_post_status=" + ", ".join(
-        f"{code}:{count}" for code, count in sorted(_booking_status.items())
-    ) or "booking_post_status=none")
+    print(
+        "booking_post_status="
+        + ", ".join(f"{code}:{count}" for code, count in sorted(_booking_status.items()))
+        or "booking_post_status=none"
+    )
     for entry in environment.stats.entries.values():
         if "confirm/" not in entry.name:
             continue

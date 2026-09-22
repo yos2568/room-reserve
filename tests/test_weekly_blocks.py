@@ -218,12 +218,41 @@ def test_ensure_rooms_provisions_the_real_floor(frozen, db):
     assert set(
         WeeklyBlock.objects.filter(room=active["304"]).values_list("weekday", "start_hour", "end_hour")
     ) == {
-        (0, 10, 12),  # Monday: Counterpoint
+        (0, 10, 12),  # Monday: Counterpoint, two dates only
         (1, 12, 14),  # Tuesday: Skill-Piano
         (3, 10, 12),  # Thursday: Harmony
         (4, 13, 15),  # Friday: Wind Pedagogy
     }
+    assert set(
+        WeeklyBlock.objects.filter(room=active["304"], weekday=0).values_list("valid_from", "valid_until")
+    ) == {
+        (date(2026, 9, 28), date(2026, 9, 28)),
+        (date(2026, 11, 16), date(2026, 11, 16)),
+    }
     assert not WeeklyBlock.objects.filter(room=active["303"]).exists()
+
+
+def test_room_304_counterpoint_meets_only_on_the_annotated_mondays(frozen, db):
+    """The A304 sheet lists Counterpoint on 28/9/69 and 16/11/69, not every Monday."""
+    rooms_service.ensure_rooms()
+    room = Room.objects.get(number="304")
+    moment = factories.bangkok(2026, 9, 14, 10, 40)
+
+    with clock.frozen_clock(moment):
+        ordinary = availability.public_grid(date(2026, 9, 21), clock.now())
+        first = availability.public_grid(date(2026, 9, 28), clock.now())
+        second = availability.public_grid(date(2026, 11, 16), clock.now())
+        tuesday = availability.public_grid(date(2026, 9, 15), clock.now())
+
+    assert cell_for(ordinary, room, 10).block_reason == ""
+    assert cell_for(ordinary, room, 11).block_reason == ""
+    assert "COUNTERPOINT" in cell_for(first, room, 10).block_reason
+    assert "COUNTERPOINT" in cell_for(first, room, 11).block_reason
+    assert cell_for(first, room, 9).block_reason == ""
+    assert cell_for(first, room, 12).block_reason == ""
+    assert "COUNTERPOINT" in cell_for(second, room, 10).block_reason
+    assert "SKILL-PIANO" in cell_for(tuesday, room, 12).block_reason
+    assert "วณีสอน" in WeeklyBlock.objects.get(room=room, weekday=4).reason
 
 
 def test_room_301_is_availability_only_and_cannot_be_reserved(frozen, student, db):
@@ -250,7 +279,7 @@ def test_ensure_rooms_is_idempotent_and_retires_strays(frozen, db):
     stray.refresh_from_db()
     assert not stray.is_active
     assert Room.objects.filter(is_active=True).count() == 13
-    assert WeeklyBlock.objects.filter(room__number="304").count() == 4
+    assert WeeklyBlock.objects.filter(room__number="304").count() == 5
 
 
 def test_retired_room_returns_when_configured_again(frozen, db):
@@ -299,9 +328,9 @@ def test_dropping_a_room_from_the_timetable_clears_its_blocks(frozen, db):
     rooms_service.ensure_rooms()
     room = Room.objects.get(number="304")
     factories.make_weekly_block(room, weekday=2, start_hour=10, end_hour=11)
-    assert WeeklyBlock.objects.filter(room=room).count() == 5
+    assert WeeklyBlock.objects.filter(room=room).count() == 6
 
     report = rooms_service.ensure_rooms(weekly_blocks={})
 
     assert not WeeklyBlock.objects.exists()
-    assert report["blocks_cleared"] == 11
+    assert report["blocks_cleared"] == 12

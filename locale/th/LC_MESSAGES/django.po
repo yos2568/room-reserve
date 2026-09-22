@@ -4174,3 +4174,15 @@ msgstr "ชั่วโมงที่จองไว้และยังไม
 #: core/templates/core/staff/policy.html
 msgid "Max upcoming hours"
 msgstr "จำนวนชั่วโมงที่จองล่วงหน้าได้สูงสุด"
+
+#: core/templates/core/partials/month_calendar.html
+msgid "Previous month"
+msgstr "เดือนก่อนหน้า"
+
+#: core/templates/core/partials/month_calendar.html
+msgid "Next month"
+msgstr "เดือนถัดไป"
+
+#: core/templates/core/partials/month_calendar.html
+msgid "Show this date"
+msgstr "แสดงวันที่นี้"

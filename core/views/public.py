@@ -31,11 +31,9 @@ def _parse_date(raw: str | None, default: date) -> date:
         parsed = date.fromisoformat(raw)
     except (TypeError, ValueError):
         return default
-    # Never show a date outside the bookable horizon.
-    policy = current_policy()
+    # Viewing runs through the published last date. Booking stays on the horizon.
     today = clock.local_date(clock.now())
-    latest = today + timedelta(days=policy.horizon_days)
-    if parsed < today or parsed > latest:
+    if slots.clamp_view_date(parsed, today) is None:
         return default
     return parsed
 
@@ -55,18 +53,8 @@ def _grid_context(request, local_date: date, *, include_suggestions: bool = True
         room_number=room_number,
     )
     today = clock.local_date(moment)
-
-    days = []
     policy = current_policy()
-    for offset in range(policy.horizon_days + 1):
-        candidate = today + timedelta(days=offset)
-        days.append(
-            {
-                "date": candidate,
-                "is_selected": candidate == local_date,
-                "is_today": candidate == today,
-            }
-        )
+    last = slots.calendar_last_date(today)
 
     return {
         "grid": grid,
@@ -83,12 +71,11 @@ def _grid_context(request, local_date: date, *, include_suggestions: bool = True
             else None
         ),
         "local_date": local_date,
-        "days": days,
+        "today_date": today,
+        "calendar": slots.month_page(local_date, today),
         "is_today": local_date == today,
         "prev_date": local_date - timedelta(days=1) if local_date > today else None,
-        "next_date": local_date + timedelta(days=1)
-        if local_date < today + timedelta(days=policy.horizon_days)
-        else None,
+        "next_date": local_date + timedelta(days=1) if local_date < last else None,
         "moment": moment,
         "policy": policy,
         "closed_reason": _day_closed_reason(local_date),
@@ -141,7 +128,7 @@ def room_board(request):
         rows.append({"room": row["room"], "cell": cell})
 
     today = clock.local_date(moment)
-    policy = current_policy()
+    last = slots.calendar_last_date(today)
     return render(
         request,
         "core/room_board.html",
@@ -149,13 +136,12 @@ def room_board(request):
             "rows": rows,
             "local_date": local_date,
             "today_date": today,
+            "calendar": slots.month_page(local_date, today),
             "selected_hour": selected_hour,
             "time_options": range(settings.OPENING_SLOT_START_HOUR, settings.LAST_SLOT_START_HOUR + 1),
             "is_today": local_date == today,
             "prev_date": local_date - timedelta(days=1) if local_date > today else None,
-            "next_date": local_date + timedelta(days=1)
-            if local_date < today + timedelta(days=policy.horizon_days)
-            else None,
+            "next_date": local_date + timedelta(days=1) if local_date < last else None,
         },
     )
 
@@ -230,8 +216,19 @@ def availability_fragment(request):
 def week(request):
     """Seven-day view using the same cell derivation as the single-day grid."""
     moment = now()
-    selected = _parse_date(request.GET.get("date"), clock.local_date(moment))
+    today = clock.local_date(moment)
+    selected = _parse_date(request.GET.get("date"), today)
+    last = slots.calendar_last_date(today)
     monday = selected - timedelta(days=selected.weekday())
+    prev_anchor = monday - timedelta(days=7)
+    if prev_anchor + timedelta(days=6) < today:
+        prev_week = None
+    elif prev_anchor < today:
+        prev_week = today
+    else:
+        prev_week = prev_anchor
+    next_anchor = monday + timedelta(days=7)
+    next_week = next_anchor if next_anchor <= last else None
     week_days = []
     for offset in range(7):
         day = monday + timedelta(days=offset)
@@ -239,7 +236,8 @@ def week(request):
         week_days.append(
             {
                 "date": day,
-                "is_today": day == clock.local_date(moment),
+                "is_today": day == today,
+                "in_range": today <= day <= last,
                 "grid": context["grid"],
             }
         )
@@ -266,8 +264,10 @@ def week(request):
             "week_days": week_days,
             "week_rows": week_rows,
             "selected_date": selected,
-            "prev_week": monday - timedelta(days=7),
-            "next_week": monday + timedelta(days=7),
+            "local_date": selected,
+            "calendar": slots.month_page(selected, today),
+            "prev_week": prev_week,
+            "next_week": next_week,
             "moment": moment,
             "capacity_min": _parse_capacity(request.GET.get("capacity")),
             "equipment_query": (request.GET.get("equipment") or "").strip()[:80],

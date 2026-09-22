@@ -4,15 +4,16 @@
 **Repository:** `https://github.com/yos2568/room-reserve` (private)
 **Specification:** `roomreserveapp.v3.md`
 **Previous handoff:** `handoff21sep.md` (superseded by this file)
-**Branch:** `main` · this checkpoint includes local account onboarding; push all
-unpublished commits before deployment.
+**Branch:** `main` · this checkpoint records the calendar-range release and the
+current production verification state.
 **Local preview:** `http://localhost:8010/th/` (`.claude/launch.json`, name `roomreserve-dev`)
 
 ## Honest status
 
-`LOCAL_PASS_CANDIDATE`. **495 tests pass** on PostgreSQL, including the Chromium
-browser tests; ruff check and format are clean; `makemigrations --check` finds nothing.
-Nothing is deployed to Hostinger and no real student has used the app.
+`PRODUCTION_VERIFIED_WITH_BLOCKER`. The public timetable release is live and has
+been checked in English and Thai at desktop and phone widths. The focused release
+tests pass on PostgreSQL; ruff check and format are clean; `makemigrations --check`
+finds no model changes.
 
 The local development database has since received the staff and maintainer
 accounts described in the local database checkpoint below. Database rows are not
@@ -21,6 +22,42 @@ captured by Git and must be onboarded separately in production.
 Everything described in `handoff21sep.md` is now committed (it was all
 uncommitted working tree before this session). Two ultrareviews ran; every finding
 was verified and fixed except one efficiency item (§6).
+
+## Current deployment checkpoint — 22 September 2026
+
+The timetable-range change was deployed to Hostinger from the working copy before
+this handoff commit. The running VPS services use the local image tag
+`roomreserve-app:calendar-2030`; the web container is healthy and the scheduler is
+running. The Docker image ID is `sha256:a8b2e68b5febf79a598c737c39d73d7dfab3d4fce3f34e8d00ec72fe59579ddf`.
+This is not the immutable GHCR image from CI.
+
+The successful CI candidate for commit `aa73dee` remains
+`ghcr.io/yos2568/room-reserve:sha-aa73dee5326fea601bb20e930fee7be148c012c0`,
+digest `sha256:d2c495b7458765a7949d496d6821d3ca009bdd49728c302dcca2dd63efb048e3`;
+it was not the image observed on the VPS during this checkpoint.
+
+Verified results:
+
+- `/healthz/` and `/readyz/` return HTTP 200.
+- English home, Choose a room, and Week view open at 31 December 2030.
+- Thai opens the same range and displays Gregorian years.
+- A date beyond the bound returns to today; the booking horizon remains separate.
+- Migration `0014_weekly_block_dated_meetings` is applied; web and scheduler are
+  running from the same release.
+- `COMPLAINT_RECIPIENT_EMAIL`, `POLICY_HORIZON_DAYS`, and
+  `POLICY_MAX_UPCOMING_HOURS` are present in the production environment; the
+  complaint recipient is the owner-supplied admin address.
+
+Production account onboarding is deliberately stopped: one existing superuser has
+a different address, so no second superuser was created. Of the nine requested
+operational-staff identities, one matching account exists but is not operational
+staff; no account or notification rows were changed by this checkpoint. Resolve
+that existing-superuser conflict before onboarding or sending invitations.
+
+The documented encrypted off-host PostgreSQL backup was not run by this checkpoint;
+the configured rclone destination requires explicit approval before it can be used.
+No controlled complaint email was sent, and no password, activation token, or reset
+token is recorded here.
 
 ## 1. What changed this session, in commit order
 
@@ -34,6 +71,7 @@ was verified and fixed except one efficiency item (§6).
 | `a86b953` | Browser check: phone cells showed 12 identical "Reserve" buttons with no hour; the colour key contradicted the grid (free was crimson); ~190 Thai strings missing or fuzzy; week view squeezed room names on phones; phone first screen was all heading. |
 | `622efd0` | **D-37 — check in only at the door's printed QR.** Email QR link and the My bookings button no longer check anyone in. |
 | `fa24041` | **D-38 — book 2 days ahead, hold at most 4 upcoming hours; weekly repeat removed.** |
+| `1ebf5da` | Calendar navigation through 31 December 2030, separate viewing and booking bounds, dated A304 blocks, release tests, and this deployment checkpoint. |
 
 PR #1 (`main` → `review-base`) was review-only; it is closed and `review-base` deleted.
 
@@ -124,16 +162,17 @@ was changed:
    labels if wanted (§4.4).
 4. **Walk-ins from anywhere** (§3) — tie "Use now" to the door page if wanted.
 
-## 7. Before deploying to Hostinger
+## 7. Remaining production work
 
-1. Push all unpublished commits, including this handoff update; deploy only a
-   committed revision.
-2. Production environment must set `COMPLAINT_RECIPIENT_EMAIL` (the app refuses to
-   start without it), plus `SITE_BASE_URL`, `DEFAULT_FROM_EMAIL` and the Mailcow
-   SMTP settings. Consider `SUPPORT_CONTACT_EMAIL` (§4.3).
-3. `migrate` (includes 0012 and 0013), `collectstatic`, rebuild CSS if needed.
-4. Restart Django and the outbox worker; send one controlled complaint; check the
-   staff outbox page.
+1. Commit and push this timetable release and handoff. The running release was
+   deployed from a working copy, so the production image is not yet traceable to
+   the immutable GHCR candidate above.
+2. Approve and run the documented encrypted off-host PostgreSQL backup before the
+   next production change.
+3. Resolve the existing different-address superuser conflict. Only then onboard
+   the missing operational-staff accounts and verify the activation outbox.
+4. Confirm the controlled complaint path and send one clearly marked test only
+   after SMTP/outbox verification. No test was sent in this checkpoint.
 5. Put up the printed door posters (§5).
 
 ## 8. Environment notes learned this session

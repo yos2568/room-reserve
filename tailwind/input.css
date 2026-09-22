@@ -276,6 +276,60 @@
   .date-chip[aria-current="date"] {
     @apply border-brand-600 bg-brand-600 text-white shadow-md hover:bg-brand-700 hover:text-white;
   }
+  .month-calendar {
+    @apply rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4;
+  }
+  .month-calendar-bar {
+    @apply mb-2 flex items-center justify-between gap-2;
+  }
+  .month-calendar-title {
+    @apply text-base font-semibold text-slate-900;
+  }
+  .month-nav {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-md border border-slate-300 bg-white text-lg leading-none text-slate-700 hover:border-brand-600 hover:bg-brand-50 hover:text-brand-700;
+  }
+  .month-nav.is-disabled {
+    @apply border-transparent text-slate-300;
+  }
+  .month-calendar-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0.2rem;
+  }
+  .month-calendar-table th {
+    @apply pb-1 text-center text-xs font-medium text-slate-500;
+  }
+  .month-calendar-table td {
+    text-align: center;
+  }
+  .month-day {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-md text-sm text-slate-800;
+  }
+  a.month-day:hover {
+    @apply bg-brand-50 text-brand-700;
+  }
+  .month-day.is-outside {
+    @apply text-slate-400;
+  }
+  .month-day.is-muted {
+    @apply text-slate-300;
+  }
+  .month-day[aria-current="date"] {
+    @apply bg-brand-600 font-semibold text-white;
+  }
+  a.month-day[aria-current="date"]:hover {
+    @apply bg-brand-700 text-white;
+  }
+  .month-day.is-today:not([aria-current="date"]) {
+    box-shadow: inset 0 0 0 2px var(--faa-brand);
+  }
+  .month-jump {
+    @apply mt-3 flex flex-wrap items-end gap-2;
+  }
+  .month-jump .field {
+    @apply w-auto;
+  }
   .section-label {
     @apply text-xs font-semibold uppercase tracking-[0.14em] text-slate-500;
   }

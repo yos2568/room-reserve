@@ -12,9 +12,9 @@
         <p class="page-intro">{% trans "Scan the week by room, then open a day to reserve a free hour." %}</p>
       </div>
       <nav aria-label="{% trans 'Choose a week' %}" class="flex flex-wrap gap-2">
-        <a class="btn-secondary" href="?date={{ prev_week|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}">← {% trans "Previous week" %}</a>
+        {% if prev_week %}<a class="btn-secondary" href="?date={{ prev_week|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}">← {% trans "Previous week" %}</a>{% endif %}
         <a class="btn-secondary" href="{% url 'core:home' %}">{% trans "Day view" %}</a>
-        <a class="btn-secondary" href="?date={{ next_week|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}">{% trans "Next week" %} →</a>
+        {% if next_week %}<a class="btn-secondary" href="?date={{ next_week|date:'Y-m-d' }}{% if selected_room %}&room={{ selected_room|urlencode }}{% endif %}{% if equipment_query %}&equipment={{ equipment_query|urlencode }}{% endif %}">{% trans "Next week" %} →</a>{% endif %}
       </nav>
     </div>
   </section>
@@ -37,6 +37,10 @@
     <button class="btn-primary" type="submit">{% trans "Filter rooms" %}</button>
   </form>
 
+  <div class="mt-4">
+    {% include "core/partials/month_calendar.html" %}
+  </div>
+
   <div class="availability-shell mt-4">
     <div class="table-wrap">
     <table class="availability-table min-w-[980px] w-full border-collapse text-sm">
@@ -46,7 +50,11 @@
           <th class="sticky start-0 z-10 min-w-[8.5rem] bg-slate-50 p-3 text-start" scope="col">{% trans "Room" %}</th>
           {% for day in week_days %}
             <th class="min-w-[130px] p-3 text-start {% if day.is_today %}bg-brand-50{% endif %}" scope="col">
-              <a class="room-name" href="{% url 'core:home' %}?date={{ day.date|date:'Y-m-d' }}">{{ day.date|date:"D j M" }}</a>
+              {% if day.in_range %}
+                <a class="room-name" href="{% url 'core:home' %}?date={{ day.date|date:'Y-m-d' }}">{{ day.date|date:"D j M" }}</a>
+              {% else %}
+                <span class="room-name">{{ day.date|date:"D j M" }}</span>
+              {% endif %}
               {% if day.is_today %}<span class="block text-xs font-normal text-brand-700">{% trans "today" %}</span>{% endif %}
             </th>
           {% endfor %}

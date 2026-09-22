@@ -1,0 +1,59 @@
+{% load i18n %}
+{# One month of the public timetable. Days link with a plain GET, so the control works with JavaScript off. #}
+<nav class="month-calendar" aria-label="{% trans 'Choose a date' %}">
+  <div class="month-calendar-bar">
+    {% if calendar.prev_month %}
+      <a class="month-nav" href="{% querystring date=calendar.prev_month.isoformat %}" aria-label="{% trans 'Previous month' %}">‹</a>
+    {% else %}
+      <span class="month-nav is-disabled" aria-hidden="true">‹</span>
+    {% endif %}
+    <p class="month-calendar-title">{{ calendar.month_start|date:"F Y" }}</p>
+    {% if calendar.next_month %}
+      <a class="month-nav" href="{% querystring date=calendar.next_month.isoformat %}" aria-label="{% trans 'Next month' %}">›</a>
+    {% else %}
+      <span class="month-nav is-disabled" aria-hidden="true">›</span>
+    {% endif %}
+  </div>
+
+  <table class="month-calendar-table">
+    <caption class="sr-only">{{ calendar.month_start|date:"F Y" }}</caption>
+    <thead>
+      <tr>
+        {% for header in calendar.headers %}
+          <th scope="col">{{ header|date:"D" }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for week in calendar.weeks %}
+        <tr>
+          {% for day in week %}
+            <td>
+              {% if day.selectable %}
+                <a class="month-day{% if not day.in_month %} is-outside{% endif %}{% if day.is_today %} is-today{% endif %}"
+                   href="{% querystring date=day.date.isoformat %}"
+                   {% if day.is_selected %}aria-current="date"{% endif %}>{{ day.date|date:"j" }}</a>
+              {% elif day.in_month %}
+                <span class="month-day is-muted">{{ day.date|date:"j" }}</span>
+              {% else %}
+                <span class="month-day is-muted" aria-hidden="true">{{ day.date|date:"j" }}</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <form method="get" class="month-jump">
+    {% for key, value in request.GET.items %}
+      {% if key != "date" %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}
+    {% endfor %}
+    <label class="sr-only" for="calendar-date">{% trans "Choose a date" %}</label>
+    <input class="field" id="calendar-date" name="date" type="date" required
+           value="{{ local_date|date:'Y-m-d' }}"
+           min="{{ calendar.today|date:'Y-m-d' }}"
+           max="{{ calendar.last|date:'Y-m-d' }}">
+    <button class="btn-secondary" type="submit">{% trans "Show this date" %}</button>
+  </form>
+</nav>
