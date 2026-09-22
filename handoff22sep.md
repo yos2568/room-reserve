@@ -48,9 +48,10 @@ Verified results:
 - A date beyond the bound returns to today; the booking horizon remains separate.
 - Migration `0014_weekly_block_dated_meetings` is applied; web and scheduler are
   running from the same release.
-- `COMPLAINT_RECIPIENT_EMAIL`, `POLICY_HORIZON_DAYS`, and
-  `POLICY_MAX_UPCOMING_HOURS` are present in the production environment; the
-  complaint recipient is the owner-supplied admin address.
+- `POLICY_HORIZON_DAYS=2` and `POLICY_MAX_UPCOMING_HOURS=4` are correct in
+  production. `COMPLAINT_RECIPIENT_EMAIL` is present, but its exact value did not
+  match the requested admin address during verification; it was not changed while
+  the required pre-change backup approval remains outstanding.
 
 Production account onboarding is deliberately stopped: one existing superuser has
 a different address, so no second superuser was created. Of the nine requested
@@ -175,8 +176,9 @@ was changed:
    next production change.
 3. Resolve the existing different-address superuser conflict. Only then onboard
    the missing operational-staff accounts and verify the activation outbox.
-4. Confirm the controlled complaint path and send one clearly marked test only
-   after SMTP/outbox verification. No test was sent in this checkpoint.
+4. Correct and verify `COMPLAINT_RECIPIENT_EMAIL`, then confirm the controlled
+   complaint path and send one clearly marked test only after SMTP/outbox
+   verification. No test was sent in this checkpoint.
 5. Put up the printed door posters (§5).
 
 ## 8. Environment notes learned this session
