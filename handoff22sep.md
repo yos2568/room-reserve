@@ -1,7 +1,7 @@
 # Handoff — Room Reserve V3 · 22 September 2026
 
 **Project:** `/Volumes/Crucial2TB/All Codes/FAA/Room problem`
-**Repository:** `https://github.com/yos2568/room-reserve` (private)
+**Repository:** `https://github.com/yos2568/room-reserve` (public)
 **Specification:** `roomreserveapp.v3.md`
 **Previous handoff:** `handoff21sep.md` (superseded by this file)
 **Branch:** `main` · this checkpoint records the calendar-range release and the
@@ -25,12 +25,22 @@ was verified and fixed except one efficiency item (§6).
 
 ## Current deployment checkpoint — 22 September 2026
 
-The latest verified application image is now deployed to Hostinger. CI run
+The preceding verified application image deployed to Hostinger was from CI run
 `35742697962` for main commit `9f6ca4a` passed verification and immutable image
 publication. Web and scheduler run
 `ghcr.io/yos2568/room-reserve:sha-9f6ca4ae310585b851acfc5161602c33fc650b66`,
 digest `sha256:a0ec52f164d83bd4d590bd7fbd5959dc443867bfa7be651daf33b6d99773d200`.
 The web image ID is `sha256:5ba8a735d04c5ada657353273067309cef8f85ecdc6a5c1b3c8b96643a54c8fa`.
+
+After that deployment, CI run `35750413773` passed for commit `ad11555` and
+published image digest
+`sha256:911279dd6f959f77fc863b8810f9b02339de8a1792b16116fbf24414e9c39752`.
+The VPS now runs that immutable image for both web and scheduler. The Hostinger
+Compose file also routes `mail.yos.in.th` to the Docker host gateway so Room
+Reserve reaches the existing Mailcow Postfix service while retaining the correct
+TLS hostname. The configured Mailcow sender is `roomreserve@yos.in.th`; SMTP
+authentication and one requested activation notification were verified
+successfully. No password, activation token, or message body is recorded here.
 
 The earlier successful CI candidate for commit `aa73dee` was
 `ghcr.io/yos2568/room-reserve:sha-aa73dee5326fea601bb20e930fee7be148c012c0`,
@@ -58,17 +68,22 @@ Verified results:
   no restarts.
 - `POLICY_HORIZON_DAYS=2` and `POLICY_MAX_UPCOMING_HOURS=4` are correct in
   production. `COMPLAINT_RECIPIENT_EMAIL` matches the requested admin address.
+- Mailcow containers and Postfix submission are running; the Room Reserve
+  scheduler tick accepted the activation notification with `mail_sent=1` and
+  `mail_failed=0`.
 
 Production account onboarding is deliberately stopped: one existing superuser has
 a different address, so no second superuser was created. Of the nine requested
 operational-staff identities, one matching account exists but is not operational
-staff; no account or notification rows were changed by this checkpoint. Resolve
-that existing-superuser conflict before onboarding or sending invitations.
+staff; no account or role changes were made by this checkpoint. One user-requested
+activation notification for the existing maintainer account was sent after SMTP
+was repaired; no other onboarding was performed. Resolve that existing-superuser
+conflict before onboarding the remaining staff accounts.
 
 The approved encrypted off-host PostgreSQL backup completed through the configured
-systemd backup service immediately before deployment. The production notification
-count remains zero; no controlled complaint email was sent, and no password,
-activation token, or reset token is recorded here.
+systemd backup service immediately before deployment. No controlled complaint
+email was sent, and no password, activation token, or reset token is recorded
+here.
 
 ## 1. What changed this session, in commit order
 
@@ -84,7 +99,8 @@ activation token, or reset token is recorded here.
 | `fa24041` | **D-38 — book 2 days ahead, hold at most 4 upcoming hours; weekly repeat removed.** |
 | `36af5ed` | Calendar navigation through 31 December 2030, separate viewing and booking bounds, dated A304 blocks, release tests, and this deployment checkpoint. |
 | `5e8d88f` | Recorded the requested complaint-recipient discrepancy and the later production deployment check. |
-| `9f6ca4a` | Latest CI-verified immutable image deployed to Hostinger after backup, migration, seed, and health checks. |
+| `9f6ca4a` | CI-verified immutable image deployed to Hostinger after backup, migration, seed, and health checks. |
+| `ad11555` | Routed Room Reserve SMTP through the existing VPS Mailcow service; CI passed and the immutable image/compose correction was deployed. |
 
 PR #1 (`main` → `review-base`) was review-only; it is closed and `review-base` deleted.
 
@@ -179,10 +195,10 @@ was changed:
 
 1. Resolve the existing different-address superuser conflict. Production currently
    has one superuser, but zero users matching the requested admin address; no second
-   superuser was created. Only then onboard the missing operational-staff accounts
-   and verify the activation outbox.
-2. Confirm the controlled complaint path and send one clearly marked test only
-   after SMTP/outbox verification. No test was sent in this checkpoint.
+   superuser was created. Only then onboard the missing operational-staff accounts.
+2. Confirm the controlled complaint path and send one clearly marked test. SMTP and
+   the activation outbox are now verified; no complaint test was sent in this
+   checkpoint.
 3. Put up the printed door posters (§5).
 
 ## 8. Environment notes learned this session
