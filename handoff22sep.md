@@ -4,7 +4,8 @@
 **Repository:** `https://github.com/yos2568/room-reserve` (private)
 **Specification:** `roomreserveapp.v3.md`
 **Previous handoff:** `handoff21sep.md` (superseded by this file)
-**Branch:** `main` · local HEAD `fa24041` · **3 commits not yet pushed** (see §8)
+**Branch:** `main` · this checkpoint includes local account onboarding; push all
+unpublished commits before deployment.
 **Local preview:** `http://localhost:8010/th/` (`.claude/launch.json`, name `roomreserve-dev`)
 
 ## Honest status
@@ -12,6 +13,10 @@
 `LOCAL_PASS_CANDIDATE`. **495 tests pass** on PostgreSQL, including the Chromium
 browser tests; ruff check and format are clean; `makemigrations --check` finds nothing.
 Nothing is deployed to Hostinger and no real student has used the app.
+
+The local development database has since received the staff and maintainer
+accounts described in the local database checkpoint below. Database rows are not
+captured by Git and must be onboarded separately in production.
 
 Everything described in `handoff21sep.md` is now committed (it was all
 uncommitted working tree before this session). Two ultrareviews ran; every finding
@@ -79,6 +84,21 @@ start with the new defaults on first deploy.
 5. **The student roster spreadsheet is still in git history** (commit `55d7650`) on
    the private GitHub repo. Only a history rewrite removes it.
 
+## Local database onboarding checkpoint
+
+Applied to the local PostgreSQL database only; no Hostinger or production database
+was changed:
+
+- Nine owner-supplied staff identities were stored as lowercase operational-staff
+  accounts. Each has a pending single-use activation invitation and no preset
+  password.
+- The single technical maintainer account was created for the owner-supplied admin
+  address. A password-reset invitation is queued; no bootstrap password or token
+  is recorded in this handoff.
+- The outbox worker must be running for the activation and password-reset messages
+  to be delivered. Repeat this onboarding deliberately against production after
+  deployment and verify the destination before sending real invitations.
+
 ## 5. Needs someone else
 
 - **Thai review.** ~190 strings (commit `a86b953`) and every message added since were
@@ -99,14 +119,15 @@ start with the new defaults on first deploy.
    signs in and the assistant continues.
 2. **Efficiency.** The suggestions panel rebuilds the whole grid on every 30-second
    refresh, and the week view recomputes room options for each of 7 days.
-3. **Staff views** still redirect to an unchecked POST `next`; use `safe_next_url`.
-4. **handoff21sep leftovers:** confirm only admins can edit room 301's timetable;
-   remove capacity labels if wanted (§4.4).
-5. **Walk-ins from anywhere** (§3) — tie "Use now" to the door page if wanted.
+3. **handoff21sep leftovers:** confirm the owner accepts configuration-only editing
+   for room 301's timetable; no staff timetable editor exists. Remove capacity
+   labels if wanted (§4.4).
+4. **Walk-ins from anywhere** (§3) — tie "Use now" to the door page if wanted.
 
 ## 7. Before deploying to Hostinger
 
-1. Push the 3 local commits; deploy only a committed revision.
+1. Push all unpublished commits, including this handoff update; deploy only a
+   committed revision.
 2. Production environment must set `COMPLAINT_RECIPIENT_EMAIL` (the app refuses to
    start without it), plus `SITE_BASE_URL`, `DEFAULT_FROM_EMAIL` and the Mailcow
    SMTP settings. Consider `SUPPORT_CONTACT_EMAIL` (§4.3).
@@ -117,8 +138,8 @@ start with the new defaults on first deploy.
 
 ## 8. Environment notes learned this session
 
-- **Push** is blocked for the assistant by the permission classifier; run it yourself:
-  `git push origin main`.
+- **Pushes** may require the approved network path in this environment; after
+  pushing, verify the remote branch with `git ls-remote origin refs/heads/main`.
 - **`/code-review ultra` with no argument reviews only what `main` has that GitHub
   does not** — after a push it finds nothing. To review pushed work, open a
   review-only PR from `main` into a base branch and run `/code-review ultra <PR#>`.
