@@ -82,6 +82,21 @@ def book(actor, room, slot_start, key=None):
     )
 
 
+# A move loses either because the cell was taken or because the shared lock's
+# bounded wait expired. BUSY does not release the room the student already holds.
+MOVE_REJECTIONS = {Code.SLOT_TAKEN, Code.BUSY}
+
+
+def move(actor, booking, room, key=None):
+    return run_operation(
+        actor=actor,
+        operation="move_booking",
+        payload=booking_service.build_move_payload(booking, room),
+        key=key,
+        body=_body(lambda ctx: booking_service.move_booking(ctx, booking=booking, room=room)),
+    )
+
+
 # --- A09: twenty users, one slot ----------------------------------------------
 
 
@@ -388,3 +403,127 @@ def test_repeated_contention_stress_has_no_invariant_breach():
                 .count()
                 <= 1
             )
+
+
+def _live(room, slot_start):
+    return Booking.objects.filter(room=room, slot_start=slot_start).exclude(status=Booking.Status.CANCELLED)
+
+
+# --- Concurrent moves: the loser keeps the room they already hold ------------
+
+
+def test_two_students_race_to_move_into_the_same_room():
+    moment = factories.bangkok(2026, 9, 14, 10, 40)
+    rooms = factories.make_rooms(9)
+    slot_start = slots.slot_start_for(factories.bangkok(2026, 9, 14).date(), 11)
+    student_a = factories.make_user()
+    student_b = factories.make_user()
+
+    with clock.frozen_clock(moment):
+        booking_a = factories.make_booking(student_a, rooms[0], slot_start=slot_start)
+        booking_b = factories.make_booking(student_b, rooms[1], slot_start=slot_start)
+        workers = [
+            Worker(lambda: move(student_a, booking_a, rooms[2]), moment),
+            Worker(lambda: move(student_b, booking_b, rooms[2]), moment),
+        ]
+        run_all(workers)
+
+    successes = [worker for worker in workers if worker.outcome.ok]
+    assert len(successes) == 1, [worker.outcome.code for worker in workers]
+    for worker in workers:
+        if not worker.outcome.ok:
+            assert worker.outcome.code in MOVE_REJECTIONS, worker.outcome.code
+
+    arrived = _live(rooms[2], slot_start)
+    assert arrived.count() == 1
+
+    for booking, original in ((booking_a, rooms[0]), (booking_b, rooms[1])):
+        booking.refresh_from_db()
+        if booking.pk == arrived.get().pk:
+            continue
+        assert booking.room_id == original.pk
+        assert booking.status == Booking.Status.SCHEDULED
+
+    for student in (student_a, student_b):
+        held = Booking.objects.filter(user=student).exclude(status=Booking.Status.CANCELLED)
+        assert held.count() == 1
+
+
+def test_a_move_races_a_new_booking_for_the_same_cell():
+    moment = factories.bangkok(2026, 9, 14, 10, 40)
+    rooms = factories.make_rooms(9)
+    slot_start = slots.slot_start_for(factories.bangkok(2026, 9, 14).date(), 11)
+    student_a = factories.make_user()
+    student_c = factories.make_user()
+
+    with clock.frozen_clock(moment):
+        booking_a = factories.make_booking(student_a, rooms[0], slot_start=slot_start)
+        workers = [
+            Worker(lambda: move(student_a, booking_a, rooms[1]), moment),
+            Worker(lambda: book(student_c, rooms[1], slot_start), moment),
+        ]
+        run_all(workers)
+
+    move_worker, book_worker = workers
+    assert (move_worker.outcome.ok + book_worker.outcome.ok) == 1, [
+        worker.outcome.code for worker in workers
+    ]
+    for worker in workers:
+        if not worker.outcome.ok:
+            assert worker.outcome.code in MOVE_REJECTIONS, worker.outcome.code
+
+    holders = _live(rooms[1], slot_start)
+    assert holders.count() == 1
+    holder = holders.get()
+
+    if not move_worker.outcome.ok:
+        booking_a.refresh_from_db()
+        assert booking_a.room_id == rooms[0].pk
+        assert booking_a.status == Booking.Status.SCHEDULED
+        assert holder.user_id == student_c.pk
+    else:
+        assert holder.user_id == student_a.pk
+        assert (
+            Booking.objects.filter(user=student_c, slot_start=slot_start)
+            .exclude(status=Booking.Status.CANCELLED)
+            .count()
+            == 0
+        )
+
+
+def test_many_movers_one_free_room_keeps_every_loser_housed():
+    moment = factories.bangkok(2026, 9, 14, 10, 40)
+    rooms = factories.make_rooms(9)
+    slot_start = slots.slot_start_for(factories.bangkok(2026, 9, 14).date(), 11)
+    students = [factories.make_user() for _ in range(8)]
+
+    with clock.frozen_clock(moment):
+        bookings = [
+            factories.make_booking(student, rooms[index], slot_start=slot_start)
+            for index, student in enumerate(students)
+        ]
+        workers = [
+            Worker(lambda actor=student, booking=booking: move(actor, booking, rooms[8]), moment)
+            for student, booking in zip(students, bookings, strict=True)
+        ]
+        run_all(workers)
+
+    successes = [worker for worker in workers if worker.outcome.ok]
+    assert len(successes) == 1, [worker.outcome.code for worker in workers]
+    for worker in workers:
+        if not worker.outcome.ok:
+            assert worker.outcome.code in MOVE_REJECTIONS, worker.outcome.code
+
+    assert _live(rooms[8], slot_start).count() == 1
+
+    for index, (worker, booking) in enumerate(zip(workers, bookings, strict=True)):
+        if worker.outcome.ok:
+            continue
+        booking.refresh_from_db()
+        assert booking.room_id == rooms[index].pk
+        assert booking.status == Booking.Status.SCHEDULED
+
+    assert (
+        Booking.objects.filter(slot_start=slot_start).exclude(status=Booking.Status.CANCELLED).count()
+        == 8
+    )
