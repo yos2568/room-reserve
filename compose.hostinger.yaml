@@ -49,6 +49,11 @@ x-app: &app
     SUPPORT_CONTACT_NAME: ${SUPPORT_CONTACT_NAME:-}
     SUPPORT_CONTACT_PHONE: ${SUPPORT_CONTACT_PHONE:-}
     SUPPORT_CONTACT_EMAIL: ${SUPPORT_CONTACT_EMAIL:-}
+  # The VPS hostname resolves to 127.0.1.1 on the host because it is also the
+  # machine hostname. Route it to the Docker host so the app reaches the
+  # existing Mailcow Postfix service while retaining mail.yos.in.th for TLS.
+  extra_hosts:
+    - "mail.yos.in.th:host-gateway"
   networks:
     - roomreserve_private
   logging:
