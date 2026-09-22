@@ -38,7 +38,12 @@ it was not the image observed on the VPS during this checkpoint. The final
 application commit `36af5ed` passed CI run `35739110259` and published
 `ghcr.io/yos2568/room-reserve:sha-36af5ed926a51a3bc306c4816138b59d69d8fe97`,
 digest `sha256:bc03939db6c6ca84eb81e6d1591b6270240a661a299a36aa30584f930a243a64`.
-The VPS was not switched to that immutable image by this checkpoint.
+The later handoff commit `5e8d88f` passed CI run `35740155167` and published
+`ghcr.io/yos2568/room-reserve:sha-5e8d88f17ca927ed2009c5e528068614149ffe37`,
+digest `sha256:6cdd42b179fd0561fb8e1f14e89ed2b18fe16ae7b8b7363a3faf8c596ff82bda`.
+An attempted pull of that immutable image was denied by GHCR because the VPS
+credential lacks package-read access. The pre-deployment configuration was
+restored; the VPS was not switched to the new image.
 
 Verified results:
 
@@ -59,10 +64,9 @@ operational-staff identities, one matching account exists but is not operational
 staff; no account or notification rows were changed by this checkpoint. Resolve
 that existing-superuser conflict before onboarding or sending invitations.
 
-The documented encrypted off-host PostgreSQL backup was not run by this checkpoint;
-the configured rclone destination requires explicit approval before it can be used.
-No controlled complaint email was sent, and no password, activation token, or reset
-token is recorded here.
+The approved encrypted off-host PostgreSQL backup completed through the configured
+systemd backup service before the deployment attempt. No controlled complaint email
+was sent, and no password, activation token, or reset token is recorded here.
 
 ## 1. What changed this session, in commit order
 
@@ -77,6 +81,7 @@ token is recorded here.
 | `622efd0` | **D-37 — check in only at the door's printed QR.** Email QR link and the My bookings button no longer check anyone in. |
 | `fa24041` | **D-38 — book 2 days ahead, hold at most 4 upcoming hours; weekly repeat removed.** |
 | `36af5ed` | Calendar navigation through 31 December 2030, separate viewing and booking bounds, dated A304 blocks, release tests, and this deployment checkpoint. |
+| `5e8d88f` | Recorded the requested complaint-recipient discrepancy and the later production deployment check. |
 
 PR #1 (`main` → `review-base`) was review-only; it is closed and `review-base` deleted.
 
@@ -169,17 +174,15 @@ was changed:
 
 ## 7. Remaining production work
 
-1. Commit and push this timetable release and handoff. The running release was
-   deployed from a working copy, so the production image is not yet traceable to
-   the immutable GHCR candidate above.
-2. Approve and run the documented encrypted off-host PostgreSQL backup before the
-   next production change.
-3. Resolve the existing different-address superuser conflict. Only then onboard
+1. Configure a VPS GitHub credential with `read:packages` (or make the GHCR image
+   public), then pull and deploy the immutable image above. The running release
+   remains the verified `calendar-2030` working-copy image.
+2. Resolve the existing different-address superuser conflict. Only then onboard
    the missing operational-staff accounts and verify the activation outbox.
-4. Correct and verify `COMPLAINT_RECIPIENT_EMAIL`, then confirm the controlled
+3. Correct and verify `COMPLAINT_RECIPIENT_EMAIL`, then confirm the controlled
    complaint path and send one clearly marked test only after SMTP/outbox
    verification. No test was sent in this checkpoint.
-5. Put up the printed door posters (§5).
+4. Put up the printed door posters (§5).
 
 ## 8. Environment notes learned this session
 
