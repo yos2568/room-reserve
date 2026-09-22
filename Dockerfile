@@ -44,6 +44,7 @@ RUN DJANGO_SECRET_KEY=build-only DJANGO_ALLOWED_HOSTS=localhost \
     MAINTAINER_ALLOWED_IPS=127.0.0.1 \
     POSTGRES_PASSWORD=build-only EMAIL_HOST=localhost EMAIL_HOST_USER=x \
     EMAIL_HOST_PASSWORD=x DEFAULT_FROM_EMAIL=build@localhost.test \
+    COMPLAINT_RECIPIENT_EMAIL=build@localhost.test \
     python manage.py collectstatic --noinput
 
 # Run as an unprivileged user.
