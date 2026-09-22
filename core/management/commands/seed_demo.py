@@ -202,7 +202,8 @@ class Command(BaseCommand):
         )
         self.stdout.write("")
         self.stdout.write("Local demo access (development only):")
-        self.stdout.write("  student  6600000001 / " + student_password)
+        # Same id `_seed_student` creates for index 1 (`66` + a 7-digit index).
+        self.stdout.write(f"  student  66{1:07d} / " + student_password)
         self.stdout.write("  staff    staff0001 / " + DEMO_STAFF_PASSWORD)
         self.stdout.write("")
         self.stdout.write(

@@ -36,3 +36,6 @@ htmlcov/
 รายชื่อนิสิตป.ตรี ทั้ง 4 ปี.xlsx
 ._*
 Screenshot *.png
+
+# Locust load-test output (local runs only)
+loadtest/results/
