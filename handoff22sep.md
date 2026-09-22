@@ -25,11 +25,12 @@ was verified and fixed except one efficiency item (§6).
 
 ## Current deployment checkpoint — 22 September 2026
 
-The timetable-range change was deployed to Hostinger from the working copy before
-this handoff commit. The running VPS services use the local image tag
-`roomreserve-app:calendar-2030`; the web container is healthy and the scheduler is
-running. The Docker image ID is `sha256:a8b2e68b5febf79a598c737c39d73d7dfab3d4fce3f34e8d00ec72fe59579ddf`.
-This is not the immutable GHCR image from CI.
+The latest verified application image is now deployed to Hostinger. CI run
+`35742697962` for main commit `9f6ca4a` passed verification and immutable image
+publication. Web and scheduler run
+`ghcr.io/yos2568/room-reserve:sha-9f6ca4ae310585b851acfc5161602c33fc650b66`,
+digest `sha256:a0ec52f164d83bd4d590bd7fbd5959dc443867bfa7be651daf33b6d99773d200`.
+The web image ID is `sha256:5ba8a735d04c5ada657353273067309cef8f85ecdc6a5c1b3c8b96643a54c8fa`.
 
 The earlier successful CI candidate for commit `aa73dee` was
 `ghcr.io/yos2568/room-reserve:sha-aa73dee5326fea601bb20e930fee7be148c012c0`,
@@ -41,9 +42,9 @@ digest `sha256:bc03939db6c6ca84eb81e6d1591b6270240a661a299a36aa30584f930a243a64`
 The later handoff commit `5e8d88f` passed CI run `35740155167` and published
 `ghcr.io/yos2568/room-reserve:sha-5e8d88f17ca927ed2009c5e528068614149ffe37`,
 digest `sha256:6cdd42b179fd0561fb8e1f14e89ed2b18fe16ae7b8b7363a3faf8c596ff82bda`.
-An attempted pull of that immutable image was denied by GHCR because the VPS
-credential lacks package-read access. The pre-deployment configuration was
-restored; the VPS was not switched to the new image.
+That earlier pull was denied by GHCR because the VPS credential lacked package-read
+access; a scoped package-read credential was subsequently configured and the latest
+image was deployed successfully.
 
 Verified results:
 
@@ -53,10 +54,10 @@ Verified results:
 - A date beyond the bound returns to today; the booking horizon remains separate.
 - Migration `0014_weekly_block_dated_meetings` is applied; web and scheduler are
   running from the same release.
+- `seed_rooms` reports 13 rooms ready and 0 created; the scheduler is running with
+  no restarts.
 - `POLICY_HORIZON_DAYS=2` and `POLICY_MAX_UPCOMING_HOURS=4` are correct in
-  production. `COMPLAINT_RECIPIENT_EMAIL` is present, but its exact value did not
-  match the requested admin address during verification; it was not changed while
-  the required pre-change backup approval remains outstanding.
+  production. `COMPLAINT_RECIPIENT_EMAIL` matches the requested admin address.
 
 Production account onboarding is deliberately stopped: one existing superuser has
 a different address, so no second superuser was created. Of the nine requested
@@ -65,8 +66,9 @@ staff; no account or notification rows were changed by this checkpoint. Resolve
 that existing-superuser conflict before onboarding or sending invitations.
 
 The approved encrypted off-host PostgreSQL backup completed through the configured
-systemd backup service before the deployment attempt. No controlled complaint email
-was sent, and no password, activation token, or reset token is recorded here.
+systemd backup service immediately before deployment. The production notification
+count remains zero; no controlled complaint email was sent, and no password,
+activation token, or reset token is recorded here.
 
 ## 1. What changed this session, in commit order
 
@@ -82,6 +84,7 @@ was sent, and no password, activation token, or reset token is recorded here.
 | `fa24041` | **D-38 — book 2 days ahead, hold at most 4 upcoming hours; weekly repeat removed.** |
 | `36af5ed` | Calendar navigation through 31 December 2030, separate viewing and booking bounds, dated A304 blocks, release tests, and this deployment checkpoint. |
 | `5e8d88f` | Recorded the requested complaint-recipient discrepancy and the later production deployment check. |
+| `9f6ca4a` | Latest CI-verified immutable image deployed to Hostinger after backup, migration, seed, and health checks. |
 
 PR #1 (`main` → `review-base`) was review-only; it is closed and `review-base` deleted.
 
@@ -174,15 +177,13 @@ was changed:
 
 ## 7. Remaining production work
 
-1. Configure a VPS GitHub credential with `read:packages` (or make the GHCR image
-   public), then pull and deploy the immutable image above. The running release
-   remains the verified `calendar-2030` working-copy image.
-2. Resolve the existing different-address superuser conflict. Only then onboard
-   the missing operational-staff accounts and verify the activation outbox.
-3. Correct and verify `COMPLAINT_RECIPIENT_EMAIL`, then confirm the controlled
-   complaint path and send one clearly marked test only after SMTP/outbox
-   verification. No test was sent in this checkpoint.
-4. Put up the printed door posters (§5).
+1. Resolve the existing different-address superuser conflict. Production currently
+   has one superuser, but zero users matching the requested admin address; no second
+   superuser was created. Only then onboard the missing operational-staff accounts
+   and verify the activation outbox.
+2. Confirm the controlled complaint path and send one clearly marked test only
+   after SMTP/outbox verification. No test was sent in this checkpoint.
+3. Put up the printed door posters (§5).
 
 ## 8. Environment notes learned this session
 
