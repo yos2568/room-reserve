@@ -31,10 +31,14 @@ this handoff commit. The running VPS services use the local image tag
 running. The Docker image ID is `sha256:a8b2e68b5febf79a598c737c39d73d7dfab3d4fce3f34e8d00ec72fe59579ddf`.
 This is not the immutable GHCR image from CI.
 
-The successful CI candidate for commit `aa73dee` remains
+The earlier successful CI candidate for commit `aa73dee` was
 `ghcr.io/yos2568/room-reserve:sha-aa73dee5326fea601bb20e930fee7be148c012c0`,
 digest `sha256:d2c495b7458765a7949d496d6821d3ca009bdd49728c302dcca2dd63efb048e3`;
-it was not the image observed on the VPS during this checkpoint.
+it was not the image observed on the VPS during this checkpoint. The final
+application commit `36af5ed` passed CI run `35739110259` and published
+`ghcr.io/yos2568/room-reserve:sha-36af5ed926a51a3bc306c4816138b59d69d8fe97`,
+digest `sha256:bc03939db6c6ca84eb81e6d1591b6270240a661a299a36aa30584f930a243a64`.
+The VPS was not switched to that immutable image by this checkpoint.
 
 Verified results:
 
@@ -71,7 +75,7 @@ token is recorded here.
 | `a86b953` | Browser check: phone cells showed 12 identical "Reserve" buttons with no hour; the colour key contradicted the grid (free was crimson); ~190 Thai strings missing or fuzzy; week view squeezed room names on phones; phone first screen was all heading. |
 | `622efd0` | **D-37 — check in only at the door's printed QR.** Email QR link and the My bookings button no longer check anyone in. |
 | `fa24041` | **D-38 — book 2 days ahead, hold at most 4 upcoming hours; weekly repeat removed.** |
-| `1ebf5da` | Calendar navigation through 31 December 2030, separate viewing and booking bounds, dated A304 blocks, release tests, and this deployment checkpoint. |
+| `36af5ed` | Calendar navigation through 31 December 2030, separate viewing and booking bounds, dated A304 blocks, release tests, and this deployment checkpoint. |
 
 PR #1 (`main` → `review-base`) was review-only; it is closed and `review-base` deleted.
 
