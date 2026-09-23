@@ -26,8 +26,30 @@
       <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Status" %}</dt><dd>{{ cell.get_state_display|default:cell.state }}</dd></div>
     </dl>
 
+    {% if checkin_state == 'pending' %}
+      <p class="mt-4 rounded border border-amber-600 bg-amber-50 p-2 text-sm" role="status" data-checkin-state="pending">
+        {% trans "Your booking for this hour is still waiting for staff approval, so it cannot be checked in yet. Check My bookings for the decision." %}
+      </p>
+    {% elif checkin_state == 'closed' %}
+      <p class="mt-4 rounded border border-red-700 bg-red-50 p-2 text-sm" role="alert" data-checkin-state="closed">
+        {% blocktrans with deadline=my_booking.deadline|date:'H:i' %}Check-in for your booking closed at {{ deadline }}. The room has been released and a no-show is recorded. If you were here on time, contact the department office.{% endblocktrans %}
+      </p>
+    {% elif other_room_booking %}
+      <p class="mt-4 rounded border border-amber-600 bg-amber-50 p-2 text-sm" role="status" data-checkin-state="other_room">
+        {% blocktrans with other=other_room_booking.room %}Your booking this hour is in {{ other }}, not this room. Scan the QR code on the door of {{ other }} to check in.{% endblocktrans %}
+      </p>
+    {% elif upcoming_booking %}
+      <p class="mt-4 rounded border border-sky-700 bg-sky-50 p-2 text-sm" role="status" data-checkin-state="not_open">
+        {% if upcoming_booking.status == 'PENDING_APPROVAL' %}
+          {% blocktrans with start=upcoming_booking.slot_start|date:'H:i' %}Your booking here at {{ start }} is still waiting for staff approval.{% endblocktrans %}
+        {% else %}
+          {% blocktrans with start=upcoming_booking.slot_start|date:'H:i' deadline=upcoming_booking.deadline|date:'H:i' minutes=upcoming_minutes %}Your booking here starts at {{ start }}. Check-in opens at {{ start }} (in {{ minutes }} min) and closes at {{ deadline }}. Scan this QR code again then.{% endblocktrans %}
+        {% endif %}
+      </p>
+    {% endif %}
+
     {% if can_check_in %}
-      <form method="post" action="{% url 'core:room_check_in' room_id=room.pk pk=my_booking.pk %}" class="mt-4">
+      <form method="post" action="{% url 'core:room_check_in' room_id=room.pk pk=my_booking.pk %}" class="mt-4" data-checkin-state="ready">
         {% csrf_token %}
         <input type="hidden" name="operation_key" value="{{ operation_key }}">
         <button class="btn-primary" type="submit">
@@ -46,9 +68,11 @@
         <button class="btn-primary" type="submit">{% trans "I am at this room / ยืนยันว่าฉันอยู่ที่ห้องนี้" %}</button>
       </form>
     {% elif my_booking and my_booking.status == 'IN_USE' %}
-      <p class="mt-4 text-sm font-medium text-brand-700">{% trans "This room is checked in and in use." %}</p>
+      <p class="mt-4 text-sm font-medium text-brand-700" data-checkin-state="in_use">{% trans "This room is checked in and in use." %}</p>
+    {% elif checkin_state == 'none' and not other_room_booking and not upcoming_booking %}
+      <p class="mt-4 text-sm" data-checkin-state="none">{% trans "You have no booking in this room for the current hour, and the room is not free to use now." %}</p>
+      <a class="btn-secondary mt-2" href="{% url 'core:home' %}">{% trans "See which rooms are free" %}</a>
     {% else %}
-      <p class="mt-4 text-sm">{% trans "This room is not available for the current hour." %}</p>
       <a class="btn-secondary mt-2" href="{% url 'core:home' %}">{% trans "See which rooms are free" %}</a>
     {% endif %}
   </div>

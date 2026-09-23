@@ -7,6 +7,7 @@ one. Everything here is GET-only and writes nothing.
 
 from __future__ import annotations
 
+import math
 from datetime import date, timedelta
 
 from django.conf import settings
@@ -288,6 +289,30 @@ def room_profile(request, room_id: int):
     )
 
 
+# How far ahead the door page mentions the student's next booking in this room,
+# so arriving a little early reads "opens at 14:00", not "not available".
+DOOR_UPCOMING_NOTICE = timedelta(minutes=60)
+
+
+def _door_checkin_state(booking: Booking | None, moment) -> str:
+    """Why the door page does or does not offer check-in for this hour's booking."""
+    if booking is None:
+        return "none"
+    if booking.status == Booking.Status.IN_USE:
+        return "in_use"
+    if booking.status == Booking.Status.PENDING_APPROVAL:
+        return "pending"
+    if booking.status == Booking.Status.NO_SHOW:
+        return "closed"
+    if booking.deadline is None:
+        return "none"
+    if moment < booking.slot_start:
+        return "not_open"
+    if moment >= booking.deadline:
+        return "closed"
+    return "ready"
+
+
 @login_required
 @require_GET
 def room_qr_landing(request, room_id: int):
@@ -308,18 +333,43 @@ def room_qr_landing(request, room_id: int):
             user=user,
             room=room,
             slot_start=cell.slot_start,
-            status__in=[Booking.Status.SCHEDULED, Booking.Status.IN_USE],
+            status__in=[
+                Booking.Status.SCHEDULED,
+                Booking.Status.IN_USE,
+                Booking.Status.PENDING_APPROVAL,
+                Booking.Status.NO_SHOW,
+            ],
         )
         .select_related("room")
         .first()
     )
+    checkin_state = _door_checkin_state(my_booking, moment)
 
-    can_check_in = (
-        my_booking is not None
-        and my_booking.status == Booking.Status.SCHEDULED
-        and my_booking.deadline is not None
-        and my_booking.slot_start <= moment < my_booking.deadline
-    )
+    # Nothing for this door this hour: say where the student should be instead,
+    # so a scan never ends on an unexplained "not available".
+    other_room_booking = upcoming_booking = None
+    if my_booking is None:
+        other_room_booking = (
+            Booking.objects.filter(
+                user=user,
+                slot_start=cell.slot_start,
+                status__in=[Booking.Status.SCHEDULED, Booking.Status.IN_USE],
+            )
+            .exclude(room=room)
+            .select_related("room")
+            .first()
+        )
+        upcoming_booking = (
+            Booking.objects.filter(
+                user=user,
+                room=room,
+                slot_start__gt=moment,
+                slot_start__lte=moment + DOOR_UPCOMING_NOTICE,
+                status__in=[Booking.Status.SCHEDULED, Booking.Status.PENDING_APPROVAL],
+            )
+            .order_by("slot_start")
+            .first()
+        )
 
     suspension = active_suspension(user, moment)
 
@@ -330,7 +380,15 @@ def room_qr_landing(request, room_id: int):
             "room": room,
             "cell": cell,
             "my_booking": my_booking,
-            "can_check_in": can_check_in,
+            "checkin_state": checkin_state,
+            "can_check_in": checkin_state == "ready",
+            "other_room_booking": other_room_booking,
+            "upcoming_booking": upcoming_booking,
+            "upcoming_minutes": (
+                max(1, math.ceil((upcoming_booking.slot_start - moment).total_seconds() / 60))
+                if upcoming_booking
+                else None
+            ),
             "remaining_minutes": slots.remaining_minutes(moment, cell.slot_end),
             "short_warning": slots.remaining_minutes(moment, cell.slot_end) < 5,
             "suspension": suspension,

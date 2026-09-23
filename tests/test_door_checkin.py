@@ -122,3 +122,58 @@ def test_booking_emails_carry_no_check_in_link(frozen, student, rooms, kind):
     assert "check-in/" not in body
     assert "/r/" not in body
     assert "scan the QR code on the room door" in body
+
+
+# --- The door page explains why there is no check-in button -------------------------
+
+
+def _door_page(client, room, moment):
+    with clock.frozen_clock(moment):
+        return client.get(reverse("core:room_qr", args=[room.pk])).content.decode()
+
+
+def test_the_door_page_says_a_pending_booking_awaits_approval(frozen, student, rooms):
+    factories.make_booking(student, rooms[0], day=TOMORROW, hour=13, status=Booking.Status.PENDING_APPROVAL)
+    client = Client()
+    client.force_login(student)
+
+    body = _door_page(client, rooms[0], IN_WINDOW)
+
+    assert 'data-checkin-state="pending"' in body
+    assert 'data-checkin-state="ready"' not in body
+
+
+@pytest.mark.parametrize("status", [Booking.Status.SCHEDULED, Booking.Status.NO_SHOW])
+def test_the_door_page_says_check_in_has_closed(frozen, student, rooms, status):
+    factories.make_booking(student, rooms[0], day=TOMORROW, hour=13, status=status)
+    client = Client()
+    client.force_login(student)
+
+    body = _door_page(client, rooms[0], AFTER_DEADLINE)
+
+    assert 'data-checkin-state="closed"' in body
+    assert "13:15" in body, "the closing time is shown"
+
+
+def test_the_door_page_says_when_check_in_opens_for_an_early_arrival(frozen, student, rooms):
+    factories.make_booking(student, rooms[0], day=TOMORROW, hour=14)
+    client = Client()
+    client.force_login(student)
+
+    body = _door_page(client, rooms[0], factories.bangkok(2026, 9, 15, 13, 50))
+
+    assert 'data-checkin-state="not_open"' in body
+    assert "14:00" in body and "14:15" in body
+    assert "(in 10 min)" in body or "(อีก 10 นาที)" in body
+    assert 'data-checkin-state="ready"' not in body
+
+
+def test_the_door_page_points_to_the_room_actually_booked(frozen, student, rooms):
+    factories.make_booking(student, rooms[1], day=TOMORROW, hour=13)
+    client = Client()
+    client.force_login(student)
+
+    body = _door_page(client, rooms[0], IN_WINDOW)
+
+    assert 'data-checkin-state="other_room"' in body
+    assert str(rooms[1]) in body

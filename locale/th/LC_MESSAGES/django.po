@@ -4186,3 +4186,50 @@ msgstr "เดือนถัดไป"
 #: core/templates/core/partials/month_calendar.html
 msgid "Show this date"
 msgstr "แสดงวันที่นี้"
+
+#: core/templates/core/room_qr.html
+msgid ""
+"Your booking for this hour is still waiting for staff approval, so it cannot "
+"be checked in yet. Check My bookings for the decision."
+msgstr ""
+"การจองชั่วโมงนี้ของคุณยังรอการอนุมัติจากเจ้าหน้าที่ จึงยังเช็คอินไม่ได้ "
+"ดูผลการพิจารณาได้ที่หน้าการจองของฉัน"
+
+#: core/templates/core/room_qr.html
+#, python-format
+msgid ""
+"Check-in for your booking closed at %(deadline)s. The room has been released "
+"and a no-show is recorded. If you were here on time, contact the department "
+"office."
+msgstr ""
+"การเช็คอินสำหรับการจองของคุณปิดไปแล้วเมื่อ %(deadline)s ห้องถูกปล่อยให้ผู้อื่นใช้ "
+"และมีการบันทึกว่าไม่มาใช้ห้อง หากคุณมาถึงตรงเวลา กรุณาติดต่อสำนักงานภาควิชา"
+
+#: core/templates/core/room_qr.html
+#, python-format
+msgid ""
+"Your booking this hour is in %(other)s, not this room. Scan the QR code on "
+"the door of %(other)s to check in."
+msgstr ""
+"การจองชั่วโมงนี้ของคุณอยู่ที่ %(other)s ไม่ใช่ห้องนี้ "
+"กรุณาสแกนคิวอาร์โค้ดที่ประตูห้อง %(other)s เพื่อเช็คอิน"
+
+#: core/templates/core/room_qr.html
+#, python-format
+msgid "Your booking here at %(start)s is still waiting for staff approval."
+msgstr "การจองห้องนี้เวลา %(start)s ของคุณยังรอการอนุมัติจากเจ้าหน้าที่"
+
+#: core/templates/core/room_qr.html
+#, python-format
+msgid ""
+"Your booking here starts at %(start)s. Check-in opens at %(start)s (in "
+"%(minutes)s min) and closes at %(deadline)s. Scan this QR code again then."
+msgstr ""
+"การจองห้องนี้ของคุณเริ่มเวลา %(start)s เช็คอินได้ตั้งแต่ %(start)s (อีก %(minutes)s นาที) "
+"ถึง %(deadline)s กรุณาสแกนคิวอาร์โค้ดนี้อีกครั้งเมื่อถึงเวลา"
+
+#: core/templates/core/room_qr.html
+msgid ""
+"You have no booking in this room for the current hour, and the room is not "
+"free to use now."
+msgstr "คุณไม่มีการจองห้องนี้ในชั่วโมงปัจจุบัน และห้องไม่ว่างให้ใช้ในขณะนี้"
