@@ -7,7 +7,7 @@
   {% if issued %}
     <div class="card mb-3 border-emerald-700 bg-emerald-50" role="status">
       <p class="text-sm font-medium">{% blocktrans with id=issued.institutional_id %}Activation link for {{ id }}:{% endblocktrans %}</p>
-      <p class="mt-1 break-all text-sm">{{ site_base_url|default:"" }}{{ issued.link }}</p>
+      <p class="mt-1 break-all text-sm">{{ issued.link }}</p>
       <p class="mt-1 text-xs text-slate-700">{% trans "Shown once. The link is also emailed, and is never written to logs." %}</p>
     </div>
   {% endif %}

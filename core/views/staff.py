@@ -462,6 +462,40 @@ def deactivate_account(request, pk: int):
     return redirect_back(request, "core:staff_users")
 
 
+@maintainer_required
+@require_POST
+def issue_password_link(request, pk: int):
+    """Give a staff or faculty account a set-password link by hand, when email fails.
+
+    Deliberately not idempotent: a replay record would store the raw token. The
+    link is rendered in this response only; reloading issues a fresh one, which
+    supersedes this one.
+    """
+    user = get_object_or_404(User, pk=pk)
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_issue_password_link",
+        payload={"user": pk},
+        body=lambda ctx: _password_link(ctx, user),
+    )
+    if not outcome.ok:
+        add_outcome_message(request, outcome)
+        return redirect_back(request, "core:staff_users")
+    return render(
+        request,
+        "core/staff/password_link.html",
+        {"account": user, "link": outcome.data["link"], "expires_at": outcome.data["expires_at"]},
+    )
+
+
+def _password_link(ctx, user):
+    from django.urls import reverse
+
+    invitation, raw_token = identity_service.issue_password_link(user=user, actor=ctx.actor)
+    path = reverse("core:accept_invitation", kwargs={"token": raw_token})
+    return _success(link=settings.SITE_BASE_URL.rstrip("/") + path, expires_at=invitation.expires_at)
+
+
 # --- Closures ------------------------------------------------------------------
 
 
@@ -862,7 +896,7 @@ def _invite(ctx, institutional_id, email, name, staff, teacher=False):
     )
     from django.urls import reverse
 
-    link = reverse("core:accept_invitation", kwargs={"token": raw_token})
+    link = settings.SITE_BASE_URL.rstrip("/") + reverse("core:accept_invitation", kwargs={"token": raw_token})
     return _success(user_id=user.pk, invitation_id=invitation.pk, link=link)
 
 

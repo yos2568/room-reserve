@@ -75,6 +75,11 @@ urlpatterns = [
     ),
     path("staff/users/<int:pk>/suspend/", views.staff.manual_suspension, name="staff_suspend"),
     path("staff/users/<int:pk>/deactivate/", views.staff.deactivate_account, name="staff_deactivate"),
+    path(
+        "staff/users/<int:pk>/password-link/",
+        views.staff.issue_password_link,
+        name="staff_issue_password_link",
+    ),
     path("staff/sanctions/<int:pk>/lift/", views.staff.lift_suspension, name="staff_lift"),
     path("staff/sanctions/<int:pk>/adjust/", views.staff.adjust_suspension, name="staff_adjust_suspension"),
     path(

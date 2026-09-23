@@ -4233,3 +4233,43 @@ msgid ""
 "You have no booking in this room for the current hour, and the room is not "
 "free to use now."
 msgstr "คุณไม่มีการจองห้องนี้ในชั่วโมงปัจจุบัน และห้องไม่ว่างให้ใช้ในขณะนี้"
+
+#: core/templates/core/staff/password_link.html
+msgid "Set-password link"
+msgstr "ลิงก์ตั้งรหัสผ่าน"
+
+#: core/templates/core/staff/password_link.html
+#, python-format
+msgid "Set-password link for %(name)s (%(email)s):"
+msgstr "ลิงก์ตั้งรหัสผ่านสำหรับ %(name)s (%(email)s):"
+
+#: core/templates/core/staff/password_link.html
+msgid "Copy link"
+msgstr "คัดลอกลิงก์"
+
+#: core/templates/core/staff/password_link.html
+msgid "Copied"
+msgstr "คัดลอกแล้ว"
+
+#: core/templates/core/staff/password_link.html
+#, python-format
+msgid ""
+"Give this link to the person directly (in person, LINE or phone). It works "
+"once and expires at %(expires)s. It is shown only now and is not emailed; "
+"creating another link cancels this one."
+msgstr ""
+"ส่งลิงก์นี้ให้เจ้าของบัญชีโดยตรง (ด้วยตนเอง ทาง LINE หรือโทรศัพท์) "
+"ใช้ได้ครั้งเดียวและหมดอายุเวลา %(expires)s ลิงก์แสดงเฉพาะตอนนี้และไม่ได้ส่งทางอีเมล "
+"การสร้างลิงก์ใหม่จะยกเลิกลิงก์นี้"
+
+#: core/templates/core/staff/password_link.html
+msgid "Back to users"
+msgstr "กลับไปหน้าผู้ใช้"
+
+#: core/templates/core/staff/users.html
+msgid "New set-password link"
+msgstr "สร้างลิงก์ตั้งรหัสผ่านใหม่"
+
+#: core/templates/core/staff/users.html
+msgid "For when the email does not arrive. Hand the link over directly."
+msgstr "ใช้เมื่ออีเมลไม่มาถึง ส่งลิงก์ให้เจ้าของบัญชีโดยตรง"

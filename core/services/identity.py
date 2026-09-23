@@ -46,6 +46,7 @@ DECLARABLE_CATEGORIES = frozenset(
 VERIFICATION_TTL = timedelta(days=3)
 ACTIVATION_TTL = timedelta(days=14)
 PASSWORD_RESET_TTL = timedelta(hours=2)
+MANUAL_LINK_TTL = timedelta(hours=24)
 
 TOKEN_BYTES = 32
 
@@ -350,6 +351,34 @@ def start_password_reset(email: str) -> None:
             actor_label="self-service",
             changes={"invitation_generation": invitation.generation},
         )
+
+
+def issue_password_link(*, user, actor) -> tuple[Invitation, str]:
+    """A set-password link the maintainer hands over in person when email fails.
+
+    Limited to staff and faculty accounts, never a superuser, and issued only by
+    a superuser. Nothing is emailed; the raw token is returned once for display
+    and is not stored. Issuing supersedes any earlier activation link.
+    """
+    if not getattr(actor, "is_superuser", False):
+        raise OperationRejected(Code.INVALID_INPUT)
+    if not user.is_active or user.is_superuser or not (user.is_operational_staff or user.is_teacher):
+        raise OperationRejected(Code.INVALID_INPUT)
+
+    invitation, raw_token = create_invitation(
+        user=user,
+        purpose=Invitation.Purpose.ACCOUNT_ACTIVATION,
+        ttl=MANUAL_LINK_TTL,
+        actor=actor,
+    )
+    record_audit(
+        action="account.password_link_issued",
+        entity_type="User",
+        entity_id=user.pk,
+        actor=actor,
+        changes={"invitation_generation": invitation.generation},
+    )
+    return invitation, raw_token
 
 
 def set_initial_password(*, user, password: str, raw_token: str, purpose: str) -> None:
