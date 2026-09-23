@@ -28,7 +28,7 @@ cannot retroactively invalidate a check-in that already happened.
 | Automatic suspension | 7 days | `POLICY_AUTO_SUSPENSION_DAYS` |
 | Reminder lead | 30 minutes before the hour | `POLICY_REMINDER_LEAD_MINUTES` |
 | Institutional email | `student.chula.ac.th` | `INSTITUTION_EMAIL_DOMAIN` |
-| Rooms | 13 — room 301 view-only, stalls 1–10, room 303 instrument-specific, room 304 general | `ROOM_COUNT`, `ROOM_OVERRIDES` |
+| Rooms | 13 — room 301 by approved request only (D-39), stalls 1–10, room 303 instrument-specific, room 304 general | `ROOM_COUNT`, `ROOM_OVERRIDES` |
 | Class hours on 301 | Mon 13–15, Tue 08–10 and 12–15, Wed–Fri 13–15 (approximate first-semester report) | `ROOM_WEEKLY_BLOCKS` |
 | Class hours on 304 | Tue 12–14, Thu 10–12, Fri 13–15 every week; Counterpoint Mon 10–12 only on 28 Sep and 16 Nov 2026 | `ROOM_WEEKLY_BLOCKS` |
 

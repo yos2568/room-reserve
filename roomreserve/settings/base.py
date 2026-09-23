@@ -195,10 +195,14 @@ ROOM_COUNT = 10
 # in once an hour has started and the room is still free. Room 304 is a general
 # practice room with the same weekday opening hours as the other rooms.
 ROOM_OVERRIDES = {
+    # Room 301 is the main classroom: reservable outside its class hours only by
+    # advance request, approved by a teacher or admin named as its room
+    # administrator (D-39). No walk-ins.
     "301": {
         "label": "ห้อง 301 (ห้องเรียนหลัก)",
         "position": 0,
-        "availability_only": True,
+        "availability_only": False,
+        "requires_approval": True,
     },
     "10": {
         "label": "ห้องซ้อม 10",
