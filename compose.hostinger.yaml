@@ -36,6 +36,8 @@ x-app: &app
     EMAIL_USE_SSL: ${EMAIL_USE_SSL:-false}
     DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:?DEFAULT_FROM_EMAIL is required}
     COMPLAINT_RECIPIENT_EMAIL: ${COMPLAINT_RECIPIENT_EMAIL:?COMPLAINT_RECIPIENT_EMAIL is required}
+    # Absolute links in emails and CLI-generated posters; without it they point at localhost.
+    SITE_BASE_URL: ${SITE_BASE_URL:?SITE_BASE_URL is required, e.g. https://roomreserve.yos.in.th}
     OUTBOX_ENABLED: ${OUTBOX_ENABLED:-true}
     POLICY_HORIZON_DAYS: ${POLICY_HORIZON_DAYS:-2}
     POLICY_MAX_UPCOMING_HOURS: ${POLICY_MAX_UPCOMING_HOURS:-4}
