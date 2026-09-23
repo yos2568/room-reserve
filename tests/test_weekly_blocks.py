@@ -200,7 +200,8 @@ def test_ensure_rooms_provisions_the_real_floor(frozen, db):
     assert not active["304"].is_restricted
     assert active["304"].label == "ห้อง 304 (ห้องบรรยาย 1)"
     assert active["301"].label == "ห้อง 301 (ห้องเรียนหลัก)"
-    assert active["301"].availability_only
+    assert not active["301"].availability_only
+    assert active["301"].requires_approval
     assert active["303"].requires_approval
     assert active["304"].requires_approval
 
@@ -255,19 +256,28 @@ def test_room_304_counterpoint_meets_only_on_the_annotated_mondays(frozen, db):
     assert "วณีสอน" in WeeklyBlock.objects.get(room=room, weekday=4).reason
 
 
-def test_room_301_is_availability_only_and_cannot_be_reserved(frozen, student, db):
+def test_room_301_is_requested_in_advance_and_awaits_approval(frozen, student, db):
+    """D-39: outside class hours, 301 takes advance requests only; no walk-in."""
     rooms_service.ensure_rooms()
     room = Room.objects.get(number="301")
 
     grid = availability.public_grid(NEXT_TUESDAY, clock.now(), user=student)
     cell = cell_for(grid, room, 11)
-    assert cell.state == availability.SlotState.VIEW_ONLY
-    assert not cell.can_reserve
+    assert cell.can_reserve
     assert not cell.can_use_now
 
     outcome = helpers.advance_booking(student, room, slots.slot_start_for(NEXT_TUESDAY, 11))
+    assert outcome.ok
+    booking = Booking.objects.get(user=student, room=room)
+    assert booking.status == Booking.Status.PENDING_APPROVAL
+
+
+def test_room_301_class_hours_stay_closed(frozen, student, db):
+    rooms_service.ensure_rooms()
+    room = Room.objects.get(number="301")
+
+    outcome = helpers.advance_booking(student, room, slots.slot_start_for(NEXT_TUESDAY, 8))
     assert not outcome.ok
-    assert outcome.code == Code.CLOSED
 
 
 def test_ensure_rooms_is_idempotent_and_retires_strays(frozen, db):

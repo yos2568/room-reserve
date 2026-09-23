@@ -402,3 +402,14 @@ an hour. Weekly repeat booking (up to four weeks ahead) contradicted a two-day
 window and was removed; series created earlier can still be cancelled. Existing
 databases keep their current policy version until staff create a new one; a
 fresh deployment starts with these defaults.
+
+**D-39 — Room 301 is reservable by approved request only (24 September 2026).**
+The owner asked that room 301, the main classroom, be usable outside its class
+hours once a teacher or an admin approves the request. It is no longer
+availability-only: it takes advance requests, which wait in `PENDING_APPROVAL`,
+and it refuses walk-ins, like 303 and 304. Who approves is not a new role: the
+maintainer names a teacher (or staff member) as 301's room administrator on the
+Configuration screen, and superusers and operational staff can approve every
+room as before. A teacher account stays read-only for its own bookings; the
+room-administrator grant only lets it decide requests for its assigned room.
+Class hours on 301 stay blocked.

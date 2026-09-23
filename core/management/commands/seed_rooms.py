@@ -2,8 +2,8 @@
 
 The rooms and their per-room configuration come from settings
 (``ROOM_COUNT`` / ``ROOM_OVERRIDES`` / ``ROOM_WEEKLY_BLOCKS``): the ten stalls,
-the timetable-only teaching room 301, the piano-and-percussion room 303, and
-the approval-controlled teaching room 304 are deployment configuration rather
+the approval-controlled main classroom 301, the piano-and-percussion room 303,
+and the approval-controlled teaching room 304 are deployment configuration rather
 than literals buried in a command.
 Rooms outside the configured set are deactivated, never deleted.
 """

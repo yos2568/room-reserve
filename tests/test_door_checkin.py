@@ -177,3 +177,13 @@ def test_the_door_page_points_to_the_room_actually_booked(frozen, student, rooms
 
     assert 'data-checkin-state="other_room"' in body
     assert str(rooms[1]) in body
+
+
+def test_the_door_page_shows_the_hour_status_translated(frozen, student, rooms):
+    factories.make_booking(student, rooms[0], day=TOMORROW, hour=13)
+    client = Client()
+    client.force_login(student)
+
+    body = _door_page(client, rooms[0], IN_WINDOW)
+
+    assert "<dd>held</dd>" not in body

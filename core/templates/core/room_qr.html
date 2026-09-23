@@ -23,7 +23,7 @@
     <dl class="space-y-1 text-sm">
       <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Current hour" %}</dt><dd>{{ cell.slot_start|date:"H:i" }}–{{ cell.slot_end|date:"H:i" }}</dd></div>
       <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Time remaining" %}</dt><dd>{{ remaining_minutes }} {% trans "min" %}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Status" %}</dt><dd>{{ cell.get_state_display|default:cell.state }}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="font-medium">{% trans "Status" %}</dt><dd>{% if cell.state == 'free_now' %}{% trans "Available" %}{% elif cell.state == 'in_use' %}{% trans "In use" %}{% elif cell.state == 'held' or cell.state == 'taken' %}{% trans "Reserved" %}{% elif cell.state == 'closed' and cell.block_reason %}{% trans "Class in session" %}{% elif cell.state == 'view_only' %}{% trans "View only" %}{% elif cell.state == 'past' %}{% trans "Finished" %}{% else %}{% trans "Closed" %}{% endif %}</dd></div>
     </dl>
 
     {% if checkin_state == 'pending' %}
