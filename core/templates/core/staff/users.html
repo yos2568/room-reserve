@@ -99,6 +99,15 @@
                   </form>
                 {% endif %}
 
+                {% if request.user.is_superuser and row.user.is_active and not row.user.is_superuser %}{% if row.user.is_operational_staff or row.user.is_teacher %}
+                  <form method="post" action="{% url 'core:staff_issue_password_link' pk=row.user.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button class="btn-secondary" type="submit">{% trans "New set-password link" %}</button>
+                    <span class="text-xs text-slate-600">{% trans "For when the email does not arrive. Hand the link over directly." %}</span>
+                  </form>
+                {% endif %}{% endif %}
+
                 <form method="post" action="{% url 'core:staff_deactivate' pk=row.user.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
                   {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
                   <input type="hidden" name="next" value="{{ request.get_full_path }}">
