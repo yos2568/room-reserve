@@ -1,0 +1,457 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8">
+<title>คู่มือการใช้งานระบบจองห้องซ้อม</title><style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Sans+Thai+Looped:wght@400;600&display=swap');
+:root{--navy:#173a6a;--navy2:#0f2747;--crimson:#a3262f;--ink:#1f2937;--muted:#5b6474;--line:#e3e8f0;
+  --student:#2563eb;--student-bg:#eff5ff;--teacher:#0f766e;--teacher-bg:#ecfbf7;--admin:#a3262f;--admin-bg:#fff1f2}
+@page{size:A4;margin:16mm 15mm 18mm 15mm}
+@page :first{margin:0}
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:'IBM Plex Sans Thai',sans-serif;color:var(--ink);font-size:10.4pt;line-height:1.7;margin:0}
+code{font-family:'IBM Plex Sans Thai',monospace;background:#f1f4f9;border-radius:4px;padding:0 4px;font-size:.92em}
+p{margin:.35em 0 .6em}
+ul,ol{margin:.3em 0 .8em;padding-left:1.4em}
+li{margin:.15em 0}
+
+/* Cover */
+.cover{height:297mm;width:210mm;position:relative;overflow:hidden;color:#fff;page-break-after:always;
+  background:radial-gradient(circle at 85% 12%,rgba(255,255,255,.12) 0 18%,transparent 19%),
+             radial-gradient(circle at 8% 92%,rgba(163,38,47,.55) 0 22%,transparent 23%),
+             linear-gradient(160deg,var(--navy) 0%,var(--navy2) 100%);padding:34mm 22mm}
+.cover .brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.02em}
+.cover .brand b{font-family:Georgia,serif;font-size:22pt}
+.cover .brand span{border-left:1px solid rgba(255,255,255,.5);padding-left:12px;font-size:12pt}
+.cover h1{font-size:40pt;line-height:1.25;margin:34mm 0 6mm;font-weight:700}
+.cover .sub{font-size:14pt;opacity:.9;max-width:150mm}
+.cover .url{display:inline-block;margin-top:9mm;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);
+  border-radius:999px;padding:6px 16px;font-size:11pt}
+.cover .cards{position:absolute;left:22mm;right:22mm;bottom:42mm;display:grid;grid-template-columns:repeat(3,1fr);gap:6mm}
+.cover .card{background:#fff;color:var(--ink);border-radius:5mm;padding:6mm 6mm 5mm;border-top:3mm solid}
+.cover .card.student{border-color:var(--student)} .cover .card.teacher{border-color:var(--teacher)} .cover .card.admin{border-color:var(--admin)}
+.cover .card .n{font-size:9pt;color:var(--muted)} .cover .card .t{font-size:15pt;font-weight:700;margin:1mm 0}
+.cover .card .d{font-size:9pt;color:var(--muted);line-height:1.5}
+.cover .foot{position:absolute;left:22mm;right:22mm;bottom:16mm;font-size:9.5pt;opacity:.85}
+
+/* Contents */
+.toc{page-break-after:always}
+.toc h2{font-size:22pt;color:var(--navy);margin:0 0 6mm}
+.toc ol{list-style:none;padding:0;counter-reset:none}
+.toc li{padding:3.2mm 0;border-bottom:1px dashed var(--line);font-size:12pt}
+.toc li.toc-3{padding-left:8mm;font-size:10.5pt;color:var(--muted)}
+
+/* Headings */
+h2{font-size:19pt;color:var(--navy);margin:0 0 4mm;line-height:1.35}
+h3{font-size:13pt;margin:7mm 0 2.5mm;padding-left:3.5mm;border-left:1.3mm solid var(--navy);line-height:1.35;break-after:avoid}
+section.level{page-break-before:always}
+section.level>h2:first-child{color:#fff;border-radius:5mm;padding:7mm 8mm;margin-bottom:6mm;font-size:21pt}
+section.student>h2:first-child{background:linear-gradient(120deg,var(--student),#1e3a8a)}
+section.teacher>h2:first-child{background:linear-gradient(120deg,var(--teacher),#134e4a)}
+section.admin>h2:first-child{background:linear-gradient(120deg,var(--admin),#6b1220)}
+section.student h3{border-color:var(--student)} section.teacher h3{border-color:var(--teacher)} section.admin h3{border-color:var(--admin)}
+body>h2{margin-top:2mm}
+
+/* Tables */
+table{width:100%;border-collapse:separate;border-spacing:0;margin:2mm 0 5mm;border:1px solid var(--line);border-radius:3mm;overflow:hidden;font-size:9.8pt;break-inside:avoid}
+th{background:#f3f6fb;text-align:left;font-weight:600;color:var(--navy)}
+th,td{padding:2.2mm 3.2mm;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+section.student th{background:var(--student-bg);color:#1e3a8a} section.teacher th{background:var(--teacher-bg);color:#134e4a}
+section.admin th{background:var(--admin-bg);color:#7f1d1d}
+.chip{display:inline-block;border-radius:999px;padding:0 10px;font-weight:600;font-size:9.5pt;color:#fff;white-space:nowrap}
+.chip.student{background:var(--student)} .chip.teacher{background:var(--teacher)} .chip.admin{background:var(--admin)}
+
+/* Callouts */
+.callout{border-radius:4mm;padding:4mm 5mm 3mm 14mm;margin:4mm 0 5mm;position:relative;break-inside:avoid}
+.callout::before{position:absolute;left:4.5mm;top:3.6mm;width:6mm;height:6mm;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:#fff;font-size:10pt;line-height:6mm;text-align:center}
+.callout.warn{background:#fff8e6;border:1px solid #f4d38b} .callout.warn::before{content:"!";background:#d97706}
+.callout.tip{background:#eefbf3;border:1px solid #a7e3bf} .callout.tip::before{content:"✓";background:#16a34a}
+.callout p:first-child{margin-top:0}
+
+/* Screenshots */
+figure{margin:0;break-inside:avoid}
+figure img{display:block;width:100%}
+figcaption{font-size:8.6pt;color:var(--muted);text-align:center;margin-top:2mm;line-height:1.45}
+.shots{display:flex;gap:7mm;justify-content:center;align-items:flex-start;margin:4mm 0 6mm;break-inside:avoid}
+figure.phone{width:58mm}
+figure.phone img{border:2.2mm solid #111827;border-radius:6mm;max-height:112mm;object-fit:cover;object-position:top;
+  box-shadow:0 3mm 8mm rgba(15,39,71,.18)}
+.shots.three figure.phone{width:47mm}
+.shots.three figure.phone img{max-height:78mm;border-width:1.8mm;border-radius:5mm}
+figure.phone.single{margin:4mm auto 6mm}
+figure.phone.single img{max-height:140mm}
+figure.desktop{margin:4mm 0 6mm}
+figure.desktop img{border:1px solid #cfd8e6;border-top:6mm solid #e7ecf4;border-radius:3mm;max-height:105mm;object-fit:cover;object-position:top;
+  box-shadow:0 2mm 6mm rgba(15,39,71,.12)}
+.shots.desk figure.desktop{flex:1;margin:0}
+.shots.desk figure.desktop img{max-height:60mm}
+.note{font-size:8.5pt;color:var(--muted);margin-top:8mm}
+</style></head><body>
+
+<div class="cover">
+  <div class="brand"><b>FAA</b><span>ระบบจองห้องซ้อม · Room Reserve</span></div>
+  <h1>คู่มือการใช้งาน<br>ระบบจองห้องซ้อม</h1>
+  <div class="sub">วิธีใช้ ข้อพึงระวัง และเคล็ดลับ สำหรับนิสิต อาจารย์ และแอดมิน</div>
+  <div class="url">roomreserve.yos.in.th</div>
+  <div class="cards">
+    <div class="card student"><div class="n">ส่วนที่ 1</div><div class="t">นิสิต</div><div class="d">สมัคร จอง เช็คอินที่ประตู ยกเลิก และคะแนนโทษ</div></div>
+    <div class="card teacher"><div class="n">ส่วนที่ 2</div><div class="t">อาจารย์</div><div class="d">ดูตารางห้อง และอนุมัติคำขอห้อง 301</div></div>
+    <div class="card admin"><div class="n">ส่วนที่ 3</div><div class="t">แอดมิน</div><div class="d">อนุมัติ จัดการผู้ใช้ ป้าย QR และงานประจำ</div></div>
+  </div>
+  <div class="foot">ภาควิชาดนตรีตะวันตก คณะศิลปกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย · อาคารศิลปกรรม ชั้น 3</div>
+</div>
+
+<div class="toc"><h2>สารบัญ</h2><ol><li class="toc-2">ภาพรวมระบบ</li><li class="toc-2">ส่วนที่ 1 · นิสิต</li><li class="toc-3">1.4 เช็คอินที่ประตูห้อง ★ สำคัญที่สุด</li><li class="toc-2">ส่วนที่ 2 · อาจารย์</li><li class="toc-3">2.3 อนุมัติคำขอจองห้อง 301</li><li class="toc-2">ส่วนที่ 3 · แอดมินและเจ้าหน้าที่</li><li class="toc-3">3.2 งานประจำ</li><li class="toc-2">ติดต่อ</li></ol></div>
+<h2>ภาพรวมระบบ</h2>
+<table>
+<thead>
+<tr>
+<th>หัวข้อ</th>
+<th>รายละเอียด</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>เวลาเปิด</td>
+<td>จันทร์–ศุกร์ 08:00–20:00 น. (รอบสุดท้ายเริ่ม 19:00) · ปิดเสาร์–อาทิตย์</td>
+</tr>
+<tr>
+<td>หน่วยการจอง</td>
+<td>ครั้งละ 1 ชั่วโมง เริ่มตรงต้นชั่วโมงเสมอ</td>
+</tr>
+<tr>
+<td>ห้องทั้งหมด</td>
+<td>13 ห้อง: ห้องซ้อม 1–10, ห้อง 301, ห้อง 303 และห้อง 304</td>
+</tr>
+</tbody>
+</table>
+<h3>ผู้ใช้ 3 ระดับ</h3>
+<div class="levels">
+<table>
+<thead>
+<tr>
+<th>ระดับ</th>
+<th>ทำอะไรได้</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="chip student">นิสิต</span></td>
+<td>จอง ใช้ห้องทันที เช็คอิน ยกเลิก และย้ายห้อง</td>
+</tr>
+<tr>
+<td><span class="chip teacher">อาจารย์</span></td>
+<td>ดูตารางห้อง และอนุมัติคำขอจองห้อง 301 (เมื่อได้รับแต่งตั้ง)</td>
+</tr>
+<tr>
+<td><span class="chip admin">แอดมิน / เจ้าหน้าที่</span></td>
+<td>อนุมัติคำขอ จัดการผู้ใช้ ปิดห้อง พิมพ์ป้าย QR และดูสถิติ</td>
+</tr>
+</tbody>
+</table>
+</div>
+<section class="level student">
+<h2>ส่วนที่ 1 · นิสิต</h2>
+<h3>1.1 สมัครใช้งาน (ครั้งแรกครั้งเดียว)</h3>
+<ol>
+<li>กด <strong>ลงทะเบียน</strong> แล้วกรอกรหัสนิสิต อีเมล <code>@student.chula.ac.th</code> ชื่อ และเครื่องดนตรีหลัก</li>
+<li>เปิดอีเมลยืนยัน กดลิงก์ แล้วตั้งรหัสผ่าน</li>
+<li>ถ้ารหัสนิสิตและอีเมลตรงกับรายชื่อของภาควิชา บัญชีจะได้รับอนุมัติทันที ถ้าไม่ตรง ต้องรอเจ้าหน้าที่อนุมัติ (ดูสถานะได้ที่หน้า <strong>สถานะบัญชี</strong>)</li>
+</ol>
+<div class="shots">
+<figure class="phone"><img src="img/m_register.png" alt="หน้าลงทะเบียน"><figcaption>หน้าลงทะเบียน</figcaption></figure>
+<figure class="phone"><img src="img/m_login.png" alt="หน้าเข้าสู่ระบบ"><figcaption>หน้าเข้าสู่ระบบ ใช้รหัสนิสิตและรหัสผ่าน</figcaption></figure>
+</div>
+<div class="callout warn">
+<p><strong>ข้อพึงระวัง</strong> ต้องใช้อีเมลนิสิต <code>@student.chula.ac.th</code> เท่านั้น อีเมล Gmail ส่วนตัวใช้สมัครไม่ได้</p>
+</div>
+<h3>1.2 จองล่วงหน้า</h3>
+<ol>
+<li>เปิดหน้า <strong>ห้อง</strong> (ตารางทุกห้อง) หรือ <strong>เลือกห้อง</strong> (ดูทุกห้องในชั่วโมงเดียวกัน)</li>
+<li>เลือกวันและชั่วโมงที่ว่าง แล้วกด <strong>จองห้องนี้</strong></li>
+<li>ใส่รายละเอียด (ไม่บังคับ) เช่น หัวข้อ วัตถุประสงค์ หรือชื่อผู้ร่วมซ้อม แล้วกด <strong>ยืนยันการจอง</strong></li>
+<li>ระบบส่งอีเมลยืนยันการจอง และส่งอีเมลเตือนอีกครั้ง <strong>30 นาทีก่อนเวลา</strong></li>
+</ol>
+<div class="shots">
+<figure class="phone"><img src="img/m_choose_room.png" alt="หน้าเลือกห้อง"><figcaption>หน้าเลือกห้อง: เลือกวันและเวลา แล้วดูว่าห้องไหนว่าง</figcaption></figure>
+<figure class="phone"><img src="img/m_book_confirm.png" alt="หน้ายืนยันการจอง"><figcaption>หน้ายืนยันการจอง: แสดงเวลาที่ต้องมาเช็คอินและจำนวนที่จองไปแล้ว</figcaption></figure>
+</div>
+<h3>1.3 กฎการจอง</h3>
+<table>
+<thead>
+<tr>
+<th>กฎ</th>
+<th>ค่าที่ใช้</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>จองล่วงหน้าได้</td>
+<td>2 วัน (นับรวมวันนี้)</td>
+</tr>
+<tr>
+<td>จำนวนครั้งต่อวัน</td>
+<td>ไม่เกิน 2 ครั้ง รวมทุกห้อง</td>
+</tr>
+<tr>
+<td>ชั่วโมงที่ถือไว้พร้อมกัน</td>
+<td>ไม่เกิน 4 ชั่วโมงที่ยังไม่ถึงเวลา พอชั่วโมงหนึ่งจบ ก็จองเพิ่มได้</td>
+</tr>
+<tr>
+<td>จองซ้ำทุกสัปดาห์</td>
+<td>ไม่มี ต้องจองเองทุกครั้ง</td>
+</tr>
+</tbody>
+</table>
+<h3>1.4 เช็คอินที่ประตูห้อง ★ สำคัญที่สุด</h3>
+<ol>
+<li>ไปถึงห้องแล้ว <strong>สแกน QR code ที่ติดอยู่หน้าประตูห้องนั้น</strong></li>
+<li>เข้าสู่ระบบ (ถ้ายังไม่ได้เข้า) แล้วกดปุ่ม <strong>ลงชื่อเข้าใช้สำหรับการจองนี้</strong></li>
+<li>เช็คอินได้ตั้งแต่ <strong>ต้นชั่วโมง จนถึง 15 นาทีหลังเริ่ม</strong> เช่น จอง 14:00 ต้องเช็คอินระหว่าง 14:00–14:15</li>
+</ol>
+<div class="shots">
+<figure class="phone"><img src="img/m_door_ready.png" alt="หน้าประตูพร้อมเช็คอิน"><figcaption>สแกนตรงเวลา: มีปุ่มเช็คอินพร้อมเวลาปิด</figcaption></figure>
+<figure class="phone"><img src="img/m_door_not_open.png" alt="มาก่อนเวลา"><figcaption>มาก่อนเวลา: บอกว่าเช็คอินได้กี่โมงและอีกกี่นาที</figcaption></figure>
+</div>
+<p>ถ้าสแกนแล้วไม่มีปุ่มเช็คอิน หน้าจอจะบอกเหตุผลไว้ ดังนี้</p>
+<table>
+<thead>
+<tr>
+<th>ข้อความที่เห็น</th>
+<th>ความหมาย</th>
+<th>ทำอย่างไร</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"เช็คอินได้ตั้งแต่ 15:00 (อีก 55 นาที)"</td>
+<td>มาก่อนเวลา</td>
+<td>รอแล้วสแกนใหม่เมื่อถึงเวลา</td>
+</tr>
+<tr>
+<td>"ยังรอการอนุมัติจากเจ้าหน้าที่"</td>
+<td>ห้อง 301, 303 หรือ 304 ที่ยังไม่ได้รับอนุมัติ</td>
+<td>ดูผลที่หน้า <strong>การจองของฉัน</strong></td>
+</tr>
+<tr>
+<td>"การจองชั่วโมงนี้ของคุณอยู่ที่ห้อง X"</td>
+<td>มาผิดห้อง</td>
+<td>ไปสแกนที่ประตูห้อง X</td>
+</tr>
+<tr>
+<td>"การเช็คอินปิดไปแล้วเมื่อ 14:15"</td>
+<td>มาสายเกินเวลา</td>
+<td>ห้องถูกปล่อยให้ผู้อื่น ถ้ามาตรงเวลาจริง ติดต่อสำนักงาน</td>
+</tr>
+</tbody>
+</table>
+<div class="shots three">
+<figure class="phone"><img src="img/m_door_pending.png" alt="รออนุมัติ"><figcaption>รออนุมัติ</figcaption></figure>
+<figure class="phone"><img src="img/m_door_other_room.png" alt="มาผิดห้อง"><figcaption>มาผิดห้อง</figcaption></figure>
+<figure class="phone"><img src="img/m_door_closed.png" alt="เช็คอินปิดแล้ว"><figcaption>เช็คอินปิดแล้ว</figcaption></figure>
+</div>
+<div class="callout warn">
+<p><strong>ข้อพึงระวัง</strong> เช็คอินจากอีเมลหรือจากหน้า <strong>การจองของฉัน</strong> ไม่ได้ ต้องสแกน QR ที่ประตูห้องเท่านั้น</p>
+</div>
+<h3>1.5 ใช้ห้องทันที (Walk-in)</h3>
+<ul>
+<li>ถ้าห้องว่างในชั่วโมงนี้ ให้สแกน QR ที่ประตูแล้วกด <strong>ฉันอยู่ที่ห้องนี้</strong> หรือกด <strong>ใช้ตอนนี้</strong> จากตาราง</li>
+<li>การใช้จะสิ้นสุดตอนจบชั่วโมงเสมอ เช่น เริ่ม 14:50 ใช้ได้ถึง 15:00</li>
+<li>ห้อง <strong>301, 303 และ 304</strong> ใช้แบบ Walk-in ไม่ได้ ต้องขอจองล่วงหน้า</li>
+</ul>
+<div class="shots">
+<figure class="phone"><img src="img/m_door_walkin.png" alt="Walk-in"><figcaption>ห้องว่าง: กด "ฉันอยู่ที่ห้องนี้" เพื่อใช้ทันที</figcaption></figure>
+<figure class="phone"><img src="img/m_book_301.png" alt="ขอจองห้อง 301"><figcaption>ขอจองห้อง 301: ต้องรออีเมลแจ้งอนุมัติก่อน</figcaption></figure>
+</div>
+<h3>1.6 ห้องพิเศษ</h3>
+<table>
+<thead>
+<tr>
+<th>ห้อง</th>
+<th>เงื่อนไข</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>301</strong> ห้องเรียนหลัก</td>
+<td>ขอจองล่วงหน้าได้เฉพาะชั่วโมงที่ไม่มีเรียน <strong>ต้องได้รับอนุมัติจากอาจารย์หรือแอดมิน</strong></td>
+</tr>
+<tr>
+<td><strong>303</strong></td>
+<td>สำหรับนิสิตเปียโนและเครื่องกระทบ ต้องจองล่วงหน้าและรอเจ้าหน้าที่อนุมัติ</td>
+</tr>
+<tr>
+<td><strong>304</strong> ห้องบรรยาย</td>
+<td>จองได้ในชั่วโมงที่ไม่มีเรียน ต้องรออนุมัติ</td>
+</tr>
+</tbody>
+</table>
+<h3>1.7 ยกเลิก แก้ไข และย้ายห้อง</h3>
+<ul>
+<li>จัดการได้ที่หน้า <strong>การจองของฉัน</strong> ก่อนเวลาเริ่ม</li>
+<li>ยกเลิกภายใน 1 ชั่วโมงก่อนเริ่ม ระบบจะบันทึกเป็น "ยกเลิกกระชั้นชิด" (ไม่นับเป็นคะแนนโทษ)</li>
+<li>เมื่อถึงเวลาเริ่มแล้ว จะยกเลิกไม่ได้</li>
+<li>กด <strong>เพิ่มลงปฏิทิน</strong> เพื่อดาวน์โหลดไฟล์ปฏิทิน (.ics) ไปใส่ในมือถือ</li>
+</ul>
+<figure class="phone single"><img src="img/m_my_bookings.png" alt="การจองของฉัน"><figcaption>หน้าการจองของฉัน: รายการที่กำลังจะมาถึง ประวัติ และคะแนนโทษ</figcaption></figure>
+<h3>1.8 คะแนนโทษและการระงับสิทธิ์</h3>
+<table>
+<thead>
+<tr>
+<th>เหตุการณ์</th>
+<th>ผล</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ไม่เช็คอินภายในเวลา (No-show)</td>
+<td>ได้ <strong>คะแนนโทษ 1 คะแนน</strong> และห้องถูกปล่อยให้ผู้อื่น</td>
+</tr>
+<tr>
+<td>คะแนนโทษครบ <strong>3 คะแนนภายใน 30 วัน</strong></td>
+<td><strong>ระงับสิทธิ์การจอง 7 วัน</strong> และการจองที่มีอยู่ถูกยกเลิก</td>
+</tr>
+<tr>
+<td>คิดว่าได้คะแนนโทษไม่ถูกต้อง</td>
+<td>ติดต่อสำนักงานภาควิชา พร้อมแจ้งวันและเวลา</td>
+</tr>
+</tbody>
+</table>
+<div class="callout tip">
+<p><strong>Tips สำหรับนิสิต</strong></p>
+<ul>
+<li>บันทึกหน้าเว็บไว้ที่หน้าจอมือถือ (Add to Home Screen) จะได้เปิดเร็ว</li>
+<li>ตั้งเตือนในมือถือเผื่อไว้ 10 นาทีก่อนเวลา นอกเหนือจากอีเมลเตือน 30 นาที</li>
+<li>ถ้าไม่ได้ใช้ห้องแล้ว <strong>ให้ยกเลิกทันที</strong> ห้องจะว่างให้เพื่อน และคุณไม่เสียคะแนนโทษ</li>
+<li>ถ้าห้องที่ต้องการเต็ม ลองหน้า <strong>เลือกห้อง</strong> ซึ่งแสดงทุกห้องในชั่วโมงเดียวกัน</li>
+<li>ถ้าอีเมลไม่มา ให้ดูในโฟลเดอร์ Junk หรือ Spam ก่อน</li>
+<li>ถ้าลิงก์ในอีเมล Outlook กดแล้วขึ้นหน้าตรวจความปลอดภัยของ Microsoft ให้คัดลอกลิงก์ไปวางในเบราว์เซอร์แทน</li>
+</ul>
+</div>
+</section>
+<section class="level teacher">
+<h2>ส่วนที่ 2 · อาจารย์</h2>
+<h3>2.1 รับบัญชี</h3>
+<ul>
+<li>อาจารย์ <strong>สมัครเองไม่ได้</strong> เจ้าหน้าที่จะส่งอีเมลคำเชิญให้</li>
+<li>กดลิงก์ในอีเมลคำเชิญเพื่อตั้งรหัสผ่าน (ลิงก์มีอายุ 14 วัน)</li>
+<li>เข้าสู่ระบบด้วย <strong>อีเมล</strong> แทนรหัสนิสิต</li>
+</ul>
+<h3>2.2 สิ่งที่ทำได้</h3>
+<ul>
+<li>ดูตารางห้องทั้งหมด ทั้งรายวัน รายสัปดาห์ และหน้าเลือกห้อง</li>
+<li>ดูชั่วโมงเรียนที่ระบบกันไว้ (ห้อง 301 และ 304)</li>
+<li>บัญชีอาจารย์ <strong>จองห้องหรือเช็คอินเองไม่ได้</strong> ถ้าต้องการใช้ห้องเพื่อกิจกรรมพิเศษ ให้แจ้งเจ้าหน้าที่ปิดห้องให้</li>
+</ul>
+<figure class="desktop"><img src="img/d_teacher_week.png" alt="มุมมองรายสัปดาห์"><figcaption>มุมมองรายสัปดาห์: เห็นทุกห้องและชั่วโมงเรียนที่กันไว้</figcaption></figure>
+<h3>2.3 อนุมัติคำขอจองห้อง 301</h3>
+<p>อาจารย์ที่แอดมินแต่งตั้งเป็น <strong>ผู้ดูแลห้อง 301</strong> จะเห็นเมนู <strong>ดูแลห้อง</strong> ในเมนูบัญชี (ไอคอนรูปคนมุมขวาบน)</p>
+<ol>
+<li>เปิดเมนู <strong>ดูแลห้อง</strong> จะเห็นรายการ <strong>คำขอที่รอการอนุมัติ</strong></li>
+<li>อ่านรายละเอียด (หัวข้อ วัตถุประสงค์ ผู้ขอ) ใส่หมายเหตุถ้าต้องการ</li>
+<li>กด <strong>อนุมัติ</strong> หรือ <strong>ไม่อนุมัติ</strong> ระบบจะส่งอีเมลแจ้งผลให้นิสิตทันที</li>
+</ol>
+<figure class="desktop"><img src="img/d_teacher_room_admin.png" alt="หน้าดูแลห้อง"><figcaption>หน้าดูแลห้องของอาจารย์: เห็นเฉพาะคำขอของห้องที่ตนดูแล</figcaption></figure>
+<div class="callout tip">
+<p><strong>Tips สำหรับอาจารย์</strong></p>
+<ul>
+<li>ตอบคำขอให้เร็ว นิสิตต้องได้รับอนุมัติ <strong>ก่อนเวลาเริ่ม</strong> จึงจะเช็คอินได้</li>
+<li>ถ้าตารางสอนเปลี่ยน ให้แจ้งเจ้าหน้าที่แก้ชั่วโมงเรียนในระบบ นิสิตจะได้ไม่จองชนกับเวลาเรียน</li>
+<li>ถ้าลืมรหัสผ่าน ให้กด <strong>ลืมรหัสผ่าน</strong> ที่หน้าเข้าสู่ระบบ หรือขอลิงก์ตั้งรหัสผ่านจากแอดมินโดยตรง</li>
+</ul>
+</div>
+</section>
+<section class="level admin">
+<h2>ส่วนที่ 3 · แอดมินและเจ้าหน้าที่</h2>
+<h3>3.1 เมนูเจ้าหน้าที่</h3>
+<table>
+<thead>
+<tr>
+<th>เมนู</th>
+<th>ใช้ทำอะไร</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>วันนี้</strong></td>
+<td>ดูการจองวันนี้ เช็คอินแทนนิสิต จบการใช้ก่อนเวลา</td>
+</tr>
+<tr>
+<td><strong>อนุมัติการจองห้อง</strong></td>
+<td>อนุมัติหรือปฏิเสธคำขอห้อง 301, 303 และ 304</td>
+</tr>
+<tr>
+<td><strong>ผู้ใช้</strong></td>
+<td>ค้นหาผู้ใช้ ระงับสิทธิ์ ยกเลิกคะแนนโทษ ปิดบัญชี</td>
+</tr>
+<tr>
+<td><strong>คำเชิญ</strong></td>
+<td>เชิญเจ้าหน้าที่และอาจารย์</td>
+</tr>
+<tr>
+<td><strong>ทะเบียนนิสิต</strong></td>
+<td>นำเข้าหรือส่งออกรายชื่อ และแก้อีเมลนิสิต</td>
+</tr>
+<tr>
+<td><strong>การปิดห้อง / ปฏิทิน</strong></td>
+<td>ปิดห้องชั่วคราว กำหนดวันหยุด</td>
+</tr>
+<tr>
+<td><strong>เหตุขัดข้อง</strong></td>
+<td>บันทึกเหตุขัดข้อง ระบบยกเลิกการจองโดยไม่ลงโทษนิสิต</td>
+</tr>
+<tr>
+<td><strong>คิวอีเมล</strong></td>
+<td>ดูอีเมลที่ส่งไม่สำเร็จ</td>
+</tr>
+<tr>
+<td><strong>สถิติ / บันทึกการตรวจสอบ</strong></td>
+<td>รายงานการใช้งานและประวัติการแก้ไข</td>
+</tr>
+<tr>
+<td><strong>ป้ายติดห้อง</strong></td>
+<td>พิมพ์ป้าย QR ติดประตูห้อง</td>
+</tr>
+<tr>
+<td><strong>การตั้งค่า</strong></td>
+<td>แก้ข้อมูลห้อง และแต่งตั้งผู้ดูแลห้อง (เฉพาะ Maintainer)</td>
+</tr>
+</tbody>
+</table>
+<figure class="desktop"><img src="img/d_staff_today.png" alt="หน้าวันนี้"><figcaption>หน้าวันนี้: ภาพรวมการใช้ห้องของวัน</figcaption></figure>
+<h3>3.2 งานประจำ</h3>
+<ul>
+<li><strong>ทุกเช้า:</strong> เปิด <strong>วันนี้</strong> และ <strong>อนุมัติการจองห้อง</strong> เพื่อตอบคำขอที่ค้างอยู่</li>
+<li><strong>เชิญเจ้าหน้าที่หรืออาจารย์ใหม่:</strong> ไปที่ <strong>คำเชิญ</strong> ใส่อีเมล แล้วติ๊ก <strong>เจ้าหน้าที่</strong> หรือ <strong>อาจารย์</strong></li>
+<li><strong>แต่งตั้งอาจารย์ผู้อนุมัติห้อง 301 (เฉพาะ Maintainer):</strong> ไปที่ <strong>การตั้งค่า</strong> → ห้อง 301 → เพิ่มผู้ดูแลห้อง แล้วเลือกบัญชีอาจารย์ (ต้องเชิญอาจารย์เข้าระบบก่อน)</li>
+<li><strong>ถ้าอีเมลไม่ถึง (เฉพาะ Maintainer):</strong> ไปที่ <strong>ผู้ใช้</strong> → จัดการ → <strong>สร้างลิงก์ตั้งรหัสผ่านใหม่</strong> แล้วส่งลิงก์ให้เจ้าของบัญชีทาง LINE (ใช้ได้ครั้งเดียว มีอายุ 24 ชั่วโมง)</li>
+<li><strong>นิสิตอุทธรณ์คะแนนโทษ:</strong> ไปที่ <strong>ผู้ใช้</strong> → จัดการ → คะแนนโทษ → <strong>ยกเลิกคะแนนโทษ</strong> พร้อมใส่เหตุผล</li>
+</ul>
+<div class="shots desk">
+<figure class="desktop"><img src="img/d_staff_invitations.png" alt="หน้าคำเชิญ"><figcaption>หน้าคำเชิญ</figcaption></figure>
+<figure class="desktop"><img src="img/d_staff_posters.png" alt="หน้าป้ายติดห้อง"><figcaption>หน้าป้ายติดห้อง</figcaption></figure>
+</div>
+<div class="callout warn">
+<p><strong>ข้อพึงระวัง</strong></p>
+<ul>
+<li><strong>พิมพ์ป้าย QR จากเมนูป้ายติดห้องเท่านั้น</strong> เพราะเมนูนี้ใช้ที่อยู่เว็บที่ถูกต้อง</li>
+<li><strong>การปิดห้องจะยกเลิกการจองในช่วงนั้นทันที</strong> และการเปิดห้องคืนจะไม่ได้การจองเหล่านั้นกลับมา</li>
+<li><strong>เจ้าหน้าที่สร้างการจองแทนนิสิตไม่ได้</strong> เพื่อไม่ให้มีการข้ามกฎ</li>
+<li><strong>ห้ามแชร์ลิงก์ตั้งรหัสผ่านในกลุ่มแชท</strong> ให้ส่งถึงเจ้าของบัญชีโดยตรงเท่านั้น</li>
+<li><strong>ระบบมีข้อมูลส่วนบุคคลของนิสิต</strong> ห้ามส่งออกรายชื่อไปเก็บในที่ที่ไม่ปลอดภัย</li>
+</ul>
+</div>
+<div class="callout tip">
+<p><strong>Tips สำหรับแอดมิน</strong></p>
+<ul>
+<li>ถ้าเห็นอีเมลค้างใน <strong>คิวอีเมล</strong> มักเกิดจากรหัสผ่านอีเมลของระบบเปลี่ยน ให้ติดต่อผู้ดูแลเซิร์ฟเวอร์</li>
+<li>ตรวจดูหน้า <strong>สถิติ</strong> ทุกเดือน ห้องที่มี No-show สูงอาจต้องปรับกฎหรือแจ้งนิสิต</li>
+<li>ช่วงนำร่องให้สุ่มตรวจหน้าห้อง เพราะ QR ยืนยันได้ว่าสแกนแล้ว แต่ยืนยันไม่ได้ว่าอยู่ในห้องจริง</li>
+</ul>
+</div>
+</section>
+<h2>ติดต่อ</h2>
+<p><strong>คุณสิตานันท์ (พี่ดิว)</strong> · โทร 02-218-4604 · อีเมล <code>superuser@yos.in.th</code>
+ภาควิชาดนตรีตะวันตก คณะศิลปกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย</p>
+<p class="note">ภาพหน้าจอในคู่มือนี้ใช้ข้อมูลตัวอย่าง ไม่ใช่ข้อมูลนิสิตจริง</p>
+</body></html>
