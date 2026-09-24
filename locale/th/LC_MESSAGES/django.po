@@ -692,8 +692,10 @@ msgid "That link has already been used. Request a new one."
 msgstr "ลิงก์นี้ถูกใช้ไปแล้ว กรุณาขอลิงก์ใหม่"
 
 #: core/services/errors.py:117
-msgid "Use your institutional email address."
-msgstr "กรุณาใช้อีเมลสถาบัน"
+msgid ""
+"Use your institutional email address or the email the department roster "
+"lists for you."
+msgstr "กรุณาใช้อีเมลจุฬาฯ หรืออีเมลที่ให้ไว้กับภาควิชา (ตามทะเบียนนิสิต)"
 
 #: core/services/errors.py:118
 msgid "Your details were not found on the department roster."
@@ -2226,9 +2228,9 @@ msgstr "ตั้งรหัสผ่านใหม่"
 
 #: core/templates/core/password_reset.html:9
 msgid ""
-"Enter your institutional email address. If it belongs to an account, we will "
-"send a reset link."
-msgstr "กรอกอีเมลสถาบันของคุณ หากตรงกับบัญชีที่มีอยู่ เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้"
+"Enter the email address you registered with. If it belongs to an account, we "
+"will send a reset link."
+msgstr "กรอกอีเมลที่ใช้ลงทะเบียน หากตรงกับบัญชีที่มีอยู่ เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้"
 
 #: core/templates/core/password_reset.html:14
 #: core/templates/core/register.html:26
@@ -2376,12 +2378,13 @@ msgstr ""
 
 #: core/templates/core/register.html:11
 msgid ""
-"Use your institutional ID and institutional email address. You will receive "
-"a link to confirm the address, then choose a password. Membership of the "
-"department is checked against the roster; an email address alone does not "
-"establish it."
+"Use your institutional ID and either your institutional email address or the "
+"email the department roster lists for you. You will receive a link to confirm "
+"the address, then choose a password. Membership of the department is checked "
+"against the roster; an email address alone does not establish it."
 msgstr ""
-"ใช้รหัสนิสิตและอีเมลสถาบันของคุณ คุณจะได้รับลิงก์เพื่อยืนยันอีเมล แล้วจึงตั้งรหัสผ่าน "
+"ใช้รหัสนิสิต และอีเมลจุฬาฯ หรืออีเมลที่ให้ไว้กับภาควิชา (ตามทะเบียนนิสิต) "
+"คุณจะได้รับลิงก์เพื่อยืนยันอีเมล แล้วจึงตั้งรหัสผ่าน "
 "การเป็นสมาชิกภาควิชาจะตรวจสอบกับทะเบียนนิสิต อีเมลเพียงอย่างเดียวไม่ยืนยันการเป็นสมาชิก"
 
 #: core/templates/core/register.html:17
@@ -2390,8 +2393,10 @@ msgstr "ชื่อ-นามสกุล"
 
 #: core/templates/core/register.html:29
 #, python-format
-msgid "Must end with %(domain)s"
-msgstr "ต้องลงท้ายด้วย %(domain)s"
+msgid ""
+"An address ending with %(domain)s, or the email listed for you in the "
+"department roster"
+msgstr "อีเมลที่ลงท้ายด้วย %(domain)s หรืออีเมลที่ให้ไว้กับภาควิชา (ตามทะเบียนนิสิต)"
 
 #: core/templates/core/register.html:32
 msgid "Your instrument"

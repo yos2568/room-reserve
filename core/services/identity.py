@@ -66,6 +66,22 @@ def email_domain_allowed(email: str) -> bool:
     return domain == expected.lower()
 
 
+def registration_email_allowed(institutional_id: str, email: str) -> bool:
+    """An institutional address, or the exact address the roster lists for this ID (D-40).
+
+    Most roster rows carry a personal address (D-20). Accepting that address only
+    for its own active roster row lets those students register without opening
+    registration to arbitrary outside addresses.
+    """
+    if email_domain_allowed(email):
+        return True
+    return EligibleStudent.objects.filter(
+        institutional_id=(institutional_id or "").strip(),
+        email__iexact=normalize_email(email),
+        is_active=True,
+    ).exists()
+
+
 # --- Invitations ---------------------------------------------------------------
 
 
@@ -168,7 +184,7 @@ def start_registration(
 
     if not institutional_id or not email or not name:
         raise OperationRejected(Code.INVALID_INPUT)
-    if not email_domain_allowed(email):
+    if not registration_email_allowed(institutional_id, email):
         raise OperationRejected(Code.DOMAIN_NOT_ALLOWED)
     if declared_category and declared_category not in DECLARABLE_CATEGORIES:
         raise OperationRejected(Code.INVALID_INPUT)
@@ -482,7 +498,7 @@ def change_email(*, user, new_email: str, actor=None) -> tuple[User, str]:
     new_email = normalize_email(new_email)
     if not new_email or "@" not in new_email:
         raise OperationRejected(Code.INVALID_INPUT)
-    if not email_domain_allowed(new_email):
+    if not registration_email_allowed(user.institutional_id, new_email):
         raise OperationRejected(Code.DOMAIN_NOT_ALLOWED)
 
     if User.objects.filter(email__iexact=new_email).exclude(pk=user.pk).exists():
