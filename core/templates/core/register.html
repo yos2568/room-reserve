@@ -30,7 +30,7 @@
     <form method="post" class="flow-panel mt-4 space-y-4">
       {% csrf_token %}
       <input type="hidden" name="account_type" value="student">
-      <p class="text-sm text-slate-700">{% blocktrans %}Use your institutional ID and institutional email address. You will receive a link to confirm the address, then choose a password. Membership of the department is checked against the roster; an email address alone does not establish it.{% endblocktrans %}</p>
+      <p class="text-sm text-slate-700">{% blocktrans %}Use your institutional ID and either your institutional email address or the email the department roster lists for you. You will receive a link to confirm the address, then choose a password. Membership of the department is checked against the roster; an email address alone does not establish it.{% endblocktrans %}</p>
       <div>
         <label class="label" for="id_name">{% trans "Full name" %}</label>
         <input class="field" id="id_name" name="name" required value="{{ form.name|default:'' }}" autocomplete="name">
@@ -41,10 +41,10 @@
                value="{{ form.institutional_id|default:'' }}" autocomplete="username">
       </div>
       <div>
-        <label class="label" for="id_email">{% trans "Institutional email" %}</label>
+        <label class="label" for="id_email">{% trans "Email" %}</label>
         <input class="field" id="id_email" name="email" type="email" required
                value="{{ form.email|default:'' }}" autocomplete="email">
-        <p class="mt-1 text-xs text-slate-600">{% blocktrans with domain=policy.snapshot.institution_email_domain %}Must end with {{ domain }}{% endblocktrans %}</p>
+        <p class="mt-1 text-xs text-slate-600">{% blocktrans with domain=policy.snapshot.institution_email_domain %}An address ending with {{ domain }}, or the email listed for you in the department roster{% endblocktrans %}</p>
       </div>
       <div>
         <label class="label" for="id_declared_category">{% trans "Your instrument" %}</label>

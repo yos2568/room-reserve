@@ -264,10 +264,11 @@ Three things to know before you trust a refresh:
 4. **Check the email column's domain before importing.** The importer validates
    only that an address is well-formed. The department's spreadsheet for 2569 had
    17 institutional addresses and 57 personal ones (55 `gmail.com`, one `gmail.con`
-   — a typo — and one `suthi.ac.th`). Registration **refuses** a non-institutional
-   domain, so those 57 rows can never match a registration and those students have
-   to be approved by hand. If the intent is automatic approval, the file needs the
-   institutional addresses first.
+   — a typo — and one `suthi.ac.th`). Since D-40, registration accepts a personal
+   address when it is exactly the one the active roster row lists for that student
+   ID, so those students register with it and are approved automatically. Fix
+   typos such as `gmail.con` before importing: a student cannot receive the
+   verification email at a mistyped address.
 
 ```bash
 # Which active rows could never auto-approve, before or after an import:

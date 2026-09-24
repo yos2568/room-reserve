@@ -122,7 +122,9 @@ _MESSAGES = {
     Code.INVALID_TOKEN: _("That link is not valid."),
     Code.TOKEN_EXPIRED: _("That link has expired. Request a new one."),
     Code.TOKEN_USED: _("That link has already been used. Request a new one."),
-    Code.DOMAIN_NOT_ALLOWED: _("Use your institutional email address."),
+    Code.DOMAIN_NOT_ALLOWED: _(
+        "Use your institutional email address or the email the department roster lists for you."
+    ),
     Code.ROSTER_MISMATCH: _("Your details were not found on the department roster."),
     Code.IDEMPOTENCY_PAYLOAD_MISMATCH: _(
         "This request conflicts with an earlier submission. Reload the page and try again."

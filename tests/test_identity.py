@@ -81,6 +81,54 @@ def test_environment_default_policy_comes_from_the_institution_domain(db):
     assert_rejected(exc, Code.DOMAIN_NOT_ALLOWED)
 
 
+def test_the_personal_address_the_roster_lists_registers_and_auto_approves(frozen, rooms):
+    """D-40: a roster row's own outside address is accepted for that ID only."""
+    entry = factories.make_roster_entry(institutional_id="66001000030", email="Listed.Person@Gmail.com")
+
+    result = register("66001000030", "listed.person@gmail.com")
+    user, _ = identity.verify_email(result.raw_token)
+
+    assert user.email == "listed.person@gmail.com"
+    assert user.eligibility == User.Eligibility.APPROVED
+    entry.refresh_from_db()
+    assert entry.account_id == user.pk
+    assert helpers.advance_booking(user, rooms[0], target(11)).ok
+
+
+@pytest.mark.parametrize(
+    ("institutional_id", "email", "active"),
+    [
+        ("66001000031", "stranger@gmail.com", True),  # not the address the roster lists
+        ("66001000099", "listed31@gmail.com", True),  # the roster address under another ID
+        ("66001000031", "listed31@gmail.com", False),  # an inactive roster row vouches for nothing
+    ],
+)
+def test_an_outside_address_not_listed_for_that_id_is_refused(db, institutional_id, email, active):
+    factories.make_roster_entry(institutional_id="66001000031", email="listed31@gmail.com", is_active=active)
+
+    with pytest.raises(OperationRejected) as exc:
+        register(institutional_id, email)
+    assert_rejected(exc, Code.DOMAIN_NOT_ALLOWED)
+    assert not User.objects.filter(username=institutional_id).exists()
+
+
+def test_the_register_page_answers_a_refused_outside_address_generically(db, client):
+    """The roster-address rule must not let a public caller probe roster membership."""
+    factories.make_roster_entry(institutional_id="66001000032", email="listed32@gmail.com")
+
+    response = client.post(
+        reverse("core:register"),
+        {
+            "account_type": "student",
+            "name": "ทดสอบ",
+            "institutional_id": "66001000032",
+            "email": "other@gmail.com",
+        },
+        follow=True,
+    )
+    assert "If these details can be registered" in response.content.decode()
+
+
 def test_duplicate_institutional_id_is_refused(db):
     factories.make_user(username="66001000005", email="first@student.chula.ac.th")
 
@@ -233,6 +281,19 @@ def test_changing_email_invalidates_verification_and_approval(frozen, rooms):
     user.refresh_from_db()
     assert user.email_is_verified is True
     assert user.eligibility == User.Eligibility.PENDING, "the roster must vouch again"
+
+
+def test_changing_email_accepts_only_the_outside_address_listed_for_the_account(db):
+    user = factories.make_user(username="66001000033", email="old33@student.chula.ac.th")
+    factories.make_roster_entry(institutional_id="66001000033", email="listed33@gmail.com")
+
+    with pytest.raises(OperationRejected) as exc:
+        identity.change_email(user=user, new_email="other33@gmail.com")
+    assert_rejected(exc, Code.DOMAIN_NOT_ALLOWED)
+
+    identity.change_email(user=user, new_email="LISTED33@gmail.com")
+    user.refresh_from_db()
+    assert user.email == "listed33@gmail.com"
 
 
 def test_changing_to_an_already_registered_address_is_refused(db):

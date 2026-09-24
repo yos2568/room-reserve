@@ -413,3 +413,17 @@ Configuration screen, and superusers and operational staff can approve every
 room as before. A teacher account stays read-only for its own bookings; the
 room-administrator grant only lets it decide requests for its assigned room.
 Class hours on 301 stay blocked.
+
+**D-40 — A student may register with the address the roster lists for them (24 September 2026).**
+Under D-20, 57 of the 74 roster rows carry a personal address, so those students
+could only register with a `student.chula.ac.th` address the roster does not hold
+and then wait for staff approval one by one. The owner asked that they be able to
+use another address. Registration and email change now accept either an address
+in the institutional domain, as before, or the exact address an **active** roster
+row lists for **that same institutional ID** (case-insensitive). Any other outside
+address is refused as before. The public registration response stays the same
+generic message for every refusal, so the rule does not reveal roster membership.
+Email verification still proves ownership, and the existing roster match then
+approves the account. Addresses are still never derived from student IDs, and a
+mistyped roster address (such as `gmail.con`) must be corrected in the roster
+before that student can receive the verification email.
