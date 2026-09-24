@@ -3,7 +3,8 @@
 **Project:** `/Volumes/Crucial2TB/All Codes/FAA/Room problem`
 **Repository:** `https://github.com/yos2568/room-reserve`
 **Previous handoff:** `handoff22sep.md` (superseded by this file)
-**Branch:** `main` at `516e322` (PR #5 merged)
+**Branch:** `main` at `516e322` (PR #5 merged). This handoff and the user manual are on
+`docs/handoff-24sep`, open as PR #6 (not merged yet).
 **Production:** `https://roomreserve.yos.in.th` (Hostinger VPS, Docker Manager project `roomreserve`)
 
 ## Honest status
@@ -22,7 +23,8 @@ are live and were checked on the production site. Two owner tasks remain open
 | #4 | Staff → Users → Manage → **New set-password link** (superuser only, staff/teacher accounts only, shown once, single use, 24 h, not emailed, audited without token). Invitations page shows a full URL | Live |
 | #5 | **D-39: room 301 reservable by approved request only** (teacher or admin named as its room administrator approves; no walk-in; class hours stay blocked). Door page status row translated (was raw `held`) | Live, `seed_rooms` run |
 
-Full suite: 519 tests pass locally; CI green on every PR.
+Full suite: 519 tests passed locally on 23 September (520 collected on 24 September; they
+could not be re-run then, see "Local environment" below); CI green on every PR.
 
 ## Production configuration now in force
 
@@ -63,10 +65,16 @@ on disk. Keep the Docker Manager YAML in step with `compose.hostinger.yaml`.
    Change TXT `_dmarc.yos.in.th` to:
    `v=DMARC1; p=quarantine; rua=mailto:superuser@yos.in.th; adkim=r; aspf=r; pct=100`
    Verify afterwards: `dig @8.8.8.8 +short TXT _dmarc.yos.in.th`
+   With `p=quarantine`, daily aggregate reports arrive in the `superuser@` inbox; glance
+   at the first few to confirm no legitimate mail is failing.
 2. **Delete the old `roomreserve@yos.in.th` mailbox** in Mailcow admin (owner must click Delete; Claude does not permanently delete data).
+   Safe now: the new sender `superuser@` passed SPF/DKIM/DMARC on 24 Sep. Do it after task 1 is verified.
 3. **Invite staff and teachers** (Staff → Invitations), then **name the teacher who approves room 301** (Staff → Configuration → room 301 → add room administrator; maintainer only). A test staff account can use `superuser+stafftest@yos.in.th` (Mailcow delivers plus-addresses to the superuser inbox).
 4. **Reprint door posters** from Staff → Posters (Staff web sheet uses the correct URL; the CLI `generate_posters` uses `SITE_BASE_URL`).
-5. **Commit the user manual** (see below) if it should live in the repo.
+5. **Review and merge PR #6** (this handoff + the user manual, already committed on
+   `docs/handoff-24sep`). Docs only, so no deploy is needed. Its first CI run failed
+   lint/format on `docs/manual/build/*.py`; those scripts were cleaned up in a follow-up
+   commit (layout only, plus one unused import removed). Merge once CI is green.
 
 ## User manual (new, not yet reviewed by the owner in print)
 
@@ -77,10 +85,11 @@ on disk. Keep the Docker Manager YAML in step with `compose.hostinger.yaml`.
 - `img/` — 22 screenshots taken from a **synthetic** local database (no real student data)
 - `build/` — `scenario.py` (demo data), `shoot.py` (screenshots), `build_html.py` + `print_pdf.py` (MD → HTML → PDF)
 
-Rebuild after editing the MD (needs a Python env with `markdown`; Playwright from the project venv):
+Rebuild after editing the MD. Both steps use the project venv (`markdown` is now in
+`requirements/dev.txt`, Playwright already was):
 
 ```
-python docs/manual/build/build_html.py docs/manual/roomreserve-manual.md docs/manual/roomreserve-manual.html
+~/.virtualenvs/roomreserve/bin/python docs/manual/build/build_html.py docs/manual/roomreserve-manual.md docs/manual/roomreserve-manual.html
 ~/.virtualenvs/roomreserve/bin/python docs/manual/build/print_pdf.py docs/manual/roomreserve-manual.html docs/manual/roomreserve-manual.pdf
 ```
 
@@ -93,13 +102,26 @@ Screenshots need the local demo DB `roomreserve_manual` (created with
 
 - Claude's auto mode blocks SSH reads/writes on production and PR merges; the
   owner runs those in the terminal pane. Give manual steps **one at a time**.
-- `diag_mail.sh` (read-only mail diagnosis) was a scratch script; its checks:
+- `diag_mail.sh` (read-only mail diagnosis) was a scratch script and **is not in the repo
+  or the project folder**; rewrite it if needed. Its checks were:
   app mail env (no password), accounts with the address, recent
   `password_reset` notifications with `last_error`, scheduler log, Postfix log.
 - Untracked on purpose: `.claude/`, `uv.lock`, floor-plan images, `Room 304.png`
   (owner decision still pending from `handoff22sep.md`).
 - Local Docker Postgres has two extra databases: the dev DB (contains real
   roster data — never use for screenshots) and `roomreserve_manual` (synthetic).
+
+## Local environment (checked 24 September)
+
+- **Project venv:** `~/.virtualenvs/roomreserve` was missing and was rebuilt on 24 Sep
+  (Python 3.12, `requirements/dev.txt`, Playwright Chromium). To rebuild again:
+  `uv venv --python 3.12 ~/.virtualenvs/roomreserve && uv pip install --python ~/.virtualenvs/roomreserve/bin/python -r requirements/dev.txt && ~/.virtualenvs/roomreserve/bin/python -m playwright install chromium`
+- **Docker is not installed** on this Mac right now (`docker` not found), so the local
+  Postgres (test DB, dev DB, `roomreserve_manual`) is unavailable. Tests error on DB
+  connection and the manual's screenshots cannot be retaken until the owner reinstalls
+  Docker Desktop and starts `compose.yaml`. Whether the old volumes (with the dev and
+  manual databases) survived depends on how Docker was removed; if they are gone,
+  recreate `roomreserve_manual` as described above. CI is unaffected.
 
 ## Possible follow-ups (not started)
 
