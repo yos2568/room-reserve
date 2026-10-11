@@ -15,6 +15,32 @@
     </div>
   {% endif %}
 
+  <section class="card mb-4" id="user-approvals" aria-labelledby="approval-heading">
+    <h2 id="approval-heading" class="text-base font-semibold">{% trans "Waiting for approval" %} <span class="text-slate-600">({{ pending|length }})</span></h2>
+    <p class="mt-2 text-sm text-slate-700">{% trans "Review the student's details, choose Approve or Reject, then select the reason for your decision. The reason is saved in the audit record." %}</p>
+    {% if pending %}
+      <ul class="mt-4 space-y-4 text-sm">
+        {% for candidate in pending %}
+          <li class="rounded-md border border-slate-200 p-3">
+            <h3 class="font-semibold">{{ candidate.display_name }}</h3>
+            <p class="mt-1">{% trans "Student ID" %}: {{ candidate.institutional_id }} · {{ candidate.email }}</p>
+            {% if not candidate.email_is_verified %}
+              <p class="mt-2 text-amber-800">{% trans "You can approve this user now. They must verify their email before booking." %}</p>
+            {% else %}
+              <p class="mt-2 text-emerald-800">{% trans "Email verified" %}</p>
+            {% endif %}
+            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+              {% include "core/staff/_eligibility_decision.html" with form=candidate.approval_form decision="APPROVED" %}
+              {% include "core/staff/_eligibility_decision.html" with form=candidate.rejection_form decision="REJECTED" %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mt-3 text-sm">{% trans "Nothing waiting." %}</p>
+    {% endif %}
+  </section>
+
   <section class="card">
     <h2 class="text-base font-semibold">{% trans "Bookings today" %}</h2>
     {% if bookings %}
@@ -73,29 +99,6 @@
     {% endif %}
   </section>
 
-  <section class="card mt-4">
-    <h2 class="text-base font-semibold">{% trans "Waiting for approval" %}</h2>
-    {% if pending %}
-      <ul class="mt-2 space-y-2 text-sm">
-        {% for candidate in pending %}
-          <li class="border-b border-slate-200 pb-2">
-            <p>{{ candidate.display_name }} ({{ candidate.institutional_id }}) · {{ candidate.email }}
-              {% if not candidate.email_is_verified %}<span class="text-amber-700">{% trans "email not verified" %}</span>{% endif %}
-            </p>
-            <form method="post" action="{% url 'core:staff_decide_eligibility' pk=candidate.pk %}" class="mt-1 flex flex-wrap items-center gap-1">
-              {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
-              <label class="sr-only" for="reason-{{ candidate.pk }}">{% trans "Reason" %}</label>
-              <input class="field !py-1" id="reason-{{ candidate.pk }}" name="reason" placeholder="{% trans 'Reason (required)' %}" required>
-              <button class="btn-primary" name="decision" value="APPROVED" type="submit">{% trans "Approve" %}</button>
-              <button class="btn-danger" name="decision" value="REJECTED" type="submit">{% trans "Reject" %}</button>
-            </form>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="mt-2 text-sm">{% trans "Nothing waiting." %}</p>
-    {% endif %}
-  </section>
 
   <div class="mt-4 grid gap-4 md:grid-cols-2">
     <section class="card">

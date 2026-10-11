@@ -4278,3 +4278,107 @@ msgstr "สร้างลิงก์ตั้งรหัสผ่านให
 #: core/templates/core/staff/users.html
 msgid "For when the email does not arrive. Hand the link over directly."
 msgstr "ใช้เมื่ออีเมลไม่มาถึง ส่งลิงก์ให้เจ้าของบัญชีโดยตรง"
+
+
+msgid "Create your account, verify your email, then sign in to return to your selected booking. Availability will be checked again."
+msgstr "สร้างบัญชี ยืนยันอีเมล แล้วเข้าสู่ระบบเพื่อกลับไปยังการจองที่เลือก ระบบจะตรวจสอบเวลาว่างอีกครั้ง"
+
+
+msgid "Sign in to continue to your selected page. Booking availability will be checked again."
+msgstr "เข้าสู่ระบบเพื่อกลับไปยังหน้าที่เลือก ระบบจะตรวจสอบเวลาว่างสำหรับการจองอีกครั้ง"
+
+
+msgid "Verified against department roster"
+msgstr "ตรวจสอบกับทะเบียนนิสิตของภาควิชาแล้ว"
+
+
+msgid "Student identity confirmed by staff"
+msgstr "เจ้าหน้าที่ยืนยันตัวตนของนิสิตแล้ว"
+
+
+msgid "Membership confirmed by department"
+msgstr "ภาควิชายืนยันการเป็นสมาชิกแล้ว"
+
+
+msgid "Not eligible for department access"
+msgstr "ไม่มีสิทธิ์ใช้งานในภาควิชา"
+
+
+msgid "Registration details incorrect"
+msgstr "ข้อมูลการลงทะเบียนไม่ถูกต้อง"
+
+
+msgid "Duplicate account"
+msgstr "บัญชีซ้ำ"
+
+
+msgid "Details for Other"
+msgstr "รายละเอียดสำหรับเหตุผลอื่น ๆ"
+
+
+msgid "Choose a reason"
+msgstr "เลือกเหตุผล"
+
+
+msgid "Other — enter details"
+msgstr "อื่น ๆ — ระบุรายละเอียด"
+
+
+msgid "Choose Approve or Reject."
+msgstr "กรุณาเลือกอนุมัติหรือปฏิเสธ"
+
+
+msgid "Enter details when choosing Other."
+msgstr "กรุณาระบุรายละเอียดเมื่อเลือกเหตุผลอื่น ๆ"
+
+
+msgid "Review the student's details, choose Approve or Reject, then select the reason for your decision. The reason is saved in the audit record."
+msgstr "ตรวจสอบข้อมูลนิสิต เลือกอนุมัติหรือปฏิเสธ แล้วเลือกเหตุผล เหตุผลจะถูกบันทึกไว้ในประวัติการดำเนินการ"
+
+
+msgid "You can approve this user now. They must verify their email before booking."
+msgstr "คุณสามารถอนุมัติบัญชีนี้ได้ทันที ผู้ใช้ต้องยืนยันอีเมลก่อนจองห้อง"
+
+
+msgid "Check the fields below. No decision has been saved."
+msgstr "กรุณาตรวจสอบช่องด้านล่าง ยังไม่ได้บันทึกการตัดสินใจ"
+
+
+msgid "Only required when you choose Other. You may add details to any reason."
+msgstr "จำเป็นเมื่อเลือกอื่น ๆ เท่านั้น คุณสามารถเพิ่มรายละเอียดให้เหตุผลใดก็ได้"
+
+
+msgid "Approve user"
+msgstr "อนุมัติบัญชี"
+
+
+msgid "Reject user"
+msgstr "ปฏิเสธบัญชี"
+
+
+msgid "Needs attention"
+msgstr "งานที่ต้องดูแล"
+
+
+msgid "Daily operations"
+msgstr "งานประจำวัน"
+
+
+msgid "Settings and records"
+msgstr "การตั้งค่าและประวัติ"
+
+
+msgid "Booking guidance"
+msgstr "คำแนะนำการจอง"
+
+
+msgid "Rooms are closed today according to the department calendar. Open the timetable to choose another date."
+msgstr "วันนี้ห้องปิดตามปฏิทินของภาควิชา เปิดตารางว่างเพื่อเลือกวันอื่น"
+
+
+msgid "Outside today's opening hours: %(opening_hour)s:00–%(closing_hour)s:00. Open the timetable to plan your booking."
+msgstr "ขณะนี้อยู่นอกเวลาเปิดห้องของวันนี้: %(opening_hour)s:00–%(closing_hour)s:00 เปิดตารางว่างเพื่อวางแผนการจอง"
+
+
+msgid "Choose a room and time from the timetable. Sign in to book; this lobby board only shows current status."
+msgstr "เลือกห้องและเวลาจากตารางว่าง แล้วเข้าสู่ระบบเพื่อจอง กระดานล็อบบี้นี้แสดงสถานะปัจจุบันเท่านั้น"

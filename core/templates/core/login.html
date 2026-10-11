@@ -14,6 +14,7 @@
   <form method="post" class="flow-panel mt-4 space-y-4">
     {% csrf_token %}
     <input type="hidden" name="next" value="{{ next }}">
+    {% if next %}<p class="text-sm text-slate-700">{% trans "Sign in to continue to your selected page. Booking availability will be checked again." %}</p>{% endif %}
     <div>
       <label class="label" for="id_institutional_id">{% trans "Student ID or email" %}</label>
       <input class="field" id="id_institutional_id" name="institutional_id" required
@@ -30,7 +31,7 @@
   <p class="mt-3 text-sm">
     <a class="underline" href="{% url 'core:password_reset' %}">{% trans "Forgot your password?" %}</a>
     ·
-    <a class="underline" href="{% url 'core:register' %}">{% trans "Register" %}</a>
+    <a class="underline" href="{% url 'core:register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% trans "Register" %}</a>
   </p>
   <p class="mt-3 text-sm">แจ้งปัญหาการเข้าสู่ระบบ / Sign-in problems: <a class="underline" href="mailto:{{ support_contact.email }}">{{ support_contact.email }}</a></p>
   </div>

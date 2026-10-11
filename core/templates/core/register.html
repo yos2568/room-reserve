@@ -5,6 +5,7 @@
 
 {% block content %}
   <div class="max-w-2xl">
+    {% if next %}<p class="card mb-4 text-sm" role="status">{% trans "Create your account, verify your email, then sign in to return to your selected booking. Availability will be checked again." %}</p>{% endif %}
     <section class="page-hero">
       <p class="page-kicker">{% trans "Room Reserve" %}</p>
       <h1 class="page-title">{% trans "Create an account" %}</h1>
@@ -30,6 +31,7 @@
     <form method="post" class="flow-panel mt-4 space-y-4">
       {% csrf_token %}
       <input type="hidden" name="account_type" value="student">
+      <input type="hidden" name="next" value="{{ next }}">
       <p class="text-sm text-slate-700">{% blocktrans %}Use your institutional ID and either your institutional email address or the email the department roster lists for you. You will receive a link to confirm the address, then choose a password. Membership of the department is checked against the roster; an email address alone does not establish it.{% endblocktrans %}</p>
       <div>
         <label class="label" for="id_name">{% trans "Full name" %}</label>
@@ -44,7 +46,7 @@
         <label class="label" for="id_email">{% trans "Email" %}</label>
         <input class="field" id="id_email" name="email" type="email" required
                value="{{ form.email|default:'' }}" autocomplete="email">
-        <p class="mt-1 text-xs text-slate-600">{% blocktrans with domain=policy.snapshot.institution_email_domain %}An address ending with {{ domain }}, or the email listed for you in the department roster{% endblocktrans %}</p>
+        <p class="mt-1 text-xs text-slate-600">{% blocktrans with domain=institution_email_domain %}An address ending with {{ domain }}, or the email listed for you in the department roster{% endblocktrans %}</p>
       </div>
       <div>
         <label class="label" for="id_declared_category">{% trans "Your instrument" %}</label>
@@ -80,7 +82,7 @@
   {% endif %}
 
   <p class="mt-3 text-sm">
-    {% trans "Already registered?" %} <a class="underline" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
+    {% trans "Already registered?" %} <a class="underline" href="{% url 'core:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% trans "Sign in" %}</a>
   </p>
   </div>
 {% endblock %}

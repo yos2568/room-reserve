@@ -20,6 +20,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from core.forms import EligibilityDecisionForm
 from core.models import (
     AuditEvent,
     Booking,
@@ -108,6 +109,10 @@ def _room_manager_redirect(request) -> str:
 @staff_required
 @require_GET
 def today(request):
+    return _render_today(request)
+
+
+def _render_today(request, *, decision_form=None, candidate_id=None, status=200):
     moment = now()
     local_date = timezone.localdate(moment)
 
@@ -120,6 +125,18 @@ def today(request):
     pending = User.objects.filter(eligibility=User.Eligibility.PENDING, is_active=True).order_by(
         "date_joined"
     )
+    for candidate in pending:
+        candidate.approval_form = EligibilityDecisionForm(
+            decision=User.Eligibility.APPROVED, user_id=candidate.pk
+        )
+        candidate.rejection_form = EligibilityDecisionForm(
+            decision=User.Eligibility.REJECTED, user_id=candidate.pk
+        )
+        if decision_form is not None and candidate.pk == candidate_id:
+            if decision_form.decision == User.Eligibility.REJECTED:
+                candidate.rejection_form = decision_form
+            else:
+                candidate.approval_form = decision_form
     active_suspensions = maintenance.active_suspensions(moment)
     pending_reviews = maintenance.reviews_pending()
     failed_mail = Notification.objects.filter(status=Notification.Status.EXHAUSTED).order_by("-created_at")[
@@ -157,6 +174,7 @@ def today(request):
             "policy": current_policy(),
             "operation_key": str(uuid.uuid4()),
         },
+        status=status,
     )
 
 
@@ -166,6 +184,11 @@ def decide_eligibility(request, pk: int):
     user = get_object_or_404(User, pk=pk)
     decision = request.POST.get("decision") or ""
     reason = request.POST.get("reason") or ""
+    if "reason_choice" in request.POST:
+        form = EligibilityDecisionForm(request.POST, decision=decision, user_id=user.pk)
+        if not form.is_valid():
+            return _render_today(request, decision_form=form, candidate_id=user.pk, status=400)
+        reason = form.audit_reason()
 
     outcome = run_view_operation(
         request=request,
@@ -178,7 +201,15 @@ def decide_eligibility(request, pk: int):
             ).pk
         ),
     )
-    add_outcome_message(request, outcome)
+    add_outcome_message(
+        request,
+        outcome,
+        success_message=(
+            "อนุมัติบัญชีเรียบร้อย / Account approved."
+            if decision == User.Eligibility.APPROVED
+            else "ปฏิเสธบัญชีเรียบร้อย / Account rejected."
+        ),
+    )
     return redirect_back(request, "core:staff_today")
 
 

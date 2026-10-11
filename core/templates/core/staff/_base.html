@@ -6,21 +6,47 @@
     <h1 class="text-xl font-semibold">{% block staff_title %}{% trans "Staff" %}{% endblock %}</h1>
   </div>
 
-  <nav aria-label="{% trans 'Staff sections' %}" class="mt-2 flex flex-wrap gap-2 text-sm">
-    <a class="btn-secondary" href="{% url 'core:staff_today' %}">{% trans "Today" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_users' %}">{% trans "Users" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_closures' %}">{% trans "Closures" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_calendar' %}">{% trans "Calendar" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_incidents' %}">{% trans "Incidents" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_roster' %}">{% trans "Roster" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_invitations' %}">{% trans "Invitations" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_outbox' %}">{% trans "Mail queue" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_audit' %}">{% trans "Audit" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_stats' %}">{% trans "Statistics" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_posters' %}">{% trans "Posters" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_policy' %}">{% trans "Policy" %}</a>
-    <a class="btn-secondary" href="{% url 'core:staff_admin' %}">{% trans "Configuration" %}</a>
-    <a class="btn-secondary" href="{% url 'core:room_admin' %}">{% trans "Room approvals" %}</a>
+  <nav aria-label="{% trans 'Staff sections' %}" class="mt-4 space-y-3 text-sm">
+    <div><p class="mb-2 font-semibold">{% trans "Needs attention" %}</p>
+      <div class="flex flex-wrap gap-2 mt-2">
+        {% url 'core:staff_today' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Today" %}{% if pending %} ({{ pending|length }}){% endif %}</a>
+        {% url 'core:staff_users' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Users" %}</a>
+        {% url 'core:room_admin' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Room approvals" %}</a>
+        {% url 'core:staff_outbox' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Mail queue" %}</a>
+      </div>
+    </div>
+    <details class="rounded-md border border-slate-200 bg-white p-3" {% if request.resolver_match.url_name in "staff_closures staff_calendar staff_incidents staff_roster" %}open{% endif %}><summary class="cursor-pointer py-2 font-semibold">{% trans "Daily operations" %}</summary>
+      <div class="flex flex-wrap gap-2 mt-2">
+        {% url 'core:staff_closures' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Closures" %}</a>
+        {% url 'core:staff_calendar' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Calendar" %}</a>
+        {% url 'core:staff_incidents' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Incidents" %}</a>
+        {% url 'core:staff_roster' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Roster" %}</a>
+      </div>
+    </details>
+    <details class="rounded-md border border-slate-200 bg-white p-3" {% if request.resolver_match.url_name in "staff_invitations staff_audit staff_stats staff_posters staff_policy staff_admin" %}open{% endif %}><summary class="cursor-pointer py-2 font-semibold">{% trans "Settings and records" %}</summary>
+      <div class="flex flex-wrap gap-2 mt-2">
+        {% url 'core:staff_invitations' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Invitations" %}</a>
+        {% url 'core:staff_audit' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Audit" %}</a>
+        {% url 'core:staff_stats' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Statistics" %}</a>
+        {% url 'core:staff_posters' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Posters" %}</a>
+        {% url 'core:staff_policy' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Policy" %}</a>
+        {% url 'core:staff_admin' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Configuration" %}</a>
+      </div>
+    </details>
   </nav>
 
   <div class="mt-4">

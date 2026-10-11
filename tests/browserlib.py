@@ -265,10 +265,13 @@ def approve_pending_student(
 ) -> None:
     """Approve through the staff screen, not the service, so the UI is exercised."""
     visit(page, base_url, "staff/today/", lang)
-    field = page.locator(f"#reason-{applicant.pk}")
+    field = page.locator(f"#decision-APPROVED-{applicant.pk}-reason")
+    form = page.locator(f"form:has(#decision-APPROVED-{applicant.pk}-reason)")
+    page.locator("details").filter(has=field).locator("summary").click()
+    form.locator("select[name=reason_choice]").select_option("other")
     field.fill(reason)
-    page.locator(f"form:has(#reason-{applicant.pk}) button[value=APPROVED]").click()
-    expect(page.locator(f"#reason-{applicant.pk}")).to_have_count(0)
+    form.locator("button[type=submit]").click()
+    expect(field).to_have_count(0)
 
 
 def reserve_from_grid(page: Page, base_url: str, room, hour: int, lang: str = "th") -> None:
