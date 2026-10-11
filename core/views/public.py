@@ -167,6 +167,10 @@ def grid(request):
 def lobby(request):
     """A privacy-safe, auto-refreshing room-status screen for a lobby display."""
     moment = now()
+    from core.services.calendar import day_hours
+
+    hours = day_hours(clock.local_date(moment))
+    outside_hours = hours is not None and not (hours[0] <= clock.local_time(moment).hour < hours[1])
     rows = []
     for room in Room.objects.filter(is_active=True).order_by("position", "number"):
         cell = availability.current_slot_cell(room, moment)
@@ -202,7 +206,18 @@ def lobby(request):
                 "next_start": next_booking.local_start if next_booking else None,
             }
         )
-    return render(request, "core/lobby.html", {"rows": rows, "moment": moment})
+    return render(
+        request,
+        "core/lobby.html",
+        {
+            "rows": rows,
+            "moment": moment,
+            "day_closed": hours is None,
+            "outside_hours": outside_hours,
+            "opening_hour": hours[0] if hours else None,
+            "closing_hour": hours[1] if hours else None,
+        },
+    )
 
 
 @require_GET

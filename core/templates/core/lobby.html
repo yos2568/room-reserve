@@ -21,6 +21,17 @@
     </div>
   </section>
 
+  <section class="card mt-4 text-sm" aria-label="{% trans 'Booking guidance' %}">
+    {% if day_closed %}
+      <p>{% trans "Rooms are closed today according to the department calendar. Open the timetable to choose another date." %}</p>
+    {% elif outside_hours %}
+      <p>{% blocktrans %}Outside today's opening hours: {{ opening_hour }}:00–{{ closing_hour }}:00. Open the timetable to plan your booking.{% endblocktrans %}</p>
+    {% else %}
+      <p>{% trans "Choose a room and time from the timetable. Sign in to book; this lobby board only shows current status." %}</p>
+    {% endif %}
+    <a class="btn-primary mt-3" href="{% url 'core:home' %}">{% trans "Open availability" %}</a>
+  </section>
+
   <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
     <p class="section-label">{% trans "Current room status" %}</p>
     <p class="text-xs text-slate-500">{% trans "Refreshes every 30 seconds" %}</p>

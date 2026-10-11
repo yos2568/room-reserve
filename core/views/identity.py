@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from urllib.parse import urlencode
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from core.models import InstrumentCategory, Invitation, User
@@ -17,6 +21,17 @@ from core.services.errors import Code, OperationRejected
 from core.services.policy import current_policy
 
 from ._helpers import now, safe_next_url
+
+
+def _onboarding_next(request):
+    candidate = request.POST.get("next") or request.GET.get("next") or request.session.get("onboarding_next")
+    return safe_next_url(request, candidate, "core:my_bookings") if candidate else ""
+
+
+def _login_destination(request):
+    destination = reverse("core:login")
+    next_url = _onboarding_next(request)
+    return destination + "?" + urlencode({"next": next_url}) if next_url else destination
 
 
 def _password_form_context(*, token: str, purpose: str, account=None, errors=None) -> dict:
@@ -44,8 +59,11 @@ def register(request):
     Faculty, operational staff and technical administrators are never allowed to
     self-assign a privileged role; they use a staff-issued invitation instead.
     """
+    next_url = _onboarding_next(request)
     if request.user.is_authenticated:
-        return redirect("core:my_bookings")
+        return redirect(next_url or "core:my_bookings")
+    if next_url:
+        request.session["onboarding_next"] = next_url
 
     registration_type = (
         (request.POST.get("account_type") or request.GET.get("type") or "student").strip().lower()
@@ -61,6 +79,9 @@ def register(request):
         "outcome": None,
         "instrument_choices": instrument_choices,
         "registration_type": registration_type,
+        "next": next_url,
+        "institution_email_domain": current_policy().snapshot.get("institution_email_domain")
+        or settings.INSTITUTION_EMAIL_DOMAIN,
     }
     if request.method == "POST":
         # Roles with operational or administrative privileges are invitation-only.
@@ -127,7 +148,7 @@ def register(request):
 
 @require_GET
 def register_done(request):
-    return render(request, "core/register_done.html")
+    return render(request, "core/register_done.html", {"next": _onboarding_next(request)})
 
 
 @require_http_methods(["GET", "POST"])
@@ -188,7 +209,7 @@ def verify_email(request, token: str):
         request,
         "ยืนยันอีเมลเรียบร้อย กรุณาเข้าสู่ระบบ / Email verified. Please sign in.",
     )
-    return redirect("core:login")
+    return redirect(_login_destination(request))
 
 
 @require_http_methods(["GET", "POST"])
@@ -255,8 +276,9 @@ def accept_invitation(request, token: str):
 def login_view(request):
     from django.contrib.auth import authenticate
 
+    next_url = _onboarding_next(request)
     if request.user.is_authenticated:
-        return redirect("core:my_bookings")
+        return redirect(next_url or "core:my_bookings")
 
     if request.method == "POST":
         institutional_id = (request.POST.get("institutional_id") or "").strip()
@@ -266,7 +288,7 @@ def login_view(request):
             ratelimit.guard(request, identifier=institutional_id)
         except OperationRejected as exc:
             messages.error(request, exc.outcome.message)
-            return render(request, "core/login.html", {}, status=429)
+            return render(request, "core/login.html", {"next": next_url}, status=429)
 
         # One field, two identifiers: students sign in with their institutional
         # ID, faculty with their email address (D-34). Resolving an email to its
@@ -286,14 +308,15 @@ def login_view(request):
             return render(
                 request,
                 "core/login.html",
-                {"institutional_id": institutional_id},
+                {"institutional_id": institutional_id, "next": next_url},
                 status=401,
             )
 
         auth_login(request, user)
-        return redirect(safe_next_url(request, request.POST.get("next"), "core:my_bookings"))
+        request.session.pop("onboarding_next", None)
+        return redirect(next_url or "core:my_bookings")
 
-    return render(request, "core/login.html", {"next": request.GET.get("next", "")})
+    return render(request, "core/login.html", {"next": next_url})
 
 
 @require_POST
