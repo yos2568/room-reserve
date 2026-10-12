@@ -31,7 +31,7 @@
       <p class="mt-4"><a class="btn-secondary" href="{% url 'core:my_bookings' %}">{% trans "Back to my bookings" %}</a></p>
     {% else %}
       <p class="mt-4 text-sm text-slate-600">
-        {% trans "Pick a room below. Your hour stays the same, and you keep your current room until the new one is confirmed." %}
+        {% trans "Pick a room below. Your time and booking length stay the same, and you keep your current room until the new one is confirmed." %}
       </p>
 
       <form method="post" class="flow-panel mt-3 space-y-4">
@@ -48,7 +48,7 @@
                     <span class="room-choice-name">{{ room }}</span>
                     <span class="room-choice-meta">
                       {% blocktrans with capacity=room.capacity %}Capacity {{ capacity }}{% endblocktrans %}
-                      {% if room.requires_approval %} · {% trans "Needs staff approval" %}{% endif %}
+                      {% if room.approval_required_for_viewer %} · {% trans "Needs staff approval" %}{% endif %}
                     </span>
                   </span>
                 </label>

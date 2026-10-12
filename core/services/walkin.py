@@ -45,7 +45,8 @@ def room_availability_for_now(room: Room, slot_start, now):
     blocker = (
         Booking.objects.filter(
             room=room,
-            slot_start=slot_start,
+            slot_start__lte=slot_start,
+            slot_end__gt=slot_start,
             status__in=list(BLOCKING_STATUSES),
         )
         .select_related("user")
@@ -66,7 +67,7 @@ def use_now(ctx, *, room: Room) -> dict:
     slot_end = slots.slot_end_for(slot_start)
 
     assert_may_use_room(user, room, now)
-    if room.requires_approval:
+    if room.walk_in_requires_approval:
         # Every path into an approval room goes through staff; a walk-in cannot.
         raise OperationRejected(Code.APPROVAL_ROOM_NO_WALK_IN, room_id=room.pk)
     assert_slot_open(slot_start, room)

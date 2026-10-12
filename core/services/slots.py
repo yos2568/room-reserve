@@ -30,6 +30,24 @@ def slot_end_for(slot_start: datetime) -> datetime:
     return slot_start + SLOT_DELTA
 
 
+def booking_end_for(slot_start: datetime, duration_hours: int = 1) -> datetime:
+    """End of a student reservation, which may cover one or two full hours."""
+    return slot_start + timedelta(hours=duration_hours)
+
+
+def allowed_booking_durations(slot_start: datetime) -> tuple[int, ...]:
+    """Durations allowed by the off-peak rule for an exact slot start.
+
+    A two-hour booking must fit wholly within 08:00–10:00 or 16:00–20:00.
+    One-hour bookings remain available at every normal opening hour.
+    """
+    local = slot_start.astimezone(BANGKOK)
+    hour = local.hour
+    if local.minute == 0 and local.second == 0 and local.microsecond == 0 and (hour == 8 or 16 <= hour <= 18):
+        return (1, 2)
+    return (1,)
+
+
 def is_hour_aligned(moment: datetime) -> bool:
     """True when ``moment`` falls exactly on a Bangkok hour boundary.
 

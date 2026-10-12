@@ -241,9 +241,9 @@ def test_the_grid_state_reaches_the_page_without_rendering_an_empty_cell(frozen,
     # language an earlier test left active in this thread.
     with translation.override("th"):
         url = reverse("core:home")
-        label = translation.gettext("Piano & percussion only")
+        label = translation.gettext("Selected instrument categories only")
     body = client.get(url).content.decode("utf-8")
-    assert label and label != "Piano & percussion only", "the label must be translated"
+    assert label and label != "Selected instrument categories only", "the label must be translated"
     assert label in body, "the restricted cell rendered nothing"
     assert f"/book/{big_room.pk}/" not in body, "no Reserve link for this viewer"
 

@@ -15,7 +15,7 @@ cannot retroactively invalidate a check-in that already happened.
 
 | Setting | Value | Environment variable |
 |---|---|---|
-| Slot length | 60 minutes, on the hour | not editable (`SLOT_MINUTES`) |
+| Booking length | 1 hour during 10:00–16:00; up to 2 consecutive hours entirely within 08:00–10:00 or 16:00–20:00 | fixed application rule |
 | Opening hours | Monday–Friday 08:00–20:00 (last start 19:00) | not editable |
 | Weekend | closed | not editable |
 | Booking horizon | 2 days ahead, including today (D-38) | `POLICY_HORIZON_DAYS` |
@@ -28,7 +28,7 @@ cannot retroactively invalidate a check-in that already happened.
 | Automatic suspension | 7 days | `POLICY_AUTO_SUSPENSION_DAYS` |
 | Reminder lead | 30 minutes before the hour | `POLICY_REMINDER_LEAD_MINUTES` |
 | Institutional email | `student.chula.ac.th` | `INSTITUTION_EMAIL_DOMAIN` |
-| Rooms | 13 — room 301 by approved request only (D-39), stalls 1–10, room 303 instrument-specific, room 304 general | `ROOM_COUNT`, `ROOM_OVERRIDES` |
+| Rooms | 13 — room 301 by approved request only (D-39), stalls 1–10, room 303 open to all with category-based approval, room 304 general | `ROOM_COUNT`, `ROOM_OVERRIDES` |
 | Class hours on 301 | Mon 13–15, Tue 08–10 and 12–15, Wed–Fri 13–15 (approximate first-semester report) | `ROOM_WEEKLY_BLOCKS` |
 | Class hours on 304 | Tue 12–14, Thu 10–12, Fri 13–15 every week; Counterpoint Mon 10–12 only on 28 Sep and 16 Nov 2026 | `ROOM_WEEKLY_BLOCKS` |
 
@@ -37,25 +37,22 @@ stated in the regulation, and the Rules page says so.
 
 ## The instrument-specific room
 
-Room 303 (`ห้อง 303`) is one of the two larger rooms at the back of the floor, and
-the department keeps it for piano and percussion practice. The rule is narrow on
-purpose:
+Room 303 (`ห้อง 303`) is one of the two larger rooms at the back of the floor. All
+eligible students may request a reservation:
 
-- **Only piano and percussion students may reserve it in advance.** Everyone else
-  sees the hour marked "Piano & percussion only" rather than a Reserve control —
-  the grid says why, because an unexplained gap in the grid reads as a fault.
+- **Piano and percussion requests are confirmed immediately.** Requests from
+  other instrument categories, including uncategorised students, wait for a room
+  administrator's approval. They see a Request control and a clear notice before
+  they submit.
 - **Anyone may walk in once the hour has started and the room is still free.**
-  This is the same release valve a no-show already provides, and it is what stops a
-  restricted room from standing empty whenever those students are not using it.
-  Starting a session there always ends at the hour boundary, like any walk-in.
-- **A booking already made is never cancelled** by restricting the room, and it
-  still checks in.
+-  A walk-in remains limited to the current hour and ends at that hour boundary.
 - **Staff cannot override it.** Staff have no "create booking" action, and the
-  design keeps it that way: staff do not bypass booking rules. A rehearsal for
-  another instrument uses the walk-in rule.
+  design keeps it that way: staff do not bypass booking rules.
 
 The audience is per room and can be changed by staff (Configuration → Rooms)
-without a developer. A room set to "only these instrument categories" with nothing
+without a developer. On an approval room open to everyone, checked categories are
+the auto-confirmed groups; on a room set to "only these instrument categories"
+with nothing
 selected lets **nobody** reserve it — an empty list is treated as a mistake, not as
 an invitation.
 
@@ -125,14 +122,18 @@ suggested and the panel says the day's limit.
 
 ## Reserving
 
-- One booking is one hour, starting on the hour.
+- Bookings start on the hour. During 10:00–16:00, reserve one hour at a time.
+  From 08:00–10:00 and 16:00–20:00, reserve one or two consecutive hours; a
+  two-hour booking must fit entirely within one of those off-peak periods.
 - A reservation may be made for any free hour from the current one through seven
   days ahead. Past hours, closed hours, weekends and closed dates are refused.
-- **Adjacency.** You cannot hold two rooms in the same hour, or bookings in
-  adjacent hours. Two hours apart is allowed if the quota still permits it.
-- **Quota.** Two bookings per day, counted across all rooms. Cancelling gives the
-  hour back and restores the quota immediately. `COMPLETED` and `NO_SHOW` both
-  count; a booking you did not use still consumed your allowance.
+- **Adjacency.** You cannot hold two rooms in overlapping or adjacent hours. Leave
+  one complete hour between reservations, including between two-hour bookings.
+- **Quota.** Two bookings per day, counted across all rooms; a two-hour block is
+  one booking. Cancelling restores the quota immediately. `COMPLETED` and `NO_SHOW` both
+  count; a booking you did not use still consumed your allowance. The four-hour
+  upcoming cap counts occupied booking hours, including each hour in a two-hour
+  reservation.
 - The day boundary is Bangkok midnight, not UTC.
 
 ## Using a room

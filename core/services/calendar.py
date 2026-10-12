@@ -90,10 +90,13 @@ def weekly_blocks_for_date(local_date: date, room_ids) -> dict[int, list[WeeklyB
     return by_room
 
 
-def assert_slot_open(slot_start, room) -> None:
-    """Raise a clean rejection when the slot is not bookable on the calendar."""
+def assert_slot_open(slot_start, room, *, duration_hours: int = 1) -> None:
+    """Raise when any hour of a reservation is outside the effective calendar."""
     if not room.is_active:
         raise OperationRejected(Code.CLOSED)
+
+    if duration_hours not in (1, 2):
+        raise OperationRejected(Code.INVALID_DURATION)
 
     local_date = clock.local_date(slot_start)
     hours = day_hours(local_date)
@@ -101,16 +104,21 @@ def assert_slot_open(slot_start, room) -> None:
         raise OperationRejected(Code.CLOSED)
 
     open_hour, close_hour = hours
-    local_hour = clock.local_time(slot_start).hour
-    if not (open_hour <= local_hour < close_hour):
+    local_start = clock.local_time(slot_start)
+    local_end_hour = local_start.hour + duration_hours
+    if local_start.minute or local_start.second or local_start.microsecond:
+        raise OperationRejected(Code.INVALID_SLOT)
+    if not (open_hour <= local_start.hour and local_end_hour <= close_hour):
         raise OperationRejected(Code.CLOSED)
 
-    if is_slot_closed(slot_start, room):
-        raise OperationRejected(Code.CLOSED)
+    for hour in range(local_start.hour, local_end_hour):
+        hour_start = slots.slot_start_for(local_date, hour)
+        if is_slot_closed(hour_start, room):
+            raise OperationRejected(Code.CLOSED)
 
-    block = weekly_block_for(slot_start, room)
-    if block is not None:
-        raise OperationRejected(Code.CLASS_IN_SESSION, room_id=room.pk, reason=block.reason)
+        block = weekly_block_for(hour_start, room)
+        if block is not None:
+            raise OperationRejected(Code.CLASS_IN_SESSION, room_id=room.pk, reason=block.reason)
 
 
 def bookable_slot_starts(local_date: date, room) -> list:

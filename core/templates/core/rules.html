@@ -12,7 +12,7 @@
   <section class="card mt-4 max-w-3xl">
     <h2 class="text-base font-semibold">{% trans "From the regulation" %}</h2>
     <ul class="mt-2 list-disc space-y-1 ps-5 text-sm">
-      <li>{% trans "One booking is one hour." %}</li>
+      <li>{% trans "Bookings use whole-hour blocks." %}</li>
       <li>{% blocktrans with quota=policy.daily_quota %}A person may hold at most {{ quota }} bookings in a day, across all rooms.{% endblocktrans %}</li>
       <li>{% trans "Use the room at the booked time and finish on time." %}</li>
       <li>{% trans "Do not book on behalf of someone else and do not reserve a room you will not use." %}</li>
@@ -29,6 +29,8 @@
   <section class="card mt-4 max-w-3xl">
     <h2 class="text-base font-semibold">{% trans "Application policy (set by the department)" %}</h2>
     <ul class="mt-2 list-disc space-y-1 ps-5 text-sm">
+      <li>{% trans "From 10:00 to 16:00, bookings are one hour. From 08:00 to 10:00 and 16:00 to 20:00, you may book one or two consecutive hours." %}</li>
+      <li>{% trans "Room 303 is open to eligible students. Piano and percussion bookings are confirmed immediately; other categories need administrator approval." %}</li>
       <li>{% blocktrans with days=policy.horizon_days %}Bookings open {{ days }} days ahead, including today.{% endblocktrans %}</li>
       <li>{% blocktrans with minutes=policy.checkin_grace_minutes %}Check-in opens at the start of the hour and closes exactly {{ minutes }} minutes later.{% endblocktrans %}</li>
       <li>{% blocktrans %}A free room can be used immediately for the remainder of the current hour, and always ends at the hour boundary.{% endblocktrans %}</li>

@@ -91,6 +91,11 @@
                 {% trans "nobody (no categories configured)" %}
               {% endif %}
             </span>
+          {% elif room.has_approval_exceptions %}
+            · <span class="text-violet-800">
+              {% trans "Automatically confirmed" %}:
+              {% for row in room.allowed_categories.all %}{{ row.get_category_display }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </span>
           {% endif %}
 
           <details class="mt-1">
@@ -103,7 +108,7 @@
               </label>
               <label class="flex items-center gap-2">
                 <input type="radio" name="reservation_scope" value="LISTED" {% if room.is_restricted %}checked{% endif %}>
-                {% trans "Only these instrument categories" %}
+                {% trans "Only these categories may reserve" %}
               </label>
               <div class="flex flex-wrap gap-x-3 gap-y-1 ps-5 text-xs">
                 {% for value, label in instrument_categories %}
@@ -114,9 +119,15 @@
                   </label>
                 {% endfor %}
               </div>
-              <p class="text-xs text-slate-700">
-                {% trans "Anyone may still walk in once an hour has started and the room is free." %}
-              </p>
+              {% if room.requires_approval %}
+                <p class="text-xs text-slate-700">
+                  {% trans "With Any eligible student selected, checked categories are confirmed automatically; other eligible students may request approval." %}
+                </p>
+              {% else %}
+                <p class="text-xs text-slate-700">
+                  {% trans "Anyone may still walk in once an hour has started and the room is free." %}
+                </p>
+              {% endif %}
               <button class="btn-secondary" type="submit">{% trans "Save audience" %}</button>
             </form>
           </details>

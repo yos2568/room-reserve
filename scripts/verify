@@ -232,12 +232,17 @@ assert WeeklyBlock.objects.count() == expected_blocks, (
     f"expected {expected_blocks} weekly blocks, found {WeeklyBlock.objects.count()}"
 )
 
-# The instrument-specific room: exactly one, and restricted to piano and
-# percussion. Configuration a deployment can get wrong, so it is checked here.
-restricted = list(Room.objects.filter(reservation_scope="LISTED").prefetch_related("allowed_categories"))
-assert len(restricted) == 1, f"expected one restricted room, found {len(restricted)}"
-assert sorted(restricted[0].allowed_category_values) == ["PERCUSSION", "PIANO"], (
-    f"{restricted[0]} is restricted to {restricted[0].allowed_category_values}"
+# Room 303 is open to all eligible students; piano and percussion bypass its
+# approval queue. Configuration a deployment can get wrong, so check it here.
+room303 = Room.objects.get(number="303")
+assert room303.reservation_scope == Room.ReservationScope.EVERYONE, (
+    f"{room303} must accept requests from every eligible student"
+)
+assert sorted(room303.allowed_category_values) == ["PERCUSSION", "PIANO"], (
+    f"{room303} auto-confirms {room303.allowed_category_values}"
+)
+assert room303.requires_approval and room303.has_approval_exceptions, (
+    f"{room303} must route other categories to room-admin approval"
 )
 
 staff = User.objects.filter(is_operational_staff=True).first()

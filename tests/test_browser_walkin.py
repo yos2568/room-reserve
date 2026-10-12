@@ -287,7 +287,9 @@ def test_other_instruments_see_why_they_cannot_reserve_the_big_room(
 
     cell = grid_cell(page, big, WALK_IN_HOUR)
     expect(cell.locator("a")).to_have_count(0)
-    assert "เปียโน" in cell.inner_text(), "the label names who the room is kept for"
+    assert "เฉพาะหมวดหมู่เครื่องดนตรีที่เลือก" in cell.inner_text(), (
+        "the label explains that only configured instrument categories may reserve"
+    )
 
     # A general room in the same hour is still bookable, so nothing is globally broken.
     expect(grid_cell(page, rooms[0], WALK_IN_HOUR).locator("a")).to_have_count(1)

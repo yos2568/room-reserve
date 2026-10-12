@@ -80,6 +80,26 @@ def _booking_details(request) -> dict[str, str]:
     )
 
 
+def _duration_hours(request) -> int:
+    """Parse the duration choice while leaving invalid values for service rejection."""
+    try:
+        return int(request.POST.get("duration_hours", "1"))
+    except (TypeError, ValueError):
+        return -1
+
+
+def _duration_options(slot_start):
+    options = []
+    for duration_hours in slots.allowed_booking_durations(slot_start):
+        options.append(
+            {
+                "hours": duration_hours,
+                "end": slots.booking_end_for(slot_start, duration_hours),
+            }
+        )
+    return options
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def book_slot(request, room_id: int, slot: str):
@@ -106,13 +126,17 @@ def book_slot(request, room_id: int, slot: str):
         return confirm_booking(request, room_id=room_id, slot=slot)
 
     outcome = None
+    duration_hours = 1
     return render(
         request,
         "core/book_confirm.html",
         {
             "room": room,
             "slot_start": slot_start,
-            "slot_end": slots.slot_end_for(slot_start),
+            "slot_end": slots.booking_end_for(slot_start, duration_hours),
+            "duration_hours": duration_hours,
+            "duration_options": _duration_options(slot_start),
+            "approval_required": room.requires_approval_for(instruments.category_for_user(request.user)),
             "slot_key": slots.encode_slot(slot_start),
             "deadline": slot_start + timedelta(minutes=policy.checkin_grace_minutes),
             "policy": policy,
@@ -135,7 +159,8 @@ def confirm_booking(request, room_id: int, slot: str):
     room = get_object_or_404(Room, pk=room_id)
     slot_start = _decode_slot_or_404(slot)
     details = _booking_details(request)
-    payload = booking_service.build_payload(room, slot_start, details)
+    duration_hours = _duration_hours(request)
+    payload = booking_service.build_payload(room, slot_start, details, duration_hours)
 
     outcome = run_view_operation(
         request=request,
@@ -143,7 +168,9 @@ def confirm_booking(request, room_id: int, slot: str):
         payload=payload,
         key=operation_key(request),
         body=lambda ctx: _success(
-            **booking_service.create_advance_booking(ctx, room=room, slot_start=slot_start)
+            **booking_service.create_advance_booking(
+                ctx, room=room, slot_start=slot_start, duration_hours=duration_hours
+            )
         ),
     )
 
@@ -178,14 +205,22 @@ def confirm_booking(request, room_id: int, slot: str):
     # fresh from the same services the grid uses — never a cached guess.
     alternatives = []
     if outcome.code in {Code.SLOT_TAKEN, Code.CLASS_IN_SESSION, Code.ADJACENCY_CONFLICT}:
-        alternatives = suggest.for_slot(slot_start, now(), user=request.user)
+        alternatives = suggest.for_slot(
+            slot_start,
+            now(),
+            user=request.user,
+            duration_hours=duration_hours if duration_hours in (1, 2) else 1,
+        )
     return render(
         request,
         "core/book_confirm.html",
         {
             "room": room,
             "slot_start": slot_start,
-            "slot_end": slots.slot_end_for(slot_start),
+            "slot_end": slots.booking_end_for(slot_start, duration_hours if duration_hours in (1, 2) else 1),
+            "duration_hours": duration_hours if duration_hours in (1, 2) else 1,
+            "duration_options": _duration_options(slot_start),
+            "approval_required": room.requires_approval_for(instruments.category_for_user(request.user)),
             "slot_key": slots.encode_slot(slot_start),
             "policy": current_policy(),
             "moment": now(),
@@ -422,7 +457,18 @@ def move_booking(request, pk: int):
     def alternatives():
         if not movable:
             return []
-        return suggest.for_slot(booking.slot_start, moment, user=request.user, exclude_booking_id=booking.pk)
+        duration_hours = int((booking.slot_end - booking.slot_start).total_seconds() // 3600)
+        rooms = suggest.for_slot(
+            booking.slot_start,
+            moment,
+            user=request.user,
+            duration_hours=duration_hours,
+            exclude_booking_id=booking.pk,
+        )
+        category = instruments.category_for_user(request.user)
+        for room in rooms:
+            room.approval_required_for_viewer = room.requires_approval_for(category)
+        return rooms
 
     outcome = None
     if request.method == "POST":

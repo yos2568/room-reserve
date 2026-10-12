@@ -32,6 +32,7 @@ class Code:
     APPROVAL_ROOM_NO_WALK_IN = "approval_room_no_walk_in"
     ROOM_NOT_FOR_INSTRUMENT = "room_not_for_instrument"
     INVALID_SLOT = "invalid_slot"
+    INVALID_DURATION = "invalid_duration"
     STALE_HOUR = "stale_hour"
     NO_SHOW_RECLAIM = "no_show_reclaim"
 
@@ -87,11 +88,9 @@ _MESSAGES = {
         "This room needs staff approval, so it cannot be used as a walk-in. Request it in advance instead."
     ),
     Code.CLASS_IN_SESSION: _("A class meets in that room at that hour. Choose another hour or another room."),
-    Code.ROOM_NOT_FOR_INSTRUMENT: _(
-        "That room can only be reserved by piano and percussion students. Once the "
-        "hour starts, anyone may use it if it is still free."
-    ),
+    Code.ROOM_NOT_FOR_INSTRUMENT: _("That room is restricted to selected instrument categories."),
     Code.INVALID_SLOT: _("That is not a bookable hour."),
+    Code.INVALID_DURATION: _("Choose a booking length allowed for this time."),
     Code.STALE_HOUR: _(
         "The hour changed while this page was open. Check the current slot and confirm again."
     ),
@@ -146,6 +145,7 @@ _REJECTION_STATUS = {
     Code.ROOM_NOT_FOR_INSTRUMENT: 409,
     Code.NOT_FOUND: 404,
     Code.INVALID_INPUT: 400,
+    Code.INVALID_DURATION: 400,
 }
 
 

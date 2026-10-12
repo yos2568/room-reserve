@@ -347,7 +347,8 @@ def room_qr_landing(request, room_id: int):
         Booking.objects.filter(
             user=user,
             room=room,
-            slot_start=cell.slot_start,
+            slot_start__lte=cell.slot_start,
+            slot_end__gt=cell.slot_start,
             status__in=[
                 Booking.Status.SCHEDULED,
                 Booking.Status.IN_USE,
@@ -367,11 +368,13 @@ def room_qr_landing(request, room_id: int):
         other_room_booking = (
             Booking.objects.filter(
                 user=user,
-                slot_start=cell.slot_start,
+                slot_start__lte=cell.slot_start,
+                slot_end__gt=cell.slot_start,
                 status__in=[Booking.Status.SCHEDULED, Booking.Status.IN_USE],
             )
             .exclude(room=room)
             .select_related("room")
+            .order_by("-slot_start")
             .first()
         )
         upcoming_booking = (

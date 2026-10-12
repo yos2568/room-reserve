@@ -248,8 +248,11 @@ class Booking(models.Model):
                 name="booking_source_valid",
             ),
             models.CheckConstraint(
-                condition=models.Q(slot_end=models.F("slot_start") + timedelta(hours=1)),
-                name="booking_slot_length_one_hour",
+                condition=(
+                    models.Q(slot_end=models.F("slot_start") + timedelta(hours=1))
+                    | models.Q(slot_end=models.F("slot_start") + timedelta(hours=2))
+                ),
+                name="booking_slot_length_one_or_two_hours",
             ),
             # Asia/Bangkok is a whole-hour offset with no daylight saving, so an
             # exact local-hour boundary is also an exact UTC-hour boundary.

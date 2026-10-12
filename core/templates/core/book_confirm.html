@@ -32,13 +32,13 @@
       <dl class="booking-summary">
         <div><dt>{% trans "Room" %}</dt><dd>{{ room }}</dd></div>
         <div><dt>{% trans "Date" %}</dt><dd>{{ slot_start|date:"j F Y" }}</dd></div>
-        <div><dt>{% trans "Hour" %}</dt><dd>{{ slot_start|date:"H:i" }}–{{ slot_end|date:"H:i" }}</dd></div>
+        <div><dt>{% trans "Start" %}</dt><dd>{{ slot_start|date:"H:i" }}</dd></div>
         <div><dt>{% trans "Arrive by" %}</dt><dd>{{ deadline|date:"H:i" }}</dd></div>
         <div><dt>{% trans "Bookings that day" %}</dt><dd>{{ quota_used }} / {{ policy.daily_quota }}</dd></div>
         <div><dt>{% trans "Upcoming hours held" %}</dt><dd>{{ upcoming_used }} / {{ policy.max_upcoming_hours }}</dd></div>
       </dl>
 
-      {% if room.requires_approval %}
+      {% if approval_required %}
         <p class="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
           {% trans "This room requires administrator approval. Your request is not confirmed until you receive the approval email." %}
         </p>
@@ -56,6 +56,20 @@
       <form method="post" action="{% url 'core:confirm_booking' room_id=room.pk slot=slot_key %}" class="mt-4 space-y-4">
         {% csrf_token %}
         <input type="hidden" name="operation_key" value="{{ operation_key }}">
+        <div>
+          <label class="label" for="booking-duration">{% trans "Booking length" %}</label>
+          <select class="field" id="booking-duration" name="duration_hours">
+            {% for option in duration_options %}
+              <option value="{{ option.hours }}" {% if duration_hours == option.hours %}selected{% endif %}>
+                {% if option.hours == 1 %}{% trans "1 hour" %}{% else %}{% trans "2 hours" %}{% endif %}
+                ({{ slot_start|date:"H:i" }}–{{ option.end|date:"H:i" }})
+              </option>
+            {% endfor %}
+          </select>
+          {% if duration_options|length > 1 %}
+            <p class="mt-1 text-xs text-slate-600">{% trans "Two-hour bookings are available only when starting at 08:00, 16:00, 17:00, or 18:00." %}</p>
+          {% endif %}
+        </div>
         <div>
           <label class="label" for="booking-title">{% trans "Title" %}</label>
           <input class="field" id="booking-title" name="title" maxlength="120" value="{{ details.title }}" autocomplete="off">

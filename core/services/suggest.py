@@ -78,15 +78,20 @@ def _viewer_conflicts(user, *, exclude_booking_id: int | None = None) -> set:
     mine = Booking.objects.filter(user=user, status__in=list(BLOCKING_STATUSES))
     if exclude_booking_id is not None:
         mine = mine.exclude(pk=exclude_booking_id)
-    mine = list(mine.values_list("slot_start", flat=True))
+    mine = list(mine.values_list("slot_start", "slot_end"))
     delta = slots.SLOT_DELTA
     conflicts = set()
-    for start in mine:
-        conflicts.update({start, start - delta, start + delta})
+    for start, end in mine:
+        hour = start - delta
+        while hour < end + delta:
+            conflicts.add(hour)
+            hour += delta
     return conflicts
 
 
-def for_slot(slot_start, now, *, user, exclude_booking_id: int | None = None) -> list:
+def for_slot(
+    slot_start, now, *, user, duration_hours: int = 1, exclude_booking_id: int | None = None
+) -> list:
     """Rooms still bookable by this viewer at one exact slot.
 
     Used when a booking is refused: the refusal names the rule, and this names
@@ -103,14 +108,17 @@ def for_slot(slot_start, now, *, user, exclude_booking_id: int | None = None) ->
         if room.availability_only or not room.may_be_reserved_by(viewer_category):
             continue
         try:
-            calendar.assert_slot_open(slot_start, room)
+            calendar.assert_slot_open(slot_start, room, duration_hours=duration_hours)
         except OperationRejected:
             continue
         if slot_start <= now:
             continue
-        if slot_start in conflicts:
+        if any(
+            hour in conflicts
+            for hour in (slot_start + slots.SLOT_DELTA * offset for offset in range(duration_hours))
+        ):
             continue
-        if room_has_blocker(room, slot_start):
+        if room_has_blocker(room, slot_start, duration_hours=duration_hours):
             continue
         found.append(room)
 
@@ -118,11 +126,12 @@ def for_slot(slot_start, now, *, user, exclude_booking_id: int | None = None) ->
     return found
 
 
-def room_has_blocker(room: Room, slot_start) -> bool:
+def room_has_blocker(room: Room, slot_start, *, duration_hours: int = 1) -> bool:
     """Whether any blocking booking occupies this room and slot."""
     return Booking.objects.filter(
         room=room,
-        slot_start=slot_start,
+        slot_start__lt=slots.booking_end_for(slot_start, duration_hours),
+        slot_end__gt=slot_start,
         status__in=list(BLOCKING_STATUSES),
     ).exists()
 
@@ -158,9 +167,11 @@ def _free_now(
         return []
 
     occupied = set(
-        Booking.objects.filter(slot_start=slot_start, status__in=list(BLOCKING_STATUSES)).values_list(
-            "room_id", flat=True
-        )
+        Booking.objects.filter(
+            slot_start__lte=slot_start,
+            slot_end__gt=slot_start,
+            status__in=list(BLOCKING_STATUSES),
+        ).values_list("room_id", flat=True)
     )
     forfeited = set()
     if user is not None and getattr(user, "pk", None):
@@ -171,9 +182,9 @@ def _free_now(
         )
 
     cards = []
-    # Neither kind can be walked into: availability-only rooms (301) are for
-    # viewing, and approval rooms go through staff (see walkin.use_now).
-    room_query = Room.objects.filter(is_active=True, availability_only=False, requires_approval=False)
+    # Availability-only rooms never offer a walk-in; rooms whose walk-in path
+    # needs staff review are filtered per room below.
+    room_query = Room.objects.filter(is_active=True, availability_only=False)
     if room_number:
         room_query = room_query.filter(number=room_number)
     if capacity_min:
@@ -181,6 +192,8 @@ def _free_now(
     if equipment_query:
         room_query = room_query.filter(equipment__icontains=equipment_query)
     for room in room_query.order_by("position", "number"):
+        if room.walk_in_requires_approval:
+            continue
         if room.pk in occupied or room.pk in forfeited:
             continue
         if calendar.is_slot_closed(slot_start, room):
