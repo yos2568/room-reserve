@@ -4,7 +4,7 @@
   <a class="slot-reserve"
      href="{% url 'core:book_slot' room_id=cell.room.pk slot=cell.slot_key %}"
      aria-label="{% blocktrans with room=cell.room time=cell.local_start|date:'H:i' %}Reserve {{ room }} at {{ time }}{% endblocktrans %}">
-    {% if cell.room.requires_approval %}{% trans "Request" %}{% else %}{% trans "Reserve" %}{% endif %}
+    {% if cell.approval_required %}{% trans "Request" %}{% else %}{% trans "Reserve" %}{% endif %}
   </a>
 {% elif cell.can_reserve %}
   <span class="slot-state slot-state-free">{% trans "Free" %}</span>
@@ -16,7 +16,7 @@
   </a>
 {% elif cell.state == "free_now" %}
   <span class="slot-state slot-state-available"
-        {% if cell.room.requires_approval %}title="{% trans 'This room needs staff approval, so it cannot be used as a walk-in. Request it in advance instead.' %}"{% endif %}>{% trans "Free" %}</span>
+        {% if cell.room.walk_in_requires_approval %}title="{% trans 'This room needs staff approval, so it cannot be used as a walk-in. Request it in advance instead.' %}"{% endif %}>{% trans "Free" %}</span>
 {% elif cell.state == "past" %}
   <span class="slot-state slot-state-muted">{% trans "Finished" %}</span>
 {% elif cell.state == "closed" %}
@@ -46,8 +46,8 @@
 {% elif cell.state == "restricted" %}
   {# Free, but only reservable by the instruments this room is kept for. The label says which, because "unavailable" with no reason reads as a fault. #}
   <span class="slot-state slot-state-restricted"
-        title="{% trans 'This room is kept for piano and percussion students to reserve. Once the hour starts, anyone may use it if it is still free.' %}">
-    {% trans "Piano & percussion only" %}
+        title="{% trans 'This room is reserved for the instrument categories listed. Once the hour starts, any eligible student may use it if it is still free.' %}">
+    {% trans "Selected instrument categories only" %}
   </span>
 {% elif cell.state == "view_only" %}
   <span class="slot-state slot-state-muted" title="{% trans 'Availability is shown for reference; reservations and walk-ins are not available.' %}">

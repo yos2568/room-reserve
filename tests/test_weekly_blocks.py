@@ -195,8 +195,11 @@ def test_ensure_rooms_provisions_the_real_floor(frozen, db):
         "304",
     }
 
-    assert active["303"].is_restricted
+    assert not active["303"].is_restricted
     assert sorted(active["303"].allowed_category_values) == ["PERCUSSION", "PIANO"]
+    assert active["303"].may_be_reserved_by("STRINGS")
+    assert not active["303"].requires_approval_for("PIANO")
+    assert active["303"].requires_approval_for("STRINGS")
     assert not active["304"].is_restricted
     assert active["304"].label == "ห้อง 304 (ห้องบรรยาย 1)"
     assert active["301"].label == "ห้อง 301 (ห้องเรียนหลัก)"

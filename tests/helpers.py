@@ -21,14 +21,18 @@ def _body(func):
     return inner
 
 
-def advance_booking(actor, room: Room, slot_start, key: str | None = None):
-    payload = booking_service.build_payload(room, slot_start)
+def advance_booking(actor, room: Room, slot_start, key: str | None = None, duration_hours: int = 1):
+    payload = booking_service.build_payload(room, slot_start, duration_hours=duration_hours)
     return run_operation(
         actor=actor,
         operation="advance_booking",
         payload=payload,
         key=key,
-        body=_body(lambda ctx: booking_service.create_advance_booking(ctx, room=room, slot_start=slot_start)),
+        body=_body(
+            lambda ctx: booking_service.create_advance_booking(
+                ctx, room=room, slot_start=slot_start, duration_hours=duration_hours
+            )
+        ),
     )
 
 

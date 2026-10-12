@@ -14,7 +14,7 @@ the reason. **Blocked** — a named external input is missing.
 
 | ID | Status | Evidence |
 |---|---|---|
-| A01 | **Passed** | `scripts/verify` check `clean_bootstrap`: a database created for the run, migrated from scratch, `seed_rooms` + `seed_demo`, then seven public routes fetched over HTTP and asserted 200 with the configured active room set (twelve after the room-10 addition), exactly one restricted to piano and percussion, and a staff account. `local_mail_flow` sends a real message over SMTP to a catcher and reads it back. |
+| A01 | **Passed** | `scripts/verify` check `clean_bootstrap`: a database created for the run, migrated from scratch, `seed_rooms` + `seed_demo`, then seven public routes fetched over HTTP and asserted 200 with the configured active room set (twelve after the room-10 addition), room 303 open to all with piano/percussion fast-tracked, and a staff account. `local_mail_flow` sends a real message over SMTP to a catcher and reads it back. |
 | A02 | **Tested** | `tests/test_booking.py` (27) — same-day, exactly seven days, beyond the horizon, off-hours, weekends and holidays. |
 | A03 | **Tested** + browser | `tests/test_booking.py`, `tests/test_lifecycle.py` (18); `tests/test_browser_student.py::test_the_public_grid_renders_every_room_and_every_hour` renders the exact-hour cell. |
 | A04 | **Tested** + browser | `tests/test_lifecycle.py` — before start, at start, deadline − ε, at deadline; `tests/test_browser_walkin.py::test_a_stale_check_in_button_is_refused_and_reconciles_the_no_show` presses a stale Check in after the boundary. |
@@ -55,8 +55,8 @@ recorded here rather than folded in silently. Both of these need the owner's
 decision on amending the specification text.
 
 **1. Twelve rooms, not nine.** The updated department floor plan gives ten numbered
-stalls plus two larger rooms: room 303 (reserved to piano and percussion students,
-D-28) and room 304 (general, but blocked during its class hours by the teaching
+stalls plus two larger rooms: room 303 (open to all with category-based approval,
+D-41) and room 304 (general, but blocked during its class hours by the teaching
 timetable, also D-28). V3 states nine rooms and A29 requires nine posters.
 The code, the acceptance assertions and the runbook now follow the data
 (`ROOM_COUNT`, `ROOM_OVERRIDES`, one poster per active room) instead of the
@@ -72,12 +72,12 @@ Evidenced by: `tests/test_room_audience.py`, `tests/test_instruments.py`,
 `scripts/verify`'s `clean_bootstrap` (asserts `settings.ROOM_COUNT` rooms and exactly
 one room restricted to piano and percussion).
 
-**2. A per-room reservation audience, which V3 does not describe at all.** V3 has no
+**2. A per-room reservation audience and category-based approval, which V3 does not describe at all.** V3 has no
 concept of a room being restricted to any group; `roomreserveapp.md` explicitly
 records the original assumption "All 9 rooms identical — no room-preference logic".
-The audience is therefore a net-new rule — see D-21 … D-26 in
-`docs/decisions.md` — and it is enforced only on **reserving**, with walk-in open to
-everyone and check-in untouched.
+The audience is therefore a net-new rule — see D-21 … D-26 and D-41 in
+`docs/decisions.md`. Room 303 accepts every eligible student's request, confirms
+piano/percussion immediately and requires staff approval for other categories.
 
 ## Notes
 

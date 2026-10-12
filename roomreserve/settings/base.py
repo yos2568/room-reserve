@@ -191,9 +191,10 @@ ROOM_COUNT = 10
 # is normalised to the numbered room shown by the current floor plan. It remains
 # a general room with the default audience and schedule.
 # Room 301 is a general room outside the recurring teaching blocks below. Room
-# 303 is kept for piano and percussion students to *reserve* — anyone may walk
-# in once an hour has started and the room is still free. Room 304 is a general
-# practice room with the same weekday opening hours as the other rooms.
+# 303 is open to all eligible students. Piano and percussion requests are
+# confirmed automatically; requests from other categories wait for staff
+# approval. Anyone may still walk in once an hour has started and the room is
+# free. Room 304 is a general practice room with the same weekday opening hours.
 ROOM_OVERRIDES = {
     # Room 301 is the main classroom: reservable outside its class hours only by
     # advance request, approved by a teacher or admin named as its room
@@ -210,7 +211,7 @@ ROOM_OVERRIDES = {
     "303": {
         "label": "ห้อง 303",
         "position": 10,
-        "reservation_scope": "LISTED",
+        "reservation_scope": "EVERYONE",
         "categories": ("PIANO", "PERCUSSION"),
         "requires_approval": True,
     },

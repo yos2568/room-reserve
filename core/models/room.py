@@ -18,8 +18,9 @@ class Room(models.Model):
         A room set to ``LISTED`` with no categories lets **nobody** reserve it.
         That is deliberate: an empty list is far more likely to be a mistake than
         an intention to open the room to everyone, so the failure is closed.
-        Everyone may still walk in once an hour has started and the room is free,
-        which is what keeps a restricted room from being dead capacity.
+        For an approval room set to ``EVERYONE``, the listed categories are the
+        groups whose requests are automatically confirmed; everyone else may
+        still request the room and wait for staff.
         """
 
         EVERYONE = "EVERYONE", _("Any eligible student")
@@ -87,6 +88,33 @@ class Room(models.Model):
         if not category:
             return False
         return any(row.category == category for row in self.allowed_categories.all())
+
+    def requires_approval_for(self, category: str | None) -> bool:
+        """Whether this student's advance request must wait for staff.
+
+        On a general approval room, an optional audience list names the
+        categories that are auto-confirmed. Restricted rooms still use their
+        list solely to decide who is allowed to reserve.
+        """
+        if not self.requires_approval:
+            return False
+        if self.reservation_scope == self.ReservationScope.EVERYONE:
+            return category not in self.allowed_category_values
+        return True
+
+    @property
+    def has_approval_exceptions(self) -> bool:
+        """Whether some categories bypass this room's general approval rule."""
+        return (
+            self.requires_approval
+            and self.reservation_scope == self.ReservationScope.EVERYONE
+            and bool(self.allowed_category_values)
+        )
+
+    @property
+    def walk_in_requires_approval(self) -> bool:
+        """Approval rooms with category exceptions keep the room-303 walk-in path."""
+        return self.requires_approval and not self.has_approval_exceptions
 
 
 class RoomAdministrator(models.Model):

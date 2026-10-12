@@ -4382,3 +4382,60 @@ msgstr "ขณะนี้อยู่นอกเวลาเปิดห้อ
 
 msgid "Choose a room and time from the timetable. Sign in to book; this lobby board only shows current status."
 msgstr "เลือกห้องและเวลาจากตารางว่าง แล้วเข้าสู่ระบบเพื่อจอง กระดานล็อบบี้นี้แสดงสถานะปัจจุบันเท่านั้น"
+
+msgid "Choose a booking length allowed for this time."
+msgstr "กรุณาเลือกระยะเวลาการจองที่อนุญาตสำหรับเวลานี้"
+
+msgid "Booking length"
+msgstr "ระยะเวลาการจอง"
+
+msgid "1 hour"
+msgstr "1 ชั่วโมง"
+
+msgid "2 hours"
+msgstr "2 ชั่วโมง"
+
+msgid "Two-hour bookings are available only when starting at 08:00, 16:00, 17:00, or 18:00."
+msgstr "การจอง 2 ชั่วโมงเริ่มได้เฉพาะเวลา 08:00, 16:00, 17:00 หรือ 18:00"
+
+msgid "Bookings use whole-hour blocks."
+msgstr "การจองใช้ช่วงเวลาเต็มชั่วโมง"
+
+msgid "From 10:00 to 16:00, bookings are one hour. From 08:00 to 10:00 and 16:00 to 20:00, you may book one or two consecutive hours."
+msgstr "ช่วง 10:00–16:00 จองได้ครั้งละ 1 ชั่วโมง ส่วนช่วง 08:00–10:00 และ 16:00–20:00 จองต่อเนื่องได้ 1 หรือ 2 ชั่วโมง"
+
+msgid "Room 303 is open to eligible students. Piano and percussion bookings are confirmed immediately; other categories need administrator approval."
+msgstr "ห้อง 303 เปิดให้นิสิตที่มีสิทธิ์ทุกคนจอง การจองของนิสิตเปียโนและเครื่องตีได้รับการยืนยันทันที ส่วนหมวดหมู่อื่นต้องได้รับอนุมัติจากผู้ดูแล"
+
+msgid "Automatically confirmed"
+msgstr "ยืนยันทันที"
+
+msgid "Only these categories may reserve"
+msgstr "อนุญาตให้จองเฉพาะหมวดหมู่เหล่านี้"
+
+msgid "With Any eligible student selected, checked categories are confirmed automatically; other eligible students may request approval."
+msgstr "เมื่อเลือกนิสิตที่มีสิทธิ์ทุกคน หมวดหมู่ที่เลือกจะได้รับการยืนยันทันที ส่วนนิสิตที่มีสิทธิ์ในหมวดหมู่อื่นสามารถส่งคำขออนุมัติได้"
+
+msgid "Other instrument categories need room administrator approval"
+msgstr "หมวดหมู่เครื่องดนตรีอื่นต้องได้รับอนุมัติจากผู้ดูแลห้อง"
+
+msgid "Other instrument categories need approval"
+msgstr "หมวดหมู่เครื่องดนตรีอื่นต้องได้รับอนุมัติ"
+
+msgid "Pick a room below. Your time and booking length stay the same, and you keep your current room until the new one is confirmed."
+msgstr "เลือกห้องด้านล่าง เวลาและระยะเวลาการจองจะเหมือนเดิม และคุณยังคงได้ใช้ห้องปัจจุบันจนกว่าห้องใหม่จะได้รับการยืนยัน"
+
+msgid "Book a room for a focused one- or two-hour practice session."
+msgstr "จองห้องสำหรับฝึกซ้อมอย่างตั้งใจครั้งละ 1 หรือ 2 ชั่วโมง"
+
+msgid "Reserved in advance for selected instrument categories."
+msgstr "สงวนการจองล่วงหน้าไว้สำหรับหมวดหมู่เครื่องดนตรีที่กำหนด"
+
+msgid "This room is reserved for the instrument categories listed. Once the hour starts, any eligible student may use it if it is still free."
+msgstr "ห้องนี้สงวนการจองไว้สำหรับหมวดหมู่เครื่องดนตรีที่ระบุ เมื่อเริ่มชั่วโมงแล้ว นิสิตที่มีสิทธิ์ทุกคนสามารถเข้าใช้ได้หากห้องยังว่าง"
+
+msgid "Selected instrument categories only"
+msgstr "เฉพาะหมวดหมู่เครื่องดนตรีที่เลือก"
+
+msgid "That room is restricted to selected instrument categories."
+msgstr "ห้องนี้จำกัดการจองไว้สำหรับหมวดหมู่เครื่องดนตรีที่เลือก"

@@ -10,8 +10,6 @@ from __future__ import annotations
 
 import logging
 
-from django.db.models import Q
-
 from core.models import (
     BLOCKING_STATUSES,
     Booking,
@@ -25,6 +23,7 @@ from . import slots
 from .calendar import assert_slot_open
 from .eligibility import assert_may_reserve_room
 from .errors import Code, OperationRejected
+from .instruments import category_for_user
 from .outbox import enqueue
 from .policy import current_policy
 from .quota import assert_quota_and_adjacency, no_show_reclaim
@@ -49,6 +48,7 @@ def build_payload(
     room: Room,
     slot_start,
     details: dict | None = None,
+    duration_hours: int = 1,
 ) -> dict:
     """The idempotency payload for an advance booking.
 
@@ -60,6 +60,7 @@ def build_payload(
         "room_id": room.pk,
         "room_number": room.number,
         "slot": slots.encode_slot(slot_start),
+        "duration_hours": duration_hours,
         **normalise_details(details),
     }
 
@@ -73,10 +74,15 @@ def build_update_payload(booking: Booking, details: dict | None = None) -> dict:
     }
 
 
-def validate_advance_target(*, user, room: Room, slot_start, now, enforce_horizon: bool = True) -> None:
+def validate_advance_target(
+    *, user, room: Room, slot_start, now, duration_hours: int = 1, enforce_horizon: bool = True
+) -> None:
     """All preconditions for a future reservation. Raises OperationRejected."""
     if not slots.is_hour_aligned(slot_start):
         raise OperationRejected(Code.INVALID_SLOT)
+
+    if duration_hours not in (1, 2) or duration_hours not in slots.allowed_booking_durations(slot_start):
+        raise OperationRejected(Code.INVALID_DURATION)
 
     slot_end = slots.slot_end_for(slot_start)
 
@@ -97,8 +103,8 @@ def validate_advance_target(*, user, room: Room, slot_start, now, enforce_horizo
         raise OperationRejected(Code.OUTSIDE_HORIZON, horizon_days=policy.horizon_days)
 
     assert_may_reserve_room(user, room, now)
-    assert_slot_open(slot_start, room)
-    assert_quota_and_adjacency(user, slot_start, room=room, now=now)
+    assert_slot_open(slot_start, room, duration_hours=duration_hours)
+    assert_quota_and_adjacency(user, slot_start, room=room, now=now, duration_hours=duration_hours)
 
 
 def _created_kind(status) -> str:
@@ -106,17 +112,20 @@ def _created_kind(status) -> str:
     return "booking_pending" if status == Booking.Status.PENDING_APPROVAL else "booking_confirmation"
 
 
-def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
+def create_advance_booking(ctx, *, room: Room, slot_start, duration_hours: int = 1) -> dict:
     """Create the SCHEDULED booking. Called inside the protocol's savepoint."""
     user = ctx.actor
     now = ctx.now
-    validate_advance_target(user=user, room=room, slot_start=slot_start, now=now)
+    validate_advance_target(
+        user=user, room=room, slot_start=slot_start, now=now, duration_hours=duration_hours
+    )
 
-    slot_end = slots.slot_end_for(slot_start)
+    slot_end = slots.booking_end_for(slot_start, duration_hours)
 
     if Booking.objects.filter(
         room=room,
-        slot_start=slot_start,
+        slot_start__lt=slot_end,
+        slot_end__gt=slot_start,
         status__in=list(BLOCKING_STATUSES),
     ).exists():
         raise OperationRejected(Code.SLOT_TAKEN)
@@ -124,7 +133,8 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
     policy = current_policy()
     deadline = advance_deadline(slot_start, policy.checkin_grace_minutes)
 
-    status = Booking.Status.PENDING_APPROVAL if room.requires_approval else Booking.Status.SCHEDULED
+    approval_required = room.requires_approval_for(category_for_user(user))
+    status = Booking.Status.PENDING_APPROVAL if approval_required else Booking.Status.SCHEDULED
     booking = Booking.objects.create(
         user=user,
         room=room,
@@ -183,6 +193,8 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
         "booking_id": booking.pk,
         "room_id": room.pk,
         "slot": slots.encode_slot(slot_start),
+        "slot_end": slot_end.isoformat(),
+        "duration_hours": duration_hours,
         "status": booking.status,
         "deadline": deadline.isoformat(),
     }
@@ -300,7 +312,8 @@ def move_booking(ctx, *, booking: Booking, room: Room) -> dict:
     # from the rules the hour already settled. Instrument restrictions and the
     # room calendar are room-specific, so both are re-checked against the target.
     assert_may_reserve_room(actor, room, now)
-    assert_slot_open(slot_start, room)
+    duration_hours = int((booking.slot_end - booking.slot_start).total_seconds() // 3600)
+    assert_slot_open(slot_start, room, duration_hours=duration_hours)
 
     if no_show_reclaim(actor, room, slot_start):
         raise OperationRejected(Code.NO_SHOW_RECLAIM)
@@ -308,7 +321,8 @@ def move_booking(ctx, *, booking: Booking, room: Room) -> dict:
     if (
         Booking.objects.filter(
             room=room,
-            slot_start=slot_start,
+            slot_start__lt=booking.slot_end,
+            slot_end__gt=slot_start,
             status__in=list(BLOCKING_STATUSES),
         )
         .exclude(pk=booking.pk)
@@ -316,7 +330,11 @@ def move_booking(ctx, *, booking: Booking, room: Room) -> dict:
     ):
         raise OperationRejected(Code.SLOT_TAKEN)
 
-    status = Booking.Status.PENDING_APPROVAL if room.requires_approval else Booking.Status.SCHEDULED
+    status = (
+        Booking.Status.PENDING_APPROVAL
+        if room.requires_approval_for(category_for_user(actor))
+        else Booking.Status.SCHEDULED
+    )
 
     booking.room = room
     booking.status = status
@@ -482,15 +500,12 @@ def decide_approval(ctx, *, booking: Booking, decision: str, note: str = "") -> 
     return {"booking_id": booking.pk, "status": booking.status}
 
 
-def booking_conflict_for(user, slot_start):
+def booking_conflict_for(user, slot_start, slot_end=None):
     """A conflicting booking held by the same user, used for friendly messages."""
+    slot_end = slot_end or slots.slot_end_for(slot_start)
     return (
         Booking.objects.filter(user=user, status__in=list(BLOCKING_STATUSES))
-        .filter(
-            Q(slot_start=slot_start)
-            | Q(slot_start=slot_start - slots.SLOT_DELTA)
-            | Q(slot_start=slot_start + slots.SLOT_DELTA)
-        )
+        .filter(slot_start__lt=slot_end + slots.SLOT_DELTA, slot_end__gt=slot_start - slots.SLOT_DELTA)
         .select_related("room")
         .first()
     )

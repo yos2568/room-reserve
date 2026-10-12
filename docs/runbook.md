@@ -324,10 +324,16 @@ row, so a bulk correction is never silent.
 
 ## 8. The instrument-specific room
 
-Room 303 (`ห้อง 303`) can only be **reserved** by piano and percussion students;
-anyone may walk in once the hour has started and the room is still free. Changing
-that is a staff action: **Configuration → Rooms → Who may reserve**. It is audited
-(`room.audience_changed`) and it never cancels an existing booking.
+Room 303 (`ห้อง 303`) is open to every eligible student. Piano and percussion
+requests confirm immediately; requests from other instrument categories wait for
+staff approval. On an approval room open to everyone, the category list controls
+which groups are auto-confirmed. Change it through **Configuration → Rooms → Who
+may reserve**. The change is audited (`room.audience_changed`) and does not cancel
+existing bookings.
+
+When these configured room 303 audience or approval settings change, run
+`python manage.py seed_rooms` after applying the code and migrations so an
+existing database receives the updated settings.
 
 Room 10 is now an active general practice room and is provisioned by `seed_rooms`
 alongside rooms 1–9. It follows the same weekday opening schedule and general

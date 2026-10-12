@@ -64,7 +64,11 @@
         {% for room in rooms %}
           <li class="rounded border border-slate-200 bg-slate-50 p-2">
             <p class="font-medium">{{ room }}</p>
-            <p class="text-xs text-slate-600">{% if room.requires_approval %}{% trans "Approval required" %}{% else %}{% trans "Approval not required" %}{% endif %}</p>
+            <p class="text-xs text-slate-600">
+              {% if room.has_approval_exceptions %}{% trans "Other instrument categories need approval" %}
+              {% elif room.requires_approval %}{% trans "Approval required" %}
+              {% else %}{% trans "Approval not required" %}{% endif %}
+            </p>
             <a class="mt-1 inline-flex text-xs text-brand-700 underline" href="{% url 'core:room_profile' room_id=room.pk %}">{% trans "Open public profile" %}</a>
             <details class="mt-2">
               <summary class="cursor-pointer text-xs font-medium">{% trans "Update room profile" %}</summary>

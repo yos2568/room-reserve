@@ -46,6 +46,7 @@ class SlotCell:
     state: SlotState
     booking: Booking | None = None
     is_mine: bool = False
+    approval_required: bool = False
     remaining_minutes: int = 0
     closed_reason: str = ""
     block_reason: str = ""
@@ -73,9 +74,8 @@ class SlotCell:
 
     @property
     def can_use_now(self) -> bool:
-        # A room that needs staff approval cannot be walked into: the walk-in
-        # would skip the approval its reservations go through.
-        return self.state == SlotState.FREE_NOW and not self.room.requires_approval
+        # A room whose walk-in path requires staff review cannot be walked into.
+        return self.state == SlotState.FREE_NOW and not self.room.walk_in_requires_approval
 
     @property
     def is_short(self) -> bool:
@@ -90,7 +90,10 @@ def _bookings_by_slot(local_date, room_ids):
     )
     lookup = {}
     for booking in bookings:
-        lookup[(booking.room_id, booking.slot_start)] = booking
+        hour_start = booking.slot_start
+        while hour_start < booking.slot_end:
+            lookup[(booking.room_id, hour_start)] = booking
+            hour_start += slots.SLOT_DELTA
     return lookup
 
 
@@ -158,6 +161,7 @@ def room_day_cells(
                 state=state,
                 booking=booking,
                 is_mine=is_mine,
+                approval_required=room.requires_approval_for(viewer_category),
                 remaining_minutes=slots.remaining_minutes(now, slot_end),
                 closed_reason=reason,
                 block_reason=block_reason,

@@ -10,7 +10,7 @@
       <h1 class="page-title">{% trans "Practice room availability" %}</h1>
       {# On phones the intro, date line and arrow toolbar are hidden: the month calendar below does the same job. #}
       <p class="page-intro max-sm:hidden">
-        {% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Book a room for a focused one-hour practice session. Open Monday to Friday, {{ open }}:00–{{ close }}:00.{% endblocktrans %}
+        {% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Book a room for a focused one- or two-hour practice session. Open Monday to Friday, {{ open }}:00–{{ close }}:00.{% endblocktrans %}
       </p>
       <div class="page-meta max-sm:hidden">
         <span class="font-semibold text-slate-900">{{ local_date|date:"j F Y" }}</span>

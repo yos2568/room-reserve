@@ -390,15 +390,14 @@ a later migration.
 
 **D-38 — Book two days ahead, hold at most four upcoming hours; no weekly repeat.**
 The department's rule: a student may reserve only two days ahead and hold at most
-four hours at once; when one of those hours finishes, they may book another. The
+four upcoming hours at once; when one of those hours finishes, they may book another. The
 horizon default drops from 7 to 2 days, and a new versioned policy value,
 `max_upcoming_hours` (default 4, staff-editable on the Policy screen), caps the
 bookings a student holds whose hour has not ended — `PENDING_APPROVAL`,
 `SCHEDULED` and `IN_USE`, walk-ins included. Cancelled and no-show hours never
 count; a finished hour stops counting the moment it ends. The existing limit of
-two bookings per day stays alongside it, so no one takes four hours of one day.
-Moving a booking to another room does not run the check, because it does not add
-an hour. Weekly repeat booking (up to four weeks ahead) contradicted a two-day
+two reservations per day stays alongside it. Moving a booking to another room
+does not run the check, because it does not add hours. Weekly repeat booking (up to four weeks ahead) contradicted a two-day
 window and was removed; series created earlier can still be cancelled. Existing
 databases keep their current policy version until staff create a new one; a
 fresh deployment starts with these defaults.
@@ -407,7 +406,7 @@ fresh deployment starts with these defaults.
 The owner asked that room 301, the main classroom, be usable outside its class
 hours once a teacher or an admin approves the request. It is no longer
 availability-only: it takes advance requests, which wait in `PENDING_APPROVAL`,
-and it refuses walk-ins, like 303 and 304. Who approves is not a new role: the
+and it refuses walk-ins, like 304. Who approves is not a new role: the
 maintainer names a teacher (or staff member) as 301's room administrator on the
 Configuration screen, and superusers and operational staff can approve every
 room as before. A teacher account stays read-only for its own bookings; the
@@ -427,3 +426,15 @@ Email verification still proves ownership, and the existing roster match then
 approves the account. Addresses are still never derived from student IDs, and a
 mistyped roster address (such as `gmail.con`) must be corrected in the roster
 before that student can receive the verification email.
+
+**D-41 — Room 303 category approvals and off-peak two-hour reservations (12 October 2026).**
+The owner asked to let students outside piano and percussion reserve room 303
+with staff approval. Room 303 remains open to every eligible student; piano and
+percussion reservations confirm immediately, while requests from other categories
+wait in `PENDING_APPROVAL`. The configured instrument category list on an
+`EVERYONE` approval room names categories that bypass approval; it does not limit
+who may request the room. Bookings remain one-hour units during 10:00–16:00.
+Students may reserve one or two consecutive hours wholly within 08:00–10:00 or
+16:00–20:00. A two-hour reservation consumes two hours of the upcoming cap and
+one reservation in the daily booking quota. One full hour must remain between a
+student's reservations. Walk-ins continue to occupy only the current hour.
