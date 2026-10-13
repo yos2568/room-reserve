@@ -9,7 +9,9 @@ never silently turned into an attendance declaration.
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 
+from django.conf import settings
 from django.db.models import Q
 
 from core.models import (
@@ -124,7 +126,13 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
     policy = current_policy()
     deadline = advance_deadline(slot_start, policy.checkin_grace_minutes)
 
-    status = Booking.Status.PENDING_APPROVAL if room.requires_approval else Booking.Status.SCHEDULED
+    # Staff may approve every room, so their own request is approved as made
+    # rather than left waiting for themselves (D-41).
+    self_approved = room.requires_approval and is_booking_staff(user)
+    if room.requires_approval and not self_approved:
+        status = Booking.Status.PENDING_APPROVAL
+    else:
+        status = Booking.Status.SCHEDULED
     booking = Booking.objects.create(
         user=user,
         room=room,
@@ -133,6 +141,8 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
         deadline=deadline,
         status=status,
         source=Booking.Source.ADVANCE,
+        approved_at=now if self_approved else None,
+        approved_by=user if self_approved else None,
         policy_version=policy,
         title=ctx.payload.get("title", ""),
         purpose=ctx.payload.get("purpose", ""),
@@ -185,6 +195,103 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
         "slot": slots.encode_slot(slot_start),
         "status": booking.status,
         "deadline": deadline.isoformat(),
+    }
+
+
+def is_booking_staff(user) -> bool:
+    """Operational staff and the maintainer: may approve, and book outside student limits."""
+    return bool(
+        getattr(user, "is_active", False)
+        and (getattr(user, "is_superuser", False) or getattr(user, "is_operational_staff", False))
+    )
+
+
+def build_staff_payload(room: Room, local_date, start_hour: int, end_hour: int, details=None) -> dict:
+    return {
+        "action": "staff_booking",
+        "room_id": room.pk,
+        "date": local_date.isoformat(),
+        "start_hour": start_hour,
+        "end_hour": end_hour,
+        **normalise_details(details),
+    }
+
+
+def create_staff_booking(ctx, *, room: Room, local_date, start_hour: int, end_hour: int) -> dict:
+    """Hold a room for several consecutive hours on behalf of the department (D-41).
+
+    For rehearsals, events and teaching that staff arrange. The student limits
+    (two-day window, daily quota, upcoming-hours cap, no adjacent hours, room
+    audience) do not apply, and a room that needs approval is approved as made.
+    The calendar still does: opening hours, closures and class hours are
+    respected, and an hour someone already holds is never taken over. Either
+    every hour is booked or none is.
+    """
+    actor = ctx.actor
+    now = ctx.now
+    if not is_booking_staff(actor):
+        raise OperationRejected(Code.NOT_ELIGIBLE)
+    if not (0 <= start_hour < end_hour <= 24):
+        raise OperationRejected(Code.INVALID_INPUT)
+
+    starts = [slots.slot_start_for(local_date, hour) for hour in range(start_hour, end_hour)]
+    if starts[0] <= now:
+        raise OperationRejected(Code.RANGE_STARTED)
+    horizon_days = settings.STAFF_BOOKING_HORIZON_DAYS
+    if starts[-1] > now + timedelta(days=horizon_days):
+        raise OperationRejected(Code.OUTSIDE_HORIZON, horizon_days=horizon_days)
+    for slot_start in starts:
+        assert_slot_open(slot_start, room)
+
+    holding = Booking.objects.filter(slot_start__in=starts, status__in=list(BLOCKING_STATUSES))
+    if holding.filter(room=room).exists():
+        raise OperationRejected(Code.RANGE_TAKEN)
+    if holding.filter(user=actor).exists():
+        # One person holds one room per hour (booking_user_slot_unique).
+        raise OperationRejected(Code.ADJACENCY_CONFLICT)
+
+    policy = current_policy()
+    created = []
+    for slot_start in starts:
+        booking = Booking.objects.create(
+            user=actor,
+            room=room,
+            slot_start=slot_start,
+            slot_end=slots.slot_end_for(slot_start),
+            deadline=advance_deadline(slot_start, policy.checkin_grace_minutes),
+            status=Booking.Status.SCHEDULED,
+            source=Booking.Source.ADVANCE,
+            is_staff_booking=True,
+            approved_at=now,
+            approved_by=actor,
+            policy_version=policy,
+            title=ctx.payload.get("title", ""),
+            purpose=ctx.payload.get("purpose", ""),
+            participant_names=ctx.payload.get("participant_names", ""),
+        )
+        created.append(booking)
+        ctx.audit(
+            action="booking.created",
+            entity_type="Booking",
+            entity_id=booking.pk,
+            actor=actor,
+            changes={
+                "room": room.number,
+                "slot_start": booking.slot_start,
+                "slot_end": booking.slot_end,
+                "source": booking.source,
+                "status": booking.status,
+                "staff_booking": True,
+                "policy_version": policy.version,
+                "title": booking.title,
+                "purpose": booking.purpose,
+            },
+        )
+
+    return {
+        "booking_ids": [booking.pk for booking in created],
+        "room_id": room.pk,
+        "hours": len(created),
     }
 
 

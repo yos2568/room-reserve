@@ -156,6 +156,10 @@ class Booking(models.Model):
         related_name="booking_approvals",
     )
     approval_note = models.TextField(blank=True)
+    # Made by operational staff or the maintainer on the staff "Book a room"
+    # screen: a department hold for a rehearsal or event, not a student's
+    # practice hour, so it is never a no-show and never earns a strike.
+    is_staff_booking = models.BooleanField(default=False)
 
     # Planning details are deliberately separate from the student's identity:
     # staff can understand what a room is being used for without exposing this

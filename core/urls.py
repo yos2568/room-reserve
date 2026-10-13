@@ -53,6 +53,9 @@ urlpatterns = [
     # Staff operations ---------------------------------------------------------
     path("staff/today/", views.staff.today, name="staff_today"),
     path("staff/room-admin/", views.staff.room_admin_dashboard, name="room_admin"),
+    path("staff/book/", views.staff.book_room, name="staff_book_room"),
+    path("staff/book/create/", views.staff.create_staff_booking, name="staff_create_booking"),
+    path("staff/upcoming/", views.staff.upcoming_bookings, name="staff_upcoming"),
     path(
         "staff/room-admin/bookings/<int:pk>/decision/",
         views.staff.decide_booking_approval,

@@ -15,6 +15,14 @@
     </div>
   {% endif %}
 
+  {% if room_requests_waiting %}
+    <section class="card mb-4" aria-labelledby="room-requests-heading">
+      <h2 id="room-requests-heading" class="text-base font-semibold">{% trans "Room requests waiting" %} <span class="text-slate-600">({{ room_requests_waiting }})</span></h2>
+      <p class="mt-2 text-sm text-slate-700">{% trans "Students have asked for rooms that need approval (301, 303, 304). You can approve them." %}</p>
+      <a class="btn-primary mt-3" href="{% url 'core:room_admin' %}">{% trans "Open Room approvals" %}</a>
+    </section>
+  {% endif %}
+
   <section class="card mb-4" id="user-approvals" aria-labelledby="approval-heading">
     <h2 id="approval-heading" class="text-base font-semibold">{% trans "Waiting for approval" %} <span class="text-slate-600">({{ pending|length }})</span></h2>
     <p class="mt-2 text-sm text-slate-700">{% trans "Review the student's details, choose Approve or Reject, then select the reason for your decision. The reason is saved in the audit record." %}</p>

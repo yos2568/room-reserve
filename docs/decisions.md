@@ -427,3 +427,26 @@ Email verification still proves ownership, and the existing roster match then
 approves the account. Addresses are still never derived from student IDs, and a
 mistyped roster address (such as `gmail.con`) must be corrected in the roster
 before that student can receive the verification email.
+
+**D-41 — Staff book rooms for the department, outside the student limits (13 October 2026).**
+The department admin reported four problems: they could not book more than two
+days ahead, could not book 17:00–20:00 as one booking, could not find students'
+requests, and their own room-301 booking waited for approval with nobody sure
+who should approve it. All four followed from staff booking through the student
+flow under the student rules, which the design had kept on purpose ("staff do
+not bypass booking rules"). The owner chose to change that for operational staff
+and the maintainer only. A new staff screen, **Book a room**, holds one room for
+several consecutive hours, up to `STAFF_BOOKING_HORIZON_DAYS` (default 90) ahead,
+confirmed at once. The two-day window, daily quota, upcoming-hours cap, adjacency
+rule and room audience do not apply; opening hours, closures and class hours
+still do, and an hour anyone already holds is never taken over — either every
+hour is booked or none is. Each hour is an ordinary one-hour booking marked
+`is_staff_booking`: it blocks the grid like any reservation, needs no check-in,
+is never recorded as a no-show or a strike, gets no reminder email, and completes
+when its hour ends. When staff reserve an approval room through the ordinary
+timetable, the request is approved as made instead of waiting for themselves.
+Teachers named as room administrators are unchanged. A new **Upcoming bookings**
+screen lists every booking that has not finished, and the Today screen points to
+Room approvals whenever student requests are waiting. Students' rules are
+unchanged.
+

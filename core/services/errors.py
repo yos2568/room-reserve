@@ -34,6 +34,8 @@ class Code:
     INVALID_SLOT = "invalid_slot"
     STALE_HOUR = "stale_hour"
     NO_SHOW_RECLAIM = "no_show_reclaim"
+    RANGE_TAKEN = "range_taken"
+    RANGE_STARTED = "range_started"
 
     # Account state
     NOT_ELIGIBLE = "not_eligible"
@@ -83,6 +85,10 @@ _MESSAGES = {
     Code.SLOT_IN_PAST: _("That time has already started. Use “Use now” if the room is free."),
     Code.SLOT_ELAPSED: _("That hour has already finished."),
     Code.CLOSED: _("That room is closed for the selected time."),
+    Code.RANGE_TAKEN: _(
+        "One or more of those hours is already booked in that room. Check Upcoming bookings and choose other hours."
+    ),
+    Code.RANGE_STARTED: _("Choose hours that have not started yet."),
     Code.APPROVAL_ROOM_NO_WALK_IN: _(
         "This room needs staff approval, so it cannot be used as a walk-in. Request it in advance instead."
     ),
@@ -140,6 +146,8 @@ _REJECTION_STATUS = {
     Code.RATE_LIMITED: 429,
     Code.IDEMPOTENCY_PAYLOAD_MISMATCH: 409,
     Code.SLOT_TAKEN: 409,
+    Code.RANGE_TAKEN: 409,
+    Code.RANGE_STARTED: 400,
     Code.ADJACENCY_CONFLICT: 409,
     Code.QUOTA_EXCEEDED: 409,
     Code.UPCOMING_LIMIT: 409,

@@ -4382,3 +4382,88 @@ msgstr "ขณะนี้อยู่นอกเวลาเปิดห้อ
 
 msgid "Choose a room and time from the timetable. Sign in to book; this lobby board only shows current status."
 msgstr "เลือกห้องและเวลาจากตารางว่าง แล้วเข้าสู่ระบบเพื่อจอง กระดานล็อบบี้นี้แสดงสถานะปัจจุบันเท่านั้น"
+
+#. D-41: staff bookings, the upcoming list and room-request guidance.
+msgid ""
+"One or more of those hours is already booked in that room. Check Upcoming "
+"bookings and choose other hours."
+msgstr ""
+"มีบางชั่วโมงในช่วงที่เลือกถูกจองไว้แล้วในห้องนี้ กรุณาตรวจสอบที่ "
+"“การจองที่กำลังจะมาถึง” แล้วเลือกเวลาอื่น"
+
+msgid "Choose hours that have not started yet."
+msgstr "กรุณาเลือกเวลาที่ยังไม่เริ่ม"
+
+msgid ""
+"For rehearsals, events and teaching. You can book several hours in a row and "
+"up to %(horizon_days)s days ahead. The booking is confirmed at once, needs "
+"no approval and no check-in at the door. Student limits do not apply; "
+"opening hours, closures and class hours still do."
+msgstr ""
+"สำหรับการซ้อมรวม กิจกรรม และการเรียนการสอน จองได้หลายชั่วโมงติดกันและล่วงหน้าได้ไม่เกิน "
+"%(horizon_days)s วัน การจองได้รับการยืนยันทันที ไม่ต้องรออนุมัติ และไม่ต้องเช็กอินที่หน้าห้อง "
+"ข้อจำกัดการจองของนิสิตไม่นำมาใช้ แต่ยังเป็นไปตามเวลาเปิด–ปิด การปิดห้อง และเวลาเรียน"
+
+msgid "For example: Orchestra rehearsal"
+msgstr "เช่น ซ้อมวงออร์เคสตรา"
+
+msgid "Book these hours"
+msgstr "จองช่วงเวลานี้"
+
+msgid ""
+"You are staff, so you can approve requests for every room, including your "
+"own. Staff bookings made on Book a room are confirmed without approval."
+msgstr ""
+"คุณเป็นเจ้าหน้าที่ จึงอนุมัติคำขอได้ทุกห้อง รวมถึงคำขอของตนเอง "
+"การจองผ่านเมนู “จองห้อง” ของเจ้าหน้าที่ได้รับการยืนยันทันทีโดยไม่ต้องรออนุมัติ"
+
+msgid ""
+"Students have asked for rooms that need approval (301, 303, 304). You can "
+"approve them."
+msgstr "มีนิสิตขอจองห้องที่ต้องได้รับอนุมัติ (301, 303, 304) คุณสามารถอนุมัติได้"
+
+msgid "Every booking that has not finished yet"
+msgstr "การจองทั้งหมดที่ยังไม่สิ้นสุด"
+
+msgid ""
+"Students' bookings and staff bookings in every room. Requests waiting for "
+"approval are decided on Room approvals."
+msgstr ""
+"การจองของนิสิตและของเจ้าหน้าที่ในทุกห้อง คำขอที่รออนุมัติให้พิจารณาที่หน้า "
+"“อนุมัติการจองห้อง”"
+
+msgid "Show"
+msgstr "แสดง"
+
+msgid "Only the first 500 are shown. Choose a room to narrow the list."
+msgstr "แสดงเฉพาะ 500 รายการแรก เลือกห้องเพื่อกรองรายการ"
+
+msgid "Upcoming bookings"
+msgstr "การจองที่กำลังจะมาถึง"
+
+msgid "Book a room"
+msgstr "จองห้อง"
+
+msgid "Book a room for the department"
+msgstr "จองห้องในนามภาควิชา"
+
+msgid "Details (optional)"
+msgstr "รายละเอียด (ไม่บังคับ)"
+
+msgid "See all upcoming bookings"
+msgstr "ดูการจองที่กำลังจะมาถึงทั้งหมด"
+
+msgid "Room requests waiting"
+msgstr "คำขอจองห้องที่รออนุมัติ"
+
+msgid "Open Room approvals"
+msgstr "ไปที่หน้าอนุมัติการจองห้อง"
+
+msgid "Booked by"
+msgstr "ผู้จอง"
+
+msgid "Staff booking"
+msgstr "จองโดยเจ้าหน้าที่"
+
+msgid "Approve or reject"
+msgstr "อนุมัติหรือปฏิเสธ"

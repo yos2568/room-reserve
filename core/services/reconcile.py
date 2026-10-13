@@ -16,7 +16,7 @@ import logging
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from core.models import Booking, ServiceIncident, Suspension, Violation
 
@@ -77,7 +77,9 @@ def _reconcile_expired_approvals(now, budget: int, actor) -> int:
 
 def _reconcile_no_shows(now, budget: int, actor) -> int:
     due = list(
-        Booking.objects.filter(status=Booking.Status.SCHEDULED, deadline__lte=now)
+        # A staff hold is the department's, not a practice hour: nobody owes a
+        # check-in for it, so it is never a no-show (D-41).
+        Booking.objects.filter(status=Booking.Status.SCHEDULED, deadline__lte=now, is_staff_booking=False)
         .order_by("deadline", "id")
         .select_related("room", "user")
     )
@@ -140,7 +142,10 @@ def _record_no_show(booking: Booking, now, policy, actor) -> None:
 
 def _reconcile_completions(now, budget: int, actor) -> int:
     due = list(
-        Booking.objects.filter(status=Booking.Status.IN_USE, slot_end__lte=now)
+        Booking.objects.filter(
+            Q(status=Booking.Status.IN_USE) | Q(status=Booking.Status.SCHEDULED, is_staff_booking=True),
+            slot_end__lte=now,
+        )
         .order_by("slot_end", "id")
         .select_related("room", "user")
     )
@@ -347,6 +352,7 @@ def enqueue_due_reminders(now) -> int:
         Booking.objects.filter(
             status=Booking.Status.SCHEDULED,
             source=Booking.Source.ADVANCE,
+            is_staff_booking=False,
             slot_start__gt=window_start,
             slot_start__lte=window_end,
         )

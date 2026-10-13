@@ -22,6 +22,7 @@ cannot retroactively invalidate a check-in that already happened.
 | Daily quota | 2 bookings per person per day, across all rooms | `POLICY_DAILY_QUOTA` |
 | Upcoming hours held | at most 4 hours not yet finished, walk-ins included; one frees up when its hour ends (D-38) | `POLICY_MAX_UPCOMING_HOURS` |
 | Weekly repeat | not offered; students book each week themselves (D-38) | — |
+| Staff bookings | operational staff and the maintainer: several hours in a row, up to 90 days ahead, confirmed at once, no check-in or no-show; calendar, closures and class hours still apply (D-41) | `STAFF_BOOKING_HORIZON_DAYS` |
 | Check-in window | closes exactly 15 minutes after the hour starts | `POLICY_CHECKIN_GRACE_MINUTES` |
 | Strike window | 30 days | `POLICY_STRIKE_WINDOW_DAYS` |
 | Strike threshold | 3 unconsumed strikes | `POLICY_STRIKE_THRESHOLD` |
@@ -50,9 +51,9 @@ purpose:
   Starting a session there always ends at the hour boundary, like any walk-in.
 - **A booking already made is never cancelled** by restricting the room, and it
   still checks in.
-- **Staff cannot override it.** Staff have no "create booking" action, and the
-  design keeps it that way: staff do not bypass booking rules. A rehearsal for
-  another instrument uses the walk-in rule.
+- **Students cannot override it.** Operational staff and the maintainer can
+  hold any room for the department on the staff **Book a room** screen (D-41);
+  that is a department booking, not a student's reservation.
 
 The audience is per room and can be changed by staff (Configuration → Rooms)
 without a developer. A room set to "only these instrument categories" with nothing

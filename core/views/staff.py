@@ -17,6 +17,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
@@ -56,6 +57,7 @@ from ._helpers import (
     maintainer_required,
     now,
     operation_key,
+    outcome_status,
     redirect_back,
     run_view_operation,
     staff_required,
@@ -162,6 +164,9 @@ def _render_today(request, *, decision_form=None, candidate_id=None, status=200)
             "local_date": local_date,
             "bookings": bookings,
             "pending": pending,
+            "room_requests_waiting": Booking.objects.filter(
+                status=Booking.Status.PENDING_APPROVAL, slot_start__gt=moment
+            ).count(),
             "active_suspensions": active_suspensions,
             "pending_reviews": pending_reviews,
             "failed_mail": failed_mail,
@@ -299,6 +304,127 @@ def resolve_review(request, pk: int):
     )
     add_outcome_message(request, outcome)
     return redirect_back(request, "core:staff_today")
+
+
+# --- Staff bookings and the upcoming list (D-41) ------------------------------
+
+
+def _staff_hours():
+    """Selectable start hours and end hours for a staff hold, within opening hours."""
+    first, last = settings.OPENING_SLOT_START_HOUR, settings.LAST_SLOT_START_HOUR
+    return list(range(first, last + 1)), list(range(first + 1, last + 2))
+
+
+def _render_book_room(request, *, values=None, status=200):
+    start_hours, end_hours = _staff_hours()
+    today_local = timezone.localdate(now())
+    return render(
+        request,
+        "core/staff/book_room.html",
+        {
+            "rooms": Room.objects.filter(is_active=True).order_by("position", "number"),
+            "start_hours": start_hours,
+            "end_hours": end_hours,
+            "min_date": today_local,
+            "max_date": today_local + timedelta(days=settings.STAFF_BOOKING_HORIZON_DAYS),
+            "horizon_days": settings.STAFF_BOOKING_HORIZON_DAYS,
+            "values": values or {},
+            "operation_key": str(uuid.uuid4()),
+        },
+        status=status,
+    )
+
+
+@staff_required
+@require_GET
+def book_room(request):
+    return _render_book_room(request, values={"room": _int_or_none(request.GET.get("room"))})
+
+
+@staff_required
+@require_POST
+def create_staff_booking(request):
+    values = {
+        "room": _int_or_none(request.POST.get("room")),
+        "date": (request.POST.get("date") or "").strip(),
+        "start_hour": _int_or_none(request.POST.get("start_hour")),
+        "end_hour": _int_or_none(request.POST.get("end_hour")),
+        "title": request.POST.get("title") or "",
+        "purpose": request.POST.get("purpose") or "",
+    }
+    room = Room.objects.filter(pk=values["room"], is_active=True).first() if values["room"] else None
+    try:
+        local_date = date.fromisoformat(values["date"])
+    except ValueError:
+        local_date = None
+    if room is None or local_date is None or values["start_hour"] is None or values["end_hour"] is None:
+        messages.error(request, "กรุณาเลือกห้อง วันที่ และเวลา / Choose a room, a date and the hours.")
+        return _render_book_room(request, values=values, status=400)
+    if values["end_hour"] <= values["start_hour"]:
+        messages.error(request, "เวลาสิ้นสุดต้องหลังเวลาเริ่ม / The end time must be after the start time.")
+        return _render_book_room(request, values=values, status=400)
+
+    details = {"title": values["title"], "purpose": values["purpose"]}
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_create_booking",
+        payload=booking_service.build_staff_payload(
+            room, local_date, values["start_hour"], values["end_hour"], details
+        ),
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            **booking_service.create_staff_booking(
+                ctx,
+                room=room,
+                local_date=local_date,
+                start_hour=values["start_hour"],
+                end_hour=values["end_hour"],
+            )
+        ),
+    )
+    if not outcome.ok:
+        add_outcome_message(request, outcome)
+        return _render_book_room(request, values=values, status=outcome_status(outcome))
+    add_outcome_message(
+        request,
+        outcome,
+        success_message=(
+            f"จองห้องเรียบร้อย {values['start_hour']}:00–{values['end_hour']}:00 / "
+            f"Room booked {values['start_hour']}:00–{values['end_hour']}:00."
+        ),
+    )
+    return redirect(f"{reverse('core:staff_upcoming')}?room={room.pk}")
+
+
+@staff_required
+@require_GET
+def upcoming_bookings(request):
+    """Every booking that has not finished yet, students' and staff holds alike."""
+    moment = now()
+    room_id = _int_or_none(request.GET.get("room"))
+    bookings = (
+        Booking.objects.filter(
+            slot_end__gt=moment,
+            status__in=[Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED, Booking.Status.IN_USE],
+        )
+        .select_related("room", "user")
+        .order_by("slot_start", "room__position")
+    )
+    if room_id:
+        bookings = bookings.filter(room_id=room_id)
+    limit = 500
+    rows = list(bookings[: limit + 1])
+    return render(
+        request,
+        "core/staff/upcoming.html",
+        {
+            "bookings": rows[:limit],
+            "truncated": len(rows) > limit,
+            "rooms": Room.objects.filter(is_active=True).order_by("position", "number"),
+            "selected_room": room_id,
+            "operation_key": str(uuid.uuid4()),
+        },
+    )
 
 
 # --- Users, violations and sanctions ------------------------------------------
@@ -1229,7 +1355,13 @@ def room_admin_dashboard(request):
     return render(
         request,
         "core/staff/room_admin.html",
-        {"rooms": rooms, "pending": pending, "moment": now(), "operation_key": str(uuid.uuid4())},
+        {
+            "rooms": rooms,
+            "pending": pending,
+            "moment": now(),
+            "operation_key": str(uuid.uuid4()),
+            "approves_every_room": request.user.is_superuser or request.user.is_operational_staff,
+        },
     )
 
 
