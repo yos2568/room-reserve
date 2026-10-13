@@ -12,10 +12,10 @@ PR #10** — read "Merge order" before merging either.
 
 `NOT_DEPLOYED`. Everything below is on PR #10 only. A second, independent review (13 Oct) found six issues; all are fixed (see "Second review" below). Production still runs the image from
 before PR #8 unless someone deployed #8 since 24 September; check `APP_IMAGE` in Docker
-Manager. PR #10 passes 614 tests locally (PostgreSQL 16 and Chromium), and GitHub CI is green on
-`8128219` ("Lint, tests, and verification gate" and "Build and publish immutable image").
+Manager. PR #10 (head `7d7d9b7`) passes 625 tests locally (PostgreSQL 16 and Chromium). GitHub CI
+was green on `8128219` and `ce92545`; check the run on `7d7d9b7` before merging.
 
-## What PR #10 contains (8 commits, 57 files, +3,137 / −83)
+## What PR #10 contains (11 commits, 62 files, +3,612 / −94)
 
 | Commit | Decision | What |
 |---|---|---|
@@ -25,8 +25,11 @@ Manager. PR #10 passes 614 tests locally (PostgreSQL 16 and Chromium), and GitHu
 | `474b090`, `78dcd34` | D-43 | An email on a room access list may register, and is **auto-approved** once the email is confirmed (owner's choice). Staff **Correct student ID** action. |
 | `d4270c2`, `6c921e6` | D-44 | Home page opens with a **"right now" board** (every room's state, today's strip, one action). Staff **Booking timeline** (rooms × hours, click a bar to act on it). |
 | `8128219` | D-41…D-44 | Fixes from a code review: staff no-show strikes, roster-ID squatting, the self-declared instrument on auto-approved accounts, ID correction on staff accounts, the board not refreshing, overlapping timeline bars, and staff holding two rooms at once (migration 0018). |
+| `a1552d4` | — | This handoff file. |
+| `ce92545` | D-41…D-44 | Fixes from a second, independent review (see below): staff-set instrument trusted (migration 0019), timeline for any opening span, whole-day staff horizon, correct conference-room refusal, overlapping bars on two lines, posters, Thai copy. |
+| `7d7d9b7` | D-41 | **Owner's decision:** a staff booking in progress is protected like a checked-in session (in use from the start of its hour; End early instead of Cancel). |
 
-Full details: `docs/decisions.md` D-41 to D-44 plus the "Review follow-up" entry, and the PR #10 description.
+Full details: `docs/decisions.md` D-41 to D-44 plus the two "Review follow-up" entries, and the PR #10 description.
 
 ### The admin's four reported issues (12 Oct, from the staff member using the `maintainer` login)
 
@@ -48,6 +51,17 @@ Full details: `docs/decisions.md` D-41 to D-44 plus the "Review follow-up" entry
 | Booking hidden behind a later class/closure on the timeline | Fixed: drawn on a second line |
 | Staff hold in progress can be cancelled and released | Fixed (owner's decision): in use from the start of its hour; End early instead of Cancel. **Tell the admin (ดิว).** |
 | Thai copy polish (“ว่างอีกครั้งเวลา … น.”, “ขอจองเวลา … น.”, “จองเวลา … น.”, “ตารางห้องรายชั่วโมง”) | Applied |
+
+### What changes for the admin (tell ดิว)
+
+From the start of its hour, a staff booking is **in use**:
+- **Cancel** disappears for that hour; staff press **End early** (สิ้นสุดก่อนเวลา) instead.
+  The room stays taken until the hour ends, so students cannot walk in for the rest of it.
+- Closing a room during a staff booking shows a warning first.
+- Staff bookings for hours that have not started can still be cancelled as before.
+
+The owner drafted a Thai message to ดิว asking whether point 1 suits their daily work. If ดิว
+wants a room freed for students after an early finish, that is a small follow-up change.
 
 ## Merge order: PR #9 and PR #10 conflict
 
@@ -111,7 +125,9 @@ staff booking.
 4. **Give the admin their own account.** The staff member who reported the issues is using the
    `maintainer` superuser login. Invite them as operational staff (Staff → Invitations) so
    the audit log shows who did what, and keep `maintainer` for the owner.
-5. **Reprint door posters** for the new room (Staff → Posters).
+5. **Reprint door posters** for the new room (Staff → Posters). Posters for approval and
+   members-only rooms no longer say "use a free hour now".
+6. **Tell ดิว about End early** (see "What changes for the admin" above) and record their answer.
 
 ## Carried forward from 24 September (status not re-checked this session)
 
@@ -151,10 +167,13 @@ private to the owner's account.
 ## Verification done this session
 
 - `ruff check`, `ruff format --check`, `manage.py check`, `makemigrations --check`: clean.
-- Full suite including browser tests: **614 passed** (PostgreSQL 16, Chromium).
-- Migrations 0016–0018 applied cleanly to a scratch database migrated to `0015`.
+- Full suite including browser tests: **625 passed** (PostgreSQL 16, Chromium).
+- Migrations 0016–0018 applied cleanly to a scratch database migrated to `0015`. Migration 0019
+  (one new boolean column, default false) was applied by the test suite, not on a scratch copy.
 - Screens checked in a real browser, in Thai, at 390 px, 1366 px and 1440 px: no horizontal overflow.
 - A code review of the whole branch: nine findings fixed in `8128219`, one (repeated queries) left as above.
+- An independent review of `a1552d4`: six findings, all fixed in `ce92545` and `7d7d9b7`, each with a regression
+  test in `tests/test_review_fixes.py`.
 
 ## Working notes for the next session
 
