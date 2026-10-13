@@ -39,6 +39,10 @@ def cancel(ctx, *, booking: Booking, reason: str = "", staff_action: bool = Fals
     if not staff_action and booking.user_id != getattr(actor, "pk", None):
         raise OperationRejected(Code.NOT_OWNER)
 
+    if booking.status == Booking.Status.IN_USE:
+        # A session in use (a staff booking from the start of its hour) ends
+        # early instead, so its hour stays occupied.
+        raise OperationRejected(Code.CANCEL_AFTER_START, booking_id=booking.pk)
     if booking.status == Booking.Status.CANCELLED:
         raise OperationRejected(Code.TERMINAL_STATUS, booking_id=booking.pk)
     if booking.status not in {Booking.Status.SCHEDULED, Booking.Status.PENDING_APPROVAL}:

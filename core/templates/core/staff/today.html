@@ -75,21 +75,22 @@
                   {% if booking.needs_review %} · <span class="text-red-800">{% trans "review needed" %}</span>{% endif %}
                 </td>
                 <td class="p-2">
-                  {% if booking.status == 'SCHEDULED' %}
+                  {% if booking.status == 'SCHEDULED' and not booking.is_staff_booking %}
                     <form method="post" action="{% url 'core:staff_assisted_check_in' pk=booking.pk %}" class="inline-flex items-center gap-1">
                       {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
                       <label class="sr-only" for="ci-{{ booking.pk }}">{% trans "Reason" %}</label>
                       <input class="field !py-1" id="ci-{{ booking.pk }}" name="reason" placeholder="{% trans 'Attendance verified how?' %}" required>
                       <button class="btn-primary" type="submit">{% trans "Check in" %}</button>
                     </form>
-                  {% elif booking.status == 'IN_USE' %}
+                  {% endif %}
+                  {% if booking.in_progress %}
                     <form method="post" action="{% url 'core:staff_complete_early' pk=booking.pk %}" class="inline-flex items-center gap-1">
                       {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
                       <input class="field !py-1" name="reason" placeholder="{% trans 'Evacuation reason' %}" required>
                       <button class="btn-danger" type="submit">{% trans "End early" %}</button>
                     </form>
                   {% endif %}
-                  {% if booking.status == 'SCHEDULED' or booking.status == 'IN_USE' %}
+                  {% if booking.status == 'SCHEDULED' and not booking.in_progress %}
                     <form method="post" action="{% url 'core:staff_cancel_booking' pk=booking.pk %}" class="mt-1 inline-flex items-center gap-1">
                       {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
                       <input class="field !py-1" name="reason" placeholder="{% trans 'Cancellation reason' %}" required>

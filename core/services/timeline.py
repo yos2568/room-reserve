@@ -102,7 +102,7 @@ def day_timeline(local_date, now) -> dict:
     for booking in by_hour.values():
         hour = booking.local_start.hour
         kind = _BOOKING_KIND[booking.status]
-        if kind == "booked" and booking.is_staff_booking:
+        if kind in ("booked", "inuse") and booking.is_staff_booking:
             kind = "staff"
         if kind == "staff":
             label = booking.title or booking.user.display_name

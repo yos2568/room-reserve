@@ -24,7 +24,7 @@ from core.models import (
     User,
 )
 
-from . import slots
+from . import clock, slots
 from .audit import record_audit
 from .errors import Code, OperationRejected
 from .outbox import enqueue
@@ -46,10 +46,19 @@ def preview_closure(room: Room | None, starts_at: datetime, ends_at: datetime) -
         .select_related("room", "user")
         .order_by("slot_start")
     )
+    # A staff booking whose hour has begun is in use even before the next
+    # reconciliation marks it so (this preview must not write).
+    now = clock.now()
+
+    def in_progress(b) -> bool:
+        return b.status == Booking.Status.IN_USE or (b.is_staff_booking and b.slot_start <= now)
+
     scheduled = [
-        b for b in affected if b.status in {Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED}
+        b
+        for b in affected
+        if b.status in {Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED} and not in_progress(b)
     ]
-    in_use = [b for b in affected if b.status == Booking.Status.IN_USE]
+    in_use = [b for b in affected if in_progress(b)]
 
     return {
         "scheduled": scheduled,

@@ -78,7 +78,7 @@
       {% if selected %}
         <div class="flex items-center justify-between gap-2">
           {% if selected.status == "PENDING_APPROVAL" %}<span class="status-pill is-pending">{% trans "Waiting for approval" %}</span>
-          {% elif selected.status == "IN_USE" %}<span class="status-pill is-busy">{% trans "In use" %}</span>
+          {% elif selected.in_progress %}<span class="status-pill is-busy">{% trans "In use" %}</span>
           {% elif selected.status == "COMPLETED" %}<span class="status-pill is-done">{% trans "Finished" %}</span>
           {% elif selected.status == "NO_SHOW" %}<span class="status-pill is-noshow">{% trans "No-show" %}</span>
           {% elif selected.is_staff_booking %}<span class="status-pill is-staff">{% trans "Staff booking" %}</span>
@@ -119,7 +119,7 @@
             <button class="btn-secondary" type="submit">{% trans "Check in for the student" %}</button>
           </form>
         {% endif %}
-        {% if selected.status == "IN_USE" %}
+        {% if selected.in_progress %}
           <form method="post" action="{% url 'core:staff_complete_early' pk=selected.pk %}" class="space-y-2">
             {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
@@ -128,7 +128,7 @@
             <button class="btn-danger" type="submit">{% trans "End early" %}</button>
           </form>
         {% endif %}
-        {% if selected.status == "SCHEDULED" or selected.status == "PENDING_APPROVAL" %}
+        {% if selected.status == "PENDING_APPROVAL" or selected.status == "SCHEDULED" and not selected.in_progress %}
           <form method="post" action="{% url 'core:staff_cancel_booking' pk=selected.pk %}" class="space-y-2">
             {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
             <input type="hidden" name="next" value="{{ request.path }}?date={{ local_date|date:'Y-m-d' }}">

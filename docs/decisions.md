@@ -538,8 +538,9 @@ review found, and this change fixes:
   allows (1–24 columns). A booking that overlaps a class or closure added after it
   is drawn on a second line under it, not hidden behind it.
 
-Kept as is, pending the owner's confirmation: a staff hold has no check-in, so it
-stays *scheduled* during its hour. Staff cancelling the hour in progress release
-it (for example, an event that ended early), and a closure preview does not count
-it as an active session. The staff member who closes or cancels is the one who
-knows whether the room is in use.
+- *D-41, owner's decision.* A staff booking in progress is protected like a
+  checked-in session. Staff do not check in, so from the start of its hour a staff
+  booking is *in use* (set by reconciliation, which every action runs first). It
+  can no longer be cancelled and released to a walk-in; staff use End early, and
+  the hour stays occupied. A closure or room/account deactivation counts it as an
+  active session needing acknowledgement and on-site review.

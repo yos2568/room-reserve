@@ -45,6 +45,14 @@
               <div>
                 {% if booking.status == 'PENDING_APPROVAL' %}
                   <a class="btn-primary" href="{% url 'core:room_admin' %}">{% trans "Approve or reject" %}</a>
+                {% elif booking.in_progress %}
+                  <form method="post" action="{% url 'core:staff_complete_early' pk=booking.pk %}" class="flex flex-wrap items-center gap-1">
+                    {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <label class="sr-only" for="end-{{ booking.pk }}">{% trans "Reason for ending early" %}</label>
+                    <input class="field !py-1" id="end-{{ booking.pk }}" name="reason" placeholder="{% trans 'Reason for ending early' %}" required>
+                    <button class="btn-danger" type="submit">{% trans "End early" %}</button>
+                  </form>
                 {% else %}
                   <form method="post" action="{% url 'core:staff_cancel_booking' pk=booking.pk %}" class="flex flex-wrap items-center gap-1">
                     {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">

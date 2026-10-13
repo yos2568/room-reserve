@@ -127,7 +127,7 @@ def test_a_staff_booking_from_the_timetable_is_never_a_no_show(frozen, all_rooms
     with clock.frozen_clock(start + timedelta(minutes=30)):
         reconcile(start + timedelta(minutes=30))
     booking.refresh_from_db()
-    assert booking.status == Booking.Status.SCHEDULED
+    assert booking.status == Booking.Status.IN_USE  # in use from the start of its hour, never a no-show
     assert not Violation.objects.exists()
 
 
@@ -311,3 +311,64 @@ def test_posters_offer_walk_in_only_where_walk_ins_are_allowed(client, frozen, a
         html = client.get(reverse("core:staff_poster_sheet")).content.decode()
     walk_in_rooms = Room.objects.filter(is_active=True, members_only=False, requires_approval=False).count()
     assert html.count("If the hour is free, confirm you are here to use it now.") == walk_in_rooms
+
+
+# --- A staff booking in progress is protected like a checked-in session -----------
+
+
+@pytest.fixture
+def running_staff_hold(all_rooms, staff_user):
+    """A staff booking of room 3 for 10:00-11:00 on Monday; the frozen time is 10:40."""
+    return factories.make_booking(staff_user, all_rooms["3"], day=MONDAY, hour=10, is_staff_booking=True)
+
+
+def test_a_staff_hold_is_in_use_once_its_hour_begins(frozen, running_staff_hold):
+    assert running_staff_hold.in_progress
+    reconcile(clock.now())
+    running_staff_hold.refresh_from_db()
+    assert running_staff_hold.status == Booking.Status.IN_USE
+
+
+def test_a_staff_hold_in_progress_cannot_be_cancelled_and_resold(
+    client, frozen, all_rooms, staff_user, other_student, running_staff_hold
+):
+    client.force_login(staff_user)
+    client.post(
+        reverse("core:staff_cancel_booking", args=[running_staff_hold.pk]),
+        {"reason": "Rehearsal over", "operation_key": "cancel-running-1"},
+    )
+    running_staff_hold.refresh_from_db()
+    assert running_staff_hold.status == Booking.Status.IN_USE
+    assert not helpers.use_now(other_student, all_rooms["3"]).ok
+
+
+def test_ending_a_staff_hold_early_keeps_its_hour_occupied(
+    client, frozen, all_rooms, staff_user, other_student, running_staff_hold
+):
+    client.force_login(staff_user)
+    client.post(
+        reverse("core:staff_complete_early", args=[running_staff_hold.pk]),
+        {"reason": "Rehearsal over", "operation_key": "end-running-1"},
+    )
+    running_staff_hold.refresh_from_db()
+    assert running_staff_hold.status == Booking.Status.COMPLETED
+    assert not helpers.use_now(other_student, all_rooms["3"]).ok
+
+
+def test_a_closure_preview_counts_a_staff_hold_in_progress(frozen, all_rooms, running_staff_hold):
+    from core.services.maintenance import preview_closure
+
+    preview = preview_closure(all_rooms["3"], clock.now(), slots.slot_start_for(MONDAY, 12))
+    assert preview["in_use"] == [running_staff_hold]
+    assert preview["scheduled"] == []
+
+
+def test_the_timeline_offers_end_early_not_cancel_for_a_staff_hold_in_progress(
+    client, frozen, staff_user, running_staff_hold
+):
+    client.force_login(staff_user)
+    page = client.get(
+        reverse("core:staff_timeline"), {"date": MONDAY.isoformat(), "booking": running_staff_hold.pk}
+    ).content.decode()
+    assert reverse("core:staff_complete_early", args=[running_staff_hold.pk]) in page
+    assert reverse("core:staff_cancel_booking", args=[running_staff_hold.pk]) not in page

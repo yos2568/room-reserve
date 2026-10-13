@@ -10,7 +10,7 @@ PR #10** — read "Merge order" before merging either.
 
 ## Honest status
 
-`NOT_DEPLOYED`. Everything below is on PR #10 only. A second, independent review (13 Oct) found six issues; all but one are fixed (see "Second review" below). Production still runs the image from
+`NOT_DEPLOYED`. Everything below is on PR #10 only. A second, independent review (13 Oct) found six issues; all are fixed (see "Second review" below). Production still runs the image from
 before PR #8 unless someone deployed #8 since 24 September; check `APP_IMAGE` in Docker
 Manager. PR #10 passes 614 tests locally (PostgreSQL 16 and Chromium), and GitHub CI is green on
 `8128219` ("Lint, tests, and verification gate" and "Build and publish immutable image").
@@ -46,7 +46,7 @@ Full details: `docs/decisions.md` D-41 to D-44 plus the "Review follow-up" entry
 | Last bookable staff date rejected afternoon hours | Fixed: horizon counts whole dates |
 | Conference-room refusal gave piano/percussion text | Fixed: "on its list" message; posters hide the walk-in line where walk-ins are not allowed |
 | Booking hidden behind a later class/closure on the timeline | Fixed: drawn on a second line |
-| Staff hold in progress can be cancelled and released | **Kept; owner to confirm** (D-41…D-44 second follow-up in `docs/decisions.md`) |
+| Staff hold in progress can be cancelled and released | Fixed (owner's decision): in use from the start of its hour; End early instead of Cancel. **Tell the admin (ดิว).** |
 | Thai copy polish (“ว่างอีกครั้งเวลา … น.”, “ขอจองเวลา … น.”, “จองเวลา … น.”, “ตารางห้องรายชั่วโมง”) | Applied |
 
 ## Merge order: PR #9 and PR #10 conflict

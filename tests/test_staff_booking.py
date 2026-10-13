@@ -133,7 +133,9 @@ def test_a_staff_hold_is_never_a_no_show_and_completes_at_its_end(client, frozen
     after_deadline = slots.slot_start_for(date(2026, 9, 15), 17) + timedelta(minutes=30)
     with clock.frozen_clock(after_deadline):
         reconcile(after_deadline)
-    assert set(Booking.objects.values_list("status", flat=True)) == {Booking.Status.SCHEDULED}
+    # The running hour is in use (staff never check in); the next is still ahead.
+    statuses = dict(Booking.objects.values_list("slot_start", "status"))
+    assert sorted(statuses.values()) == [Booking.Status.IN_USE, Booking.Status.SCHEDULED]
     assert not Violation.objects.exists()
 
     after_end = slots.slot_start_for(date(2026, 9, 15), 19) + timedelta(minutes=1)

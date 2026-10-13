@@ -346,6 +346,17 @@ class Booking(models.Model):
         }
 
     @property
+    def in_progress(self) -> bool:
+        """Checked in, or a staff booking whose hour has begun (staff never check in)."""
+        if self.status == self.Status.IN_USE:
+            return True
+        from core.services import clock
+
+        return (
+            self.is_staff_booking and self.status == self.Status.SCHEDULED and self.slot_start <= clock.now()
+        )
+
+    @property
     def occupies_slot(self) -> bool:
         return self.status in BLOCKING_STATUSES
 
