@@ -51,6 +51,17 @@
               <details>
                 <summary class="cursor-pointer">{% trans "Manage" %}</summary>
 
+                {# D-43: an ID typed at registration from a room list can be corrected here. #}
+                <form method="post" action="{% url 'core:staff_correct_institutional_id' pk=row.user.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
+                  {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <label class="sr-only" for="newid-{{ row.user.pk }}">{% trans "Correct student ID" %}</label>
+                  <input class="field !py-1" id="newid-{{ row.user.pk }}" name="institutional_id" placeholder="{% trans 'Correct student ID' %}" required>
+                  <label class="sr-only" for="newid-reason-{{ row.user.pk }}">{% trans "Reason" %}</label>
+                  <input class="field !py-1" id="newid-reason-{{ row.user.pk }}" name="reason" placeholder="{% trans 'Reason (required)' %}" required>
+                  <button class="btn-secondary" type="submit">{% trans "Correct student ID" %}</button>
+                </form>
+
                 {# D-30: the declaration opens restricted rooms until a roster row links. #}
                 <form method="post" action="{% url 'core:staff_set_declared_category' pk=row.user.pk %}" class="mt-2 flex flex-wrap items-center gap-1">
                   {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">

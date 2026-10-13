@@ -13,7 +13,6 @@ class EligibilityDecisionForm(forms.Form):
             ("roster_verified", _("Verified against department roster")),
             ("identity_confirmed", _("Student identity confirmed by staff")),
             ("department_confirmed", _("Membership confirmed by department")),
-            ("room_list_checked", _("On a room access list; student ID checked by staff")),
         ),
         User.Eligibility.REJECTED: (
             ("not_eligible", _("Not eligible for department access")),

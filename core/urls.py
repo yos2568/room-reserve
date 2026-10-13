@@ -83,6 +83,11 @@ urlpatterns = [
         views.staff.set_declared_category,
         name="staff_set_declared_category",
     ),
+    path(
+        "staff/users/<int:pk>/institutional-id/",
+        views.staff.correct_institutional_id,
+        name="staff_correct_institutional_id",
+    ),
     path("staff/users/<int:pk>/suspend/", views.staff.manual_suspension, name="staff_suspend"),
     path("staff/users/<int:pk>/deactivate/", views.staff.deactivate_account, name="staff_deactivate"),
     path(

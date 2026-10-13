@@ -12,7 +12,7 @@ from datetime import date
 import pytest
 from django.urls import reverse
 
-from core.models import Booking, Room, RoomMember
+from core.models import Booking, Room, RoomMember, User
 from core.services import availability, clock, slots
 from core.services import rooms as rooms_service
 from core.services.errors import Code
@@ -144,7 +144,7 @@ def test_removing_someone_keeps_a_booking_already_made(frozen, conference, liste
     assert not _reserve(listed, conference, hour=14).ok
 
 
-# --- D-43: registering with an address from a room access list ----------------
+# --- D-43: a room-listed address registers and is approved automatically ----
 
 
 def _register(institutional_id, email, name="นิสิต ปีสอง"):
@@ -153,17 +153,40 @@ def _register(institutional_id, email, name="นิสิต ปีสอง"):
     return identity.start_registration(institutional_id=institutional_id, email=email, name=name)
 
 
-def test_a_listed_gmail_may_register_but_waits_for_staff(frozen, conference):
+def _register_and_confirm(institutional_id, email, name="นิสิต ปีสอง"):
+    from core.services import identity
+
+    user, _ = identity.verify_email(_register(institutional_id, email, name).raw_token)
+    user.refresh_from_db()
+    return user
+
+
+def test_a_listed_gmail_is_approved_once_the_email_is_confirmed(frozen, conference):
     from core.services import identity
 
     RoomMember.objects.create(room=conference, email="second.year@gmail.com", name="นิสิต ปีสอง")
     result = _register("6800000235", "Second.Year@Gmail.com")
+    pending = User.objects.get(username="6800000235")
+    assert pending.eligibility == User.Eligibility.PENDING
+    assert not _reserve(pending, conference).ok
+
     user, _ = identity.verify_email(result.raw_token)
     user.refresh_from_db()
     assert user.email == "second.year@gmail.com"
-    assert user.email_is_verified
-    assert user.eligibility == user.Eligibility.PENDING
-    assert not _reserve(user, conference).ok
+    assert user.eligibility == User.Eligibility.APPROVED
+    assert user.eligibility_reason == identity.ROOM_LIST_REASON
+    assert _reserve(user, conference).ok
+
+
+def test_a_listed_chula_address_not_on_the_roster_is_approved_too(frozen, conference):
+    RoomMember.objects.create(room=conference, email="6980000135@student.chula.ac.th")
+    user = _register_and_confirm("6980000135", "6980000135@student.chula.ac.th")
+    assert user.eligibility == User.Eligibility.APPROVED
+
+
+def test_an_unlisted_chula_address_still_waits_for_staff(frozen, conference):
+    user = _register_and_confirm("6980000135", "6980000135@student.chula.ac.th")
+    assert user.eligibility == User.Eligibility.PENDING
 
 
 def test_an_unlisted_gmail_is_still_refused(frozen, conference):
@@ -183,24 +206,50 @@ def test_a_gmail_listed_for_a_retired_room_is_refused(frozen, conference):
         _register("6800000235", "second.year@gmail.com")
 
 
-def test_staff_see_the_listed_name_and_approve_then_the_student_books(client, frozen, conference, staff_user):
-    from core.services import identity
-
-    RoomMember.objects.create(room=conference, email="second.year@gmail.com", name="นางสาว ชื่อในรายชื่อ")
-    result = _register("6800000235", "second.year@gmail.com", name="ชื่อที่พิมพ์เอง")
-    user, _ = identity.verify_email(result.raw_token)
-
+def test_someone_confirmed_before_being_listed_is_approved_when_added(client, frozen, conference, staff_user):
+    user = _register_and_confirm("6980000135", "6980000135@student.chula.ac.th")
+    assert user.eligibility == User.Eligibility.PENDING
     client.force_login(staff_user)
-    page = client.get(reverse("core:staff_today")).content.decode()
-    assert "นางสาว ชื่อในรายชื่อ" in page
-    assert "6800000235" in page
-
-    response = client.post(
-        reverse("core:staff_decide_eligibility", args=[user.pk]),
-        {"decision": "APPROVED", "reason_choice": "room_list_checked", "reason": ""},
+    client.post(
+        reverse("core:staff_add_room_members", args=[conference.pk]),
+        {"rows": "1\tนิสิต ทดสอบ\t6980000135@student.chula.ac.th"},
     )
-    assert response.status_code == 302
     user.refresh_from_db()
-    assert user.eligibility == user.Eligibility.APPROVED
-    assert user.eligibility_reason == "On a room access list; student ID checked by staff"
-    assert _reserve(user, conference).ok
+    assert user.eligibility == User.Eligibility.APPROVED
+
+
+def test_listing_never_overrides_a_rejection(client, frozen, conference, staff_user):
+    user = _register_and_confirm("6980000135", "6980000135@student.chula.ac.th")
+    User.objects.filter(pk=user.pk).update(eligibility=User.Eligibility.REJECTED)
+    client.force_login(staff_user)
+    client.post(
+        reverse("core:staff_add_room_members", args=[conference.pk]),
+        {"rows": "1\tนิสิต ทดสอบ\t6980000135@student.chula.ac.th"},
+    )
+    user.refresh_from_db()
+    assert user.eligibility == User.Eligibility.REJECTED
+
+
+def test_staff_correct_a_mistyped_student_id(client, frozen, conference, staff_user):
+    RoomMember.objects.create(room=conference, email="second.year@gmail.com")
+    user = _register_and_confirm("6800000999", "second.year@gmail.com")
+    client.force_login(staff_user)
+    url = reverse("core:staff_correct_institutional_id", args=[user.pk])
+
+    client.post(url, {"institutional_id": "6800000235", "reason": "Typo at registration"})
+    user.refresh_from_db()
+    assert user.institutional_id == "6800000235"
+
+    other = factories.make_user(username="6800000777", email="other@student.chula.ac.th")
+    client.post(url, {"institutional_id": other.username, "reason": "Typo"})
+    user.refresh_from_db()
+    assert user.institutional_id == "6800000235"
+
+
+def test_students_cannot_change_an_id(client, frozen, student, other_student):
+    client.force_login(student)
+    response = client.post(
+        reverse("core:staff_correct_institutional_id", args=[other_student.pk]),
+        {"institutional_id": "6800000111", "reason": "x"},
+    )
+    assert response.status_code == 403

@@ -468,19 +468,20 @@ already made, as an audience change does. A listed person still needs an
 approved account to book, and an account still needs a student ID: a listed
 email only helps once an account with that same email exists.
 
-**D-43 — A room-listed address may register, and staff confirm the ID (13 October 2026).**
+**D-43 — A room-listed address may register and is approved automatically (13 October 2026).**
 The second-year master's students on the conference-room list (D-42) were given
 by the department with personal email addresses and no student IDs, so under
 D-40 they could not register at all. The owner chose to let them register with
-that address and type their own ID. Registration and email change now also
-accept an address on the access list of an active members-only room. The
-emailed link still proves the registrant owns the address, and the
-department's list vouches that the address belongs to one of its students.
-The student ID is self-declared, so such an account is never approved
-automatically: it waits on the Today screen, which shows the name on the list
-beside the name typed and says the ID was typed by the student. Staff approve
-it once, with the reason "On a room access list; student ID checked by staff".
-Name matching is shown to staff rather than enforced, because spacing and
-titles (นาย/นางสาว) make exact matching reject real students. The generic
-registration response is unchanged, so the rule does not reveal who is listed.
-
+that address, type their own ID, and be approved once they confirm the email.
+Registration and email change now also accept an address on the access list of
+an active members-only room. The emailed link proves the registrant owns the
+address and the department's list vouches that it belongs to one of its
+students, so on confirmation the account is approved automatically ("Automatic:
+verified email is on a department room access list."), whatever its domain. A
+verified account still pending when its address is added to a list is approved
+at that moment. A rejected account is never approved this way. The student ID
+is the one the student typed and is not checked: the owner accepted that risk
+for a small, known group. Staff can correct a mistyped ID on the Users screen
+(Manage → Correct student ID, audited, refused if another account holds the ID
+or the account is linked to a roster row). The generic registration response is
+unchanged, so the rule does not reveal who is listed.

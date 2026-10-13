@@ -75,9 +75,8 @@ def registration_email_allowed(institutional_id: str, email: str) -> bool:
 
     An address the department put on a members-only room's access list is
     accepted too (D-43): the department vouches for the address, and the
-    emailed link proves the registrant owns it. The student ID is typed by the
-    registrant, so such an account is never approved automatically — staff
-    confirm the ID once on the Today screen.
+    emailed link proves the registrant owns it, after which the account is
+    approved automatically. The student ID is the one the registrant typed.
     """
     if email_domain_allowed(email):
         return True
@@ -87,18 +86,7 @@ def registration_email_allowed(institutional_id: str, email: str) -> bool:
         is_active=True,
     ).exists():
         return True
-    return RoomMember.objects.filter(
-        email=normalize_email(email), room__members_only=True, room__is_active=True
-    ).exists()
-
-
-def room_listing_for(email: str):
-    """The access-list entry naming this address, for the staff approval screen."""
-    return (
-        RoomMember.objects.filter(email=normalize_email(email), room__members_only=True)
-        .select_related("room")
-        .first()
-    )
+    return room_list_vouches_for(email)
 
 
 # --- Invitations ---------------------------------------------------------------
@@ -306,11 +294,25 @@ def verify_email(raw_token: str) -> tuple[User, Invitation]:
     return user, invitation
 
 
-def apply_roster_eligibility(user) -> str:
-    """Auto-approve an exact active roster match; otherwise leave PENDING.
+ROSTER_MATCH_REASON = "Automatic match against the active department roster."
+ROOM_LIST_REASON = "Automatic: verified email is on a department room access list."
 
-    Verifies the institutional ID and the approved email *together*, because an
-    email address alone does not establish department membership.
+
+def room_list_vouches_for(email: str) -> bool:
+    """Whether the department listed this address for an active members-only room (D-43)."""
+    return RoomMember.objects.filter(
+        email=normalize_email(email), room__members_only=True, room__is_active=True
+    ).exists()
+
+
+def apply_roster_eligibility(user) -> str:
+    """Auto-approve an exact active roster match or a room-listed address; else leave PENDING.
+
+    The roster verifies the institutional ID and the approved email *together*,
+    because an email address alone does not establish department membership.
+    A verified address the department put on a room access list is accepted on
+    the department's word (D-43); the student ID on such an account is the one
+    the student typed, and staff can correct it on the Users screen.
     """
     match = EligibleStudent.objects.filter(
         institutional_id=user.institutional_id,
@@ -318,20 +320,41 @@ def apply_roster_eligibility(user) -> str:
         is_active=True,
     ).first()
 
-    if match is None:
-        if user.eligibility == User.Eligibility.APPROVED:
-            # A previously approved account keeps its approval; a roster change
-            # does not silently revoke a staff decision.
-            return user.eligibility
-        return user.eligibility
+    if match is not None:
+        if match.account_id is None:
+            match.account = user
+            match.save(update_fields=["account", "updated_at"])
+        return _auto_approve(user, reason=ROSTER_MATCH_REASON, label="roster-match")
 
-    if match.account_id is None:
-        match.account = user
-        match.save(update_fields=["account", "updated_at"])
+    if (
+        user.eligibility == User.Eligibility.PENDING
+        and user.email_is_verified
+        and room_list_vouches_for(user.email)
+    ):
+        return _auto_approve(user, reason=ROOM_LIST_REASON, label="room-list-match")
 
+    # A previously approved account keeps its approval; a roster change does not
+    # silently revoke a staff decision. A rejected account stays rejected.
+    return user.eligibility
+
+
+def approve_room_listed_accounts(emails) -> int:
+    """Approve verified, pending accounts whose address was just added to a room list."""
+    approved = 0
+    wanted = {normalize_email(email) for email in emails}
+    for user in User.objects.filter(
+        eligibility=User.Eligibility.PENDING, is_active=True, email_verified_at__isnull=False
+    ):
+        if normalize_email(user.email) in wanted and room_list_vouches_for(user.email):
+            _auto_approve(user, reason=ROOM_LIST_REASON, label="room-list-match")
+            approved += 1
+    return approved
+
+
+def _auto_approve(user, *, reason: str, label: str) -> str:
     user.eligibility = User.Eligibility.APPROVED
     user.eligibility_decided_at = clock.now()
-    user.eligibility_reason = "Automatic match against the active department roster."
+    user.eligibility_reason = reason
     user.save(update_fields=["eligibility", "eligibility_decided_at", "eligibility_reason"])
 
     record_audit(
@@ -339,7 +362,7 @@ def apply_roster_eligibility(user) -> str:
         entity_type="User",
         entity_id=user.pk,
         actor=None,
-        actor_label="roster-match",
+        actor_label=label,
         changes={"eligibility": user.eligibility},
         reason=user.eligibility_reason,
     )
@@ -610,6 +633,39 @@ def set_declared_category(*, user: User, declared_category: str, actor) -> User:
         entity_id=user.pk,
         actor=actor,
         changes={"before": before, "after": declared_category},
+    )
+    return user
+
+
+def correct_institutional_id(*, user: User, institutional_id: str, reason: str, actor) -> User:
+    """Staff correct a student ID typed wrongly at registration (D-43). Audited.
+
+    Accounts approved from a room access list carry the ID the student typed,
+    so staff need a way to fix it. The ID is also the sign-in name, which the
+    student is told on the Users screen. An ID held by another account, or an
+    account linked to a roster row (the roster is authoritative), is refused.
+    """
+    institutional_id = (institutional_id or "").strip()
+    reason = (reason or "").strip()
+    if not institutional_id or not reason or len(institutional_id) > 64:
+        raise OperationRejected(Code.INVALID_INPUT)
+    if institutional_id == user.username:
+        raise OperationRejected(Code.INVALID_INPUT)
+    if EligibleStudent.objects.filter(account_id=user.pk).exists():
+        raise OperationRejected(Code.INVALID_INPUT)
+    if User.objects.filter(username=institutional_id).exclude(pk=user.pk).exists():
+        raise OperationRejected(Code.DUPLICATE_ACCOUNT)
+
+    before = user.username
+    user.username = institutional_id
+    user.save(update_fields=["username"])
+    record_audit(
+        action="user.institutional_id_corrected",
+        entity_type="User",
+        entity_id=user.pk,
+        actor=actor,
+        changes={"before": before, "after": institutional_id},
+        reason=reason,
     )
     return user
 

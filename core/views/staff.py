@@ -129,9 +129,6 @@ def _render_today(request, *, decision_form=None, candidate_id=None, status=200)
         "date_joined"
     )
     for candidate in pending:
-        # Registered with an address from a room access list (D-43): show the
-        # listed name beside the typed one so staff can confirm the student ID.
-        candidate.room_listing = identity_service.room_listing_for(candidate.email)
         candidate.approval_form = EligibilityDecisionForm(
             decision=User.Eligibility.APPROVED, user_id=candidate.pk
         )
@@ -581,6 +578,36 @@ def set_declared_category(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
+    return redirect_back(request, "core:staff_users")
+
+
+@staff_required
+@require_POST
+def correct_institutional_id(request, pk: int):
+    """Staff fix a student ID typed wrongly at registration (D-43)."""
+    user = get_object_or_404(User, pk=pk)
+    new_id = (request.POST.get("institutional_id") or "").strip()
+    reason = (request.POST.get("reason") or "").strip()
+
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_correct_institutional_id",
+        payload={"user": pk, "institutional_id": new_id, "reason": reason},
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            user_id=identity_service.correct_institutional_id(
+                user=user, institutional_id=new_id, reason=reason, actor=ctx.actor
+            ).pk
+        ),
+    )
+    add_outcome_message(
+        request,
+        outcome,
+        success_message=(
+            f"แก้รหัสนิสิตเป็น {new_id} แล้ว นิสิตต้องใช้รหัสใหม่นี้เข้าสู่ระบบ / "
+            f"Student ID corrected to {new_id}. The student now signs in with it."
+        ),
+    )
     return redirect_back(request, "core:staff_users")
 
 

@@ -96,7 +96,17 @@ def add_members(ctx, *, room: Room, entries: list[tuple[str, str]]) -> dict:
         actor=ctx.actor,
         changes={"room": room.number, "added": added, "already_listed": len(entries) - len(added)},
     )
-    return {"room_id": room.pk, "added": len(added), "already_listed": len(entries) - len(added)}
+    # Someone who registered and confirmed their email before being listed is
+    # approved now, exactly as if they had registered afterwards (D-43).
+    from .identity import approve_room_listed_accounts
+
+    approved = approve_room_listed_accounts(added) if room.is_active else 0
+    return {
+        "room_id": room.pk,
+        "added": len(added),
+        "already_listed": len(entries) - len(added),
+        "accounts_approved": approved,
+    }
 
 
 def remove_member(ctx, *, room: Room, member_id: int) -> dict:
