@@ -32,6 +32,13 @@
           <li class="rounded-md border border-slate-200 p-3">
             <h3 class="font-semibold">{{ candidate.display_name }}</h3>
             <p class="mt-1">{% trans "Student ID" %}: {{ candidate.institutional_id }} · {{ candidate.email }}</p>
+            {% if candidate.room_listing %}
+              <div class="mt-2 rounded-md border border-violet-200 bg-violet-50 p-2">
+                <p class="font-medium">{% blocktrans with room=candidate.room_listing.room %}This email is on the access list of {{ room }}.{% endblocktrans %}</p>
+                <p class="mt-1">{% trans "Name on the list" %}: {{ candidate.room_listing.name|default:"—" }}</p>
+                <p class="mt-1 text-slate-700">{% trans "The student typed the ID above themselves. Check that it is theirs before approving." %}</p>
+              </div>
+            {% endif %}
             {% if not candidate.email_is_verified %}
               <p class="mt-2 text-amber-800">{% trans "You can approve this user now. They must verify their email before booking." %}</p>
             {% else %}

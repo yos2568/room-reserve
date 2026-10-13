@@ -33,6 +33,7 @@
       <input type="hidden" name="account_type" value="student">
       <input type="hidden" name="next" value="{{ next }}">
       <p class="text-sm text-slate-700">{% blocktrans %}Use your institutional ID and either your institutional email address or the email the department roster lists for you. You will receive a link to confirm the address, then choose a password. Membership of the department is checked against the roster; an email address alone does not establish it.{% endblocktrans %}</p>
+      <p class="text-sm text-slate-700">{% blocktrans %}Master's students: you may also use the email address the department listed for you (for example on the conference-room list). Enter your own student ID; staff check it once before you can book.{% endblocktrans %}</p>
       <div>
         <label class="label" for="id_name">{% trans "Full name" %}</label>
         <input class="field" id="id_name" name="name" required value="{{ form.name|default:'' }}" autocomplete="name">

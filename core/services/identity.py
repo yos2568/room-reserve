@@ -26,7 +26,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from core.models import EligibleStudent, InstrumentCategory, Invitation, User
+from core.models import EligibleStudent, InstrumentCategory, Invitation, RoomMember, User
 
 from . import clock
 from .audit import record_audit
@@ -67,19 +67,38 @@ def email_domain_allowed(email: str) -> bool:
 
 
 def registration_email_allowed(institutional_id: str, email: str) -> bool:
-    """An institutional address, or the exact address the roster lists for this ID (D-40).
+    """An institutional address, a roster address for this ID, or a room-listed address.
 
     Most roster rows carry a personal address (D-20). Accepting that address only
     for its own active roster row lets those students register without opening
-    registration to arbitrary outside addresses.
+    registration to arbitrary outside addresses (D-40).
+
+    An address the department put on a members-only room's access list is
+    accepted too (D-43): the department vouches for the address, and the
+    emailed link proves the registrant owns it. The student ID is typed by the
+    registrant, so such an account is never approved automatically — staff
+    confirm the ID once on the Today screen.
     """
     if email_domain_allowed(email):
         return True
-    return EligibleStudent.objects.filter(
+    if EligibleStudent.objects.filter(
         institutional_id=(institutional_id or "").strip(),
         email__iexact=normalize_email(email),
         is_active=True,
+    ).exists():
+        return True
+    return RoomMember.objects.filter(
+        email=normalize_email(email), room__members_only=True, room__is_active=True
     ).exists()
+
+
+def room_listing_for(email: str):
+    """The access-list entry naming this address, for the staff approval screen."""
+    return (
+        RoomMember.objects.filter(email=normalize_email(email), room__members_only=True)
+        .select_related("room")
+        .first()
+    )
 
 
 # --- Invitations ---------------------------------------------------------------

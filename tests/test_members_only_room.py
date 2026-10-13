@@ -142,3 +142,65 @@ def test_removing_someone_keeps_a_booking_already_made(frozen, conference, liste
     RoomMember.objects.filter(room=conference).delete()
     assert Booking.objects.get(user=listed).status == Booking.Status.SCHEDULED
     assert not _reserve(listed, conference, hour=14).ok
+
+
+# --- D-43: registering with an address from a room access list ----------------
+
+
+def _register(institutional_id, email, name="นิสิต ปีสอง"):
+    from core.services import identity
+
+    return identity.start_registration(institutional_id=institutional_id, email=email, name=name)
+
+
+def test_a_listed_gmail_may_register_but_waits_for_staff(frozen, conference):
+    from core.services import identity
+
+    RoomMember.objects.create(room=conference, email="second.year@gmail.com", name="นิสิต ปีสอง")
+    result = _register("6800000235", "Second.Year@Gmail.com")
+    user, _ = identity.verify_email(result.raw_token)
+    user.refresh_from_db()
+    assert user.email == "second.year@gmail.com"
+    assert user.email_is_verified
+    assert user.eligibility == user.Eligibility.PENDING
+    assert not _reserve(user, conference).ok
+
+
+def test_an_unlisted_gmail_is_still_refused(frozen, conference):
+    from core.services.errors import OperationRejected
+
+    with pytest.raises(OperationRejected) as refused:
+        _register("6800000235", "stranger@gmail.com")
+    assert refused.value.outcome.code == Code.DOMAIN_NOT_ALLOWED
+
+
+def test_a_gmail_listed_for_a_retired_room_is_refused(frozen, conference):
+    from core.services.errors import OperationRejected
+
+    RoomMember.objects.create(room=conference, email="second.year@gmail.com")
+    Room.objects.filter(pk=conference.pk).update(is_active=False)
+    with pytest.raises(OperationRejected):
+        _register("6800000235", "second.year@gmail.com")
+
+
+def test_staff_see_the_listed_name_and_approve_then_the_student_books(client, frozen, conference, staff_user):
+    from core.services import identity
+
+    RoomMember.objects.create(room=conference, email="second.year@gmail.com", name="นางสาว ชื่อในรายชื่อ")
+    result = _register("6800000235", "second.year@gmail.com", name="ชื่อที่พิมพ์เอง")
+    user, _ = identity.verify_email(result.raw_token)
+
+    client.force_login(staff_user)
+    page = client.get(reverse("core:staff_today")).content.decode()
+    assert "นางสาว ชื่อในรายชื่อ" in page
+    assert "6800000235" in page
+
+    response = client.post(
+        reverse("core:staff_decide_eligibility", args=[user.pk]),
+        {"decision": "APPROVED", "reason_choice": "room_list_checked", "reason": ""},
+    )
+    assert response.status_code == 302
+    user.refresh_from_db()
+    assert user.eligibility == user.Eligibility.APPROVED
+    assert user.eligibility_reason == "On a room access list; student ID checked by staff"
+    assert _reserve(user, conference).ok

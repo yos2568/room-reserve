@@ -129,6 +129,9 @@ def _render_today(request, *, decision_form=None, candidate_id=None, status=200)
         "date_joined"
     )
     for candidate in pending:
+        # Registered with an address from a room access list (D-43): show the
+        # listed name beside the typed one so staff can confirm the student ID.
+        candidate.room_listing = identity_service.room_listing_for(candidate.email)
         candidate.approval_form = EligibilityDecisionForm(
             decision=User.Eligibility.APPROVED, user_id=candidate.pk
         )

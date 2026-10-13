@@ -4533,3 +4533,26 @@ msgstr "เฉพาะนิสิตที่มีรายชื่อ"
 
 msgid "Room access lists"
 msgstr "รายชื่อผู้มีสิทธิ์ใช้ห้อง"
+
+#. D-43: registering with an address from a room access list.
+msgid "On a room access list; student ID checked by staff"
+msgstr "มีชื่อในรายชื่อผู้มีสิทธิ์ใช้ห้อง เจ้าหน้าที่ตรวจสอบรหัสนิสิตแล้ว"
+
+msgid ""
+"Master's students: you may also use the email address the department listed "
+"for you (for example on the conference-room list). Enter your own student "
+"ID; staff check it once before you can book."
+msgstr ""
+"นิสิตปริญญาโท: สามารถใช้อีเมลที่ภาควิชาระบุไว้ในรายชื่อได้ (เช่น รายชื่อผู้ใช้ห้องประชุม) "
+"กรุณากรอกรหัสนิสิตของตนเอง เจ้าหน้าที่จะตรวจสอบหนึ่งครั้งก่อนเริ่มจองได้"
+
+msgid "This email is on the access list of %(room)s."
+msgstr "อีเมลนี้อยู่ในรายชื่อผู้มีสิทธิ์ใช้ %(room)s"
+
+msgid ""
+"The student typed the ID above themselves. Check that it is theirs before "
+"approving."
+msgstr "นิสิตกรอกรหัสนิสิตด้านบนเอง กรุณาตรวจสอบว่าเป็นรหัสของนิสิตคนนี้จริงก่อนอนุมัติ"
+
+msgid "Name on the list"
+msgstr "ชื่อในรายชื่อ"

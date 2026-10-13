@@ -468,3 +468,19 @@ already made, as an audience change does. A listed person still needs an
 approved account to book, and an account still needs a student ID: a listed
 email only helps once an account with that same email exists.
 
+**D-43 — A room-listed address may register, and staff confirm the ID (13 October 2026).**
+The second-year master's students on the conference-room list (D-42) were given
+by the department with personal email addresses and no student IDs, so under
+D-40 they could not register at all. The owner chose to let them register with
+that address and type their own ID. Registration and email change now also
+accept an address on the access list of an active members-only room. The
+emailed link still proves the registrant owns the address, and the
+department's list vouches that the address belongs to one of its students.
+The student ID is self-declared, so such an account is never approved
+automatically: it waits on the Today screen, which shows the name on the list
+beside the name typed and says the ID was typed by the student. Staff approve
+it once, with the reason "On a room access list; student ID checked by staff".
+Name matching is shown to staff rather than enforced, because spacing and
+titles (นาย/นางสาว) make exact matching reject real students. The generic
+registration response is unchanged, so the rule does not reveal who is listed.
+
