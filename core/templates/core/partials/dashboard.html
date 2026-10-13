@@ -1,5 +1,7 @@
 {% load i18n %}
   {# The "where to go next" panel: deterministic rankings over the same grid data the table below renders, so the two can never disagree (D-29). #}
+{# While the "right now" board shows (D-44) only the account notices remain here. #}
+{% if not board or suggestions.upcoming_full or suggestions.quota_exhausted %}
 <section class="mb-4 space-y-3" aria-labelledby="suggest-heading">
   <h2 id="suggest-heading" class="sr-only">{% trans "Suggestions" %}</h2>
 
@@ -14,7 +16,7 @@
     </p>
   {% endif %}
 
-  {% if suggestions.free_now %}
+  {% if suggestions.free_now and not board %}
     <div class="card reveal border-brand-200 bg-gradient-to-br from-brand-50 via-white to-white">
       <div class="flex flex-wrap items-baseline justify-between gap-2">
         <h3 class="text-base font-semibold text-slate-950">{% trans "Free right now" %}</h3>
@@ -42,7 +44,7 @@
     </div>
   {% endif %}
 
-  {% if suggestions.hours %}
+  {% if suggestions.hours and not board %}
     <div class="card reveal">
       <div class="flex flex-wrap items-baseline justify-between gap-2">
         <h3 class="text-base font-semibold text-slate-950">
@@ -76,11 +78,12 @@
   {% endif %}
 
   {% if not user.is_authenticated %}
-  {% if suggestions.free_now or suggestions.hours %}
+  {% if suggestions.free_now or suggestions.hours %}{% if not board %}
     <p class="text-xs text-slate-600">
       <a class="underline" href="{% url 'core:login' %}">{% trans "Sign in" %}</a>
       {% trans "to reserve or use a room." %}
     </p>
-  {% endif %}
+  {% endif %}{% endif %}
   {% endif %}
 </section>
+{% endif %}

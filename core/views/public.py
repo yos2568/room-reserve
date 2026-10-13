@@ -57,20 +57,29 @@ def _grid_context(request, local_date: date, *, include_suggestions: bool = True
     policy = current_policy()
     last = slots.calendar_last_date(today)
 
+    suggestions = (
+        suggest.suggestions(
+            local_date,
+            moment,
+            user=user,
+            capacity_min=capacity_min,
+            equipment_query=equipment_query,
+            room_number=room_number,
+        )
+        if include_suggestions
+        else None
+    )
+    # The "right now" board leads the page for today's unfiltered view (D-44);
+    # while it shows, the suggestion panel drops the lists the board repeats.
+    filtered = room_number or equipment_query or capacity_min
+    board = availability.status_board(grid["rows"], moment) if local_date == today and not filtered else None
+
     return {
         "grid": grid,
-        "suggestions": (
-            suggest.suggestions(
-                local_date,
-                moment,
-                user=user,
-                capacity_min=capacity_min,
-                equipment_query=equipment_query,
-                room_number=room_number,
-            )
-            if include_suggestions
-            else None
-        ),
+        "board": board,
+        # Anonymous visitors get the actions too: they lead to sign-in and back.
+        "board_can_act": user is None or bool(suggestions and suggestions.can_act),
+        "suggestions": suggestions,
         "local_date": local_date,
         "today_date": today,
         "calendar": slots.month_page(local_date, today),
@@ -161,13 +170,7 @@ def grid(request):
     moment = now()
     local_date = _parse_date(request.GET.get("date"), clock.local_date(moment))
     context = _grid_context(request, local_date)
-    # The "right now" board leads the page for today's unfiltered view (D-44).
-    filtered = context["selected_room"] or context["equipment_query"] or context["capacity_min"]
-    board = (
-        availability.status_board(context["grid"]["rows"], context["moment"])
-        if context["is_today"] and not filtered
-        else None
-    )
+    board = context["board"]
     if board is not None:
         show = request.GET.get("show") or ""
         show = show if show in {"free", "practice", "teaching"} else ""

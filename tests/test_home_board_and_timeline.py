@@ -133,3 +133,30 @@ def test_an_empty_hour_prefills_book_a_room(client, frozen, all_rooms, staff_use
 def test_students_cannot_open_the_timeline(client, frozen, all_rooms, student):
     client.force_login(student)
     assert client.get(reverse("core:staff_timeline")).status_code == 403
+
+
+@pytest.mark.parametrize("account", [{"is_teacher": True}, {"eligibility": "PENDING"}, {"verified": False}])
+def test_the_board_offers_no_actions_to_accounts_that_cannot_book(client, frozen, all_rooms, account):
+    client.force_login(factories.make_user(**account))
+    html = client.get(reverse("core:home")).content.decode()
+    assert "free right now" in html or "ห้องว่าง" in html
+    assert (
+        reverse("core:use_now", args=[all_rooms["1"].pk, slots.encode_slot(slots.slot_start_for(MONDAY, 10))])
+        not in html
+    )
+
+
+def test_visitors_and_students_get_the_actions(client, frozen, all_rooms, student):
+    use_now = reverse(
+        "core:use_now", args=[all_rooms["1"].pk, slots.encode_slot(slots.slot_start_for(MONDAY, 10))]
+    )
+    assert use_now in client.get(reverse("core:home")).content.decode()
+    client.force_login(student)
+    assert use_now in client.get(reverse("core:home")).content.decode()
+
+
+def test_the_suggestion_lists_step_aside_while_the_board_shows(client, frozen, all_rooms, student):
+    client.force_login(student)
+    today = client.get("/en/").content.decode()
+    assert "Free right now" not in today and "Bookable later today" not in today
+    assert "Bookable that day" in client.get("/en/", {"date": "2026-09-15"}).content.decode()

@@ -111,7 +111,7 @@
     {% include "core/partials/grid_table.html" %}
   </div>
 
-  <details class="floor-plan-panel mt-5" open>
+  <details class="floor-plan-panel mt-5" {% if not board %}open{% endif %}>
     <summary><span>{% trans "Room map" %}<small>{% trans "Tap a room to orient yourself before choosing a time" %}</small></span><span class="summary-action">{% trans "Collapse" %}⌃</span></summary>
     <div class="floor-plan-content">
       {# The supplied RGz3L illustration is the canonical floor-plan asset (2026-09-21); older variants stay in the repo unreferenced rather than deleted. #}

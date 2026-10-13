@@ -27,7 +27,7 @@
   </p>
 
   <div class="mt-4 flex flex-wrap items-start gap-5">
-    <section class="card min-w-0 flex-[999_1_44rem] !p-0" aria-label="{% trans 'Rooms by hour' %}">
+    <section class="card min-w-0 flex-[999_1_62rem] !p-0" aria-label="{% trans 'Rooms by hour' %}">
       {% if timeline.hours %}
         <div class="overflow-x-auto">
           <div class="timeline px-4 pb-4 pt-2">
@@ -74,7 +74,7 @@
       {% endif %}
     </section>
 
-    <aside id="detail" class="card flex min-w-0 flex-[1_1_20rem] flex-col gap-4 !p-5 lg:max-w-md" aria-labelledby="detail-heading">
+    <aside id="detail" class="card flex min-w-0 flex-[1_1_20rem] flex-col gap-4 !p-5 scroll-mt-4" aria-labelledby="detail-heading">
       {% if selected %}
         <div class="flex items-center justify-between gap-2">
           {% if selected.status == "PENDING_APPROVAL" %}<span class="status-pill is-pending">{% trans "Waiting for approval" %}</span>

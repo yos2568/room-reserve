@@ -87,10 +87,10 @@
               {% if card.room.is_restricted %}{% for row in card.room.allowed_categories.all %}<span class="chip">{{ row.get_category_display }}</span>{% endfor %}{% endif %}
             </div>
 
-            {% if card.now_cell.can_use_now %}
-              <a class="btn-primary w-full !bg-emerald-700 hover:!bg-emerald-800" href="{% url 'core:use_now' room_id=card.room.pk slot=card.now_cell.slot_key %}">{% trans "Use now" %}</a>
-            {% elif card.next_bookable %}
-              <a class="btn-primary w-full" href="{% url 'core:book_slot' room_id=card.room.pk slot=card.next_bookable.slot_key %}">{% if card.room.requires_approval %}{% blocktrans with at=card.next_bookable.local_start|time:"H:i" %}Request {{ at }}{% endblocktrans %}{% else %}{% blocktrans with at=card.next_bookable.local_start|time:"H:i" %}Reserve {{ at }}{% endblocktrans %}{% endif %}</a>
+            {% if card.now_cell.can_use_now and board_can_act %}
+              <a class="btn-primary w-full !bg-emerald-700 hover:!bg-emerald-800" href="{% url 'core:use_now' room_id=card.room.pk slot=card.now_cell.slot_key %}" aria-label="{% blocktrans with room=card.room %}Use {{ room }} now{% endblocktrans %}">{% trans "Use now" %}</a>
+            {% elif card.next_bookable and board_can_act %}
+              <a class="btn-primary w-full" href="{% url 'core:book_slot' room_id=card.room.pk slot=card.next_bookable.slot_key %}" aria-label="{% blocktrans with room=card.room time=card.next_bookable.local_start|time:'H:i' %}Reserve {{ room }} at {{ time }}{% endblocktrans %}">{% if card.room.requires_approval %}{% blocktrans with at=card.next_bookable.local_start|time:"H:i" %}Request {{ at }}{% endblocktrans %}{% else %}{% blocktrans with at=card.next_bookable.local_start|time:"H:i" %}Reserve {{ at }}{% endblocktrans %}{% endif %}</a>
             {% else %}
               <a class="btn-secondary w-full" href="{% url 'core:room_profile' room_id=card.room.pk %}">{% trans "Room details" %}</a>
             {% endif %}
