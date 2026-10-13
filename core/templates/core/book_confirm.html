@@ -8,7 +8,7 @@
     <section class="page-hero">
       <p class="page-kicker">{% trans "Room booking" %}</p>
       <h1 class="page-title">{% trans "Confirm reservation" %}</h1>
-      <p class="page-intro">{% trans "Review the room and time, then add a short purpose so staff can understand the reservation." %}</p>
+      <p class="page-intro">{% trans "Review the room and time. Add details only if staff need them." %}</p>
     </section>
 
     {% if outcome and not outcome.ok %}
@@ -48,27 +48,28 @@
         {% blocktrans with minutes=policy.checkin_grace_minutes %}Check in at the room between the start of the hour and {{ minutes }} minutes past it. After that the room is released to other students and a strike is recorded.{% endblocktrans %}
       </p>
 
-      <div class="mt-5 border-t border-slate-200 pt-5">
-        <h2 class="section-heading">{% trans "Booking details" %}</h2>
-        <p class="mt-1 text-xs text-slate-600">{% trans "Optional. These details are shown to you and staff, not on the public availability grid." %}</p>
-      </div>
-
       <form method="post" action="{% url 'core:confirm_booking' room_id=room.pk slot=slot_key %}" class="mt-4 space-y-4">
         {% csrf_token %}
         <input type="hidden" name="operation_key" value="{{ operation_key }}">
-        <div>
-          <label class="label" for="booking-title">{% trans "Title" %}</label>
-          <input class="field" id="booking-title" name="title" maxlength="120" value="{{ details.title }}" autocomplete="off">
-        </div>
-        <div>
-          <label class="label" for="booking-purpose">{% trans "Purpose" %}</label>
-          <textarea class="field" id="booking-purpose" name="purpose" rows="3" maxlength="500">{{ details.purpose }}</textarea>
-        </div>
-        <div>
-          <label class="label" for="booking-participants">{% trans "Participants (optional)" %}</label>
-          <input class="field" id="booking-participants" name="participant_names" maxlength="500" value="{{ details.participant_names }}" autocomplete="off">
-          <p class="mt-1 text-xs text-slate-600">{% trans "Use names only when needed for coordination." %}</p>
-        </div>
+        <details class="border-t border-slate-200 pt-4"{% if details_open %} open{% endif %}>
+          <summary class="cursor-pointer py-3 font-semibold text-slate-900">{% trans "Booking details (optional)" %}</summary>
+          <p class="text-xs text-slate-600">{% trans "These details are shown to you and staff, not on the public availability grid." %}</p>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="label" for="booking-title">{% trans "Title" %}</label>
+              <input class="field" id="booking-title" name="title" maxlength="120" value="{{ details.title }}" autocomplete="off">
+            </div>
+            <div>
+              <label class="label" for="booking-purpose">{% trans "Purpose" %}</label>
+              <textarea class="field" id="booking-purpose" name="purpose" rows="3" maxlength="500">{{ details.purpose }}</textarea>
+            </div>
+            <div>
+              <label class="label" for="booking-participants">{% trans "Participants (optional)" %}</label>
+              <input class="field" id="booking-participants" name="participant_names" maxlength="500" value="{{ details.participant_names }}" autocomplete="off">
+              <p class="mt-1 text-xs text-slate-600">{% trans "Use names only when needed for coordination." %}</p>
+            </div>
+          </div>
+        </details>
         <div class="flex flex-wrap gap-2">
           <button class="btn-primary" type="submit">{% trans "Confirm reservation" %}</button>
           <a class="btn-secondary" href="{% url 'core:home' %}?date={{ slot_start|date:'Y-m-d' }}">{% trans "Cancel" %}</a>

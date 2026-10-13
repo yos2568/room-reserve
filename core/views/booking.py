@@ -203,6 +203,7 @@ def confirm_booking(request, room_id: int, slot: str):
             "outcome": outcome,
             "alternatives": alternatives,
             "details": details,
+            "details_open": True,
         },
         status=409,
     )
