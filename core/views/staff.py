@@ -183,12 +183,18 @@ def _render_today(request, *, decision_form=None, candidate_id=None, status=200)
 def decide_eligibility(request, pk: int):
     user = get_object_or_404(User, pk=pk)
     decision = request.POST.get("decision") or ""
-    reason = request.POST.get("reason") or ""
-    if "reason_choice" in request.POST:
-        form = EligibilityDecisionForm(request.POST, decision=decision, user_id=user.pk)
-        if not form.is_valid():
-            return _render_today(request, decision_form=form, candidate_id=user.pk, status=400)
-        reason = form.audit_reason()
+    form = EligibilityDecisionForm(request.POST, decision=decision, user_id=user.pk)
+    if not form.is_valid():
+        if user.eligibility != User.Eligibility.PENDING or not user.is_active:
+            # Another staff member decided first, so the row with the errors is
+            # no longer on the page; say so rather than show an unexplained error.
+            messages.info(
+                request,
+                "บัญชีนี้ได้รับการพิจารณาแล้ว / This account has already been decided.",
+            )
+            return redirect("core:staff_today")
+        return _render_today(request, decision_form=form, candidate_id=user.pk, status=400)
+    reason = form.audit_reason()
 
     outcome = run_view_operation(
         request=request,

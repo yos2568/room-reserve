@@ -19,7 +19,7 @@
         <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Mail queue" %}</a>
       </div>
     </div>
-    <details class="rounded-md border border-slate-200 bg-white p-3" {% if request.resolver_match.url_name in "staff_closures staff_calendar staff_incidents staff_roster" %}open{% endif %}><summary class="cursor-pointer py-2 font-semibold">{% trans "Daily operations" %}</summary>
+    <details class="rounded-md border border-slate-200 bg-white p-3" {% if staff_nav_open == "operations" %}open{% endif %}><summary class="cursor-pointer py-2 font-semibold">{% trans "Daily operations" %}</summary>
       <div class="flex flex-wrap gap-2 mt-2">
         {% url 'core:staff_closures' as section_url %}
         <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Closures" %}</a>
@@ -31,7 +31,7 @@
         <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Roster" %}</a>
       </div>
     </details>
-    <details class="rounded-md border border-slate-200 bg-white p-3" {% if request.resolver_match.url_name in "staff_invitations staff_audit staff_stats staff_posters staff_policy staff_admin" %}open{% endif %}><summary class="cursor-pointer py-2 font-semibold">{% trans "Settings and records" %}</summary>
+    <details class="rounded-md border border-slate-200 bg-white p-3" {% if staff_nav_open == "records" %}open{% endif %}><summary class="cursor-pointer py-2 font-semibold">{% trans "Settings and records" %}</summary>
       <div class="flex flex-wrap gap-2 mt-2">
         {% url 'core:staff_invitations' as section_url %}
         <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Invitations" %}</a>

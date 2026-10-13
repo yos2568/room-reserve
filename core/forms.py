@@ -2,6 +2,7 @@
 
 from django import forms
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import override
 
 from core.models import User
 
@@ -50,8 +51,6 @@ class EligibilityDecisionForm(forms.Form):
         if choice == "other":
             return self.cleaned_data["reason"]
         # Stable English audit text, independent of the staff member's language.
-        from django.utils.translation import override
-
         with override("en"):
             label = str(dict(self.REASONS[self.decision])[choice])
         details = self.cleaned_data.get("reason")

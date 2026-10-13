@@ -8,6 +8,21 @@ from django.utils import timezone
 # Bumped when the rules copy changes; recorded on the account when acknowledged.
 RULES_VERSION = "2026-09-15"
 
+# Which collapsible group of the staff menu holds each staff page, so the group
+# containing the current page opens by itself.
+STAFF_NAV_GROUPS = {
+    "staff_closures": "operations",
+    "staff_calendar": "operations",
+    "staff_incidents": "operations",
+    "staff_roster": "operations",
+    "staff_invitations": "records",
+    "staff_audit": "records",
+    "staff_stats": "records",
+    "staff_posters": "records",
+    "staff_policy": "records",
+    "staff_admin": "records",
+}
+
 
 def site_context(request):
     """Contact details, policy values and the current Bangkok date.
@@ -34,4 +49,7 @@ def site_context(request):
             "closing_hour": settings.LAST_SLOT_START_HOUR + 1,
         },
         "today": timezone.localdate(),
+        "staff_nav_open": STAFF_NAV_GROUPS.get(
+            getattr(getattr(request, "resolver_match", None), "url_name", None)
+        ),
     }
