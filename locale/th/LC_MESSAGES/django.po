@@ -4467,3 +4467,69 @@ msgstr "จองโดยเจ้าหน้าที่"
 
 msgid "Approve or reject"
 msgstr "อนุมัติหรือปฏิเสธ"
+
+#. D-42: the members-only conference room and its access list.
+msgid "listed people only"
+msgstr "เฉพาะผู้มีรายชื่อ"
+
+msgid ""
+"Only the people on this room's access list, and staff, may reserve it. "
+"Nobody may walk in (D-42)."
+msgstr ""
+"จองได้เฉพาะผู้ที่มีชื่อในรายชื่อของห้องนี้และเจ้าหน้าที่ ไม่เปิดให้ใช้แบบไม่จองล่วงหน้า (D-42)"
+
+msgid ""
+"This room is reserved for the students on its list. Ask the department "
+"office if you should be on it."
+msgstr ""
+"ห้องนี้จองได้เฉพาะนิสิตที่มีรายชื่อ หากคิดว่าควรมีชื่อในรายชื่อ กรุณาติดต่อสำนักงานภาควิชา"
+
+msgid ""
+"Only the people below, and staff, can reserve this room. Other students see "
+"it on the timetable but cannot book it or walk in. A person is matched by "
+"the email address on their account."
+msgstr ""
+"เฉพาะผู้ที่มีรายชื่อด้านล่างและเจ้าหน้าที่เท่านั้นที่จองห้องนี้ได้ นิสิตคนอื่นจะเห็นห้องในตารางแต่จองหรือเข้าใช้ไม่ได้ "
+"ระบบตรวจสอบรายชื่อจากอีเมลที่ใช้สมัครบัญชี"
+
+msgid "Add people"
+msgstr "เพิ่มรายชื่อ"
+
+msgid ""
+"Copy the rows from Excel (number, name, email) and paste them here, one "
+"person per line. Title and header rows without an email are skipped."
+msgstr ""
+"คัดลอกแถวจาก Excel (ลำดับ ชื่อ อีเมล) แล้ววางที่นี่ หนึ่งบรรทัดต่อหนึ่งคน "
+"แถวชื่อเรื่องหรือหัวตารางที่ไม่มีอีเมลจะถูกข้ามไป"
+
+msgid "Add to the list"
+msgstr "เพิ่มเข้ารายชื่อ"
+
+msgid "No account with this email yet"
+msgstr "ยังไม่มีบัญชีที่ใช้อีเมลนี้"
+
+msgid "Has an account"
+msgstr "มีบัญชีแล้ว"
+
+msgid "Nobody is on the list yet, so only staff can reserve this room."
+msgstr "ยังไม่มีรายชื่อ ตอนนี้จึงจองได้เฉพาะเจ้าหน้าที่"
+
+msgid "No room is set to listed people only."
+msgstr "ไม่มีห้องที่กำหนดให้จองได้เฉพาะผู้มีรายชื่อ"
+
+msgid "email"
+msgstr "อีเมล"
+
+msgid "name"
+msgstr "ชื่อ"
+
+msgid ""
+"This room is for listed students only and cannot be used as a walk-in. "
+"Reserve it in advance instead."
+msgstr "ห้องนี้สำหรับนิสิตที่มีรายชื่อเท่านั้น ไม่เปิดให้เข้าใช้โดยไม่จอง กรุณาจองล่วงหน้า"
+
+msgid "Listed students only"
+msgstr "เฉพาะนิสิตที่มีรายชื่อ"
+
+msgid "Room access lists"
+msgstr "รายชื่อผู้มีสิทธิ์ใช้ห้อง"

@@ -7,6 +7,9 @@
   <h1 class="text-xl font-semibold">{{ room }}</h1>
   <p class="text-sm text-slate-700">{% trans "This is the page the printed QR code points to." %}</p>
 
+  {% if room.members_only %}
+    <p class="mt-2 max-w-xl text-sm text-violet-900" role="status">{% trans "This room is for listed students only and cannot be used as a walk-in. Reserve it in advance instead." %}</p>
+  {% endif %}
   {% if room.is_restricted %}
     <p class="mt-2 max-w-xl text-sm text-violet-900" role="status">
       {% blocktrans %}Piano and percussion students may reserve this room in advance. If the hour is still free once it has started, anyone may use it — the button below does exactly that.{% endblocktrans %}

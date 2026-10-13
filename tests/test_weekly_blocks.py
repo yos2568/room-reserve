@@ -193,8 +193,12 @@ def test_ensure_rooms_provisions_the_real_floor(frozen, db):
         "10",
         "303",
         "304",
+        "ป.โท",
     }
 
+    assert active["ป.โท"].members_only
+    assert active["ป.โท"].label == "ห้องประชุม ป.โท"
+    assert not active["304"].members_only
     assert active["303"].is_restricted
     assert sorted(active["303"].allowed_category_values) == ["PERCUSSION", "PIANO"]
     assert not active["304"].is_restricted
@@ -288,7 +292,7 @@ def test_ensure_rooms_is_idempotent_and_retires_strays(frozen, db):
 
     stray.refresh_from_db()
     assert not stray.is_active
-    assert Room.objects.filter(is_active=True).count() == 13
+    assert Room.objects.filter(is_active=True).count() == 14
     assert WeeklyBlock.objects.filter(room__number="304").count() == 5
 
 

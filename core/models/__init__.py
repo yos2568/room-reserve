@@ -26,6 +26,7 @@ from core.models.room import (
     Room,
     RoomAdministrator,
     RoomAllowedCategory,
+    RoomMember,
     Weekday,
     WeeklyBlock,
 )
@@ -51,6 +52,7 @@ __all__ = [
     "Room",
     "RoomAdministrator",
     "RoomAllowedCategory",
+    "RoomMember",
     "ServiceIncident",
     "Suspension",
     "User",

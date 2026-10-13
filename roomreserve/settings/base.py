@@ -222,6 +222,15 @@ ROOM_OVERRIDES = {
         "position": 11,
         "requires_approval": True,
     },
+    # The master's students' conference room (D-42): reservable only by the
+    # people on its access list, which staff keep on the room's access screen,
+    # and by staff. No walk-ins. The list itself is never kept in settings.
+    "ป.โท": {
+        "label": "ห้องประชุม ป.โท",
+        "position": 12,
+        "capacity": 20,
+        "members_only": True,
+    },
 }
 
 # Teaching blocks for rooms 301 and 304, read from the semester 1/2569 sheet.

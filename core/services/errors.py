@@ -35,6 +35,8 @@ class Code:
     STALE_HOUR = "stale_hour"
     NO_SHOW_RECLAIM = "no_show_reclaim"
     RANGE_TAKEN = "range_taken"
+    ROOM_MEMBERS_ONLY = "room_members_only"
+    MEMBERS_ROOM_NO_WALK_IN = "members_room_no_walk_in"
     RANGE_STARTED = "range_started"
 
     # Account state
@@ -89,6 +91,12 @@ _MESSAGES = {
         "One or more of those hours is already booked in that room. Check Upcoming bookings and choose other hours."
     ),
     Code.RANGE_STARTED: _("Choose hours that have not started yet."),
+    Code.ROOM_MEMBERS_ONLY: _(
+        "This room is reserved for the students on its list. Ask the department office if you should be on it."
+    ),
+    Code.MEMBERS_ROOM_NO_WALK_IN: _(
+        "This room is for listed students only and cannot be used as a walk-in. Reserve it in advance instead."
+    ),
     Code.APPROVAL_ROOM_NO_WALK_IN: _(
         "This room needs staff approval, so it cannot be used as a walk-in. Request it in advance instead."
     ),
@@ -152,6 +160,7 @@ _REJECTION_STATUS = {
     Code.QUOTA_EXCEEDED: 409,
     Code.UPCOMING_LIMIT: 409,
     Code.ROOM_NOT_FOR_INSTRUMENT: 409,
+    Code.ROOM_MEMBERS_ONLY: 409,
     Code.NOT_FOUND: 404,
     Code.INVALID_INPUT: 400,
 }

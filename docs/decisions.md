@@ -450,3 +450,21 @@ screen lists every booking that has not finished, and the Today screen points to
 Room approvals whenever student requests are waiting. Students' rules are
 unchanged.
 
+**D-42 — A conference room for the master's students, by access list (13 October 2026).**
+The owner asked for a new conference room that only the master's students on a
+list the department supplies may reserve, with the admin keeping full control.
+Room `ป.โท` ("ห้องประชุม ป.โท") is configured as `members_only`. Its access list
+(`RoomMember`: name and email) is kept by staff on **Room access lists**, where
+rows copied from the department's spreadsheet are pasted in; the list is never
+stored in code or settings, so names and addresses stay out of the repository.
+A person is matched by the email address on their account, ignoring case,
+because the supplied list gives emails but not student IDs for the second-year
+students. Listed people reserve it like any general room — confirmed at once,
+under the usual student limits. Everyone else sees the room on the timetable
+marked "Listed students only" and cannot reserve it; nobody walks in, since a
+walk-in would bypass the list. Staff may reserve it from the timetable and from
+Book a room (D-41). Removing someone from the list keeps any booking they have
+already made, as an audience change does. A listed person still needs an
+approved account to book, and an account still needs a student ID: a listed
+email only helps once an account with that same email exists.
+

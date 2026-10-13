@@ -16,7 +16,7 @@ from django.conf import settings
 
 from core.models import BLOCKING_STATUSES, Booking, Closure, Room
 
-from . import clock, instruments, slots
+from . import clock, instruments, room_access, slots
 from .calendar import day_hours, weekly_blocks_for_date
 
 
@@ -75,7 +75,12 @@ class SlotCell:
     def can_use_now(self) -> bool:
         # A room that needs staff approval cannot be walked into: the walk-in
         # would skip the approval its reservations go through.
-        return self.state == SlotState.FREE_NOW and not self.room.requires_approval
+        # A members-only room cannot either: it is kept for its listed people.
+        return (
+            self.state == SlotState.FREE_NOW
+            and not self.room.requires_approval
+            and not self.room.members_only
+        )
 
     @property
     def is_short(self) -> bool:
@@ -106,7 +111,15 @@ def _closures_for(local_date, room_ids):
 
 
 def room_day_cells(
-    room: Room, local_date, now, *, user=None, closure_map=None, block_map=None, viewer_category=None
+    room: Room,
+    local_date,
+    now,
+    *,
+    user=None,
+    closure_map=None,
+    block_map=None,
+    viewer_category=None,
+    member_room_ids=frozenset(),
 ) -> list[SlotCell]:
     """Every slot cell for one room on one local date.
 
@@ -127,7 +140,7 @@ def room_day_cells(
     bookings = _bookings_by_slot(local_date, [room.pk])
     user_id = getattr(user, "pk", None)
     horizon_last = clock.local_date(now) + timedelta(days=settings.HORIZON_DAYS)
-    can_reserve_here = room.may_be_reserved_by(viewer_category)
+    can_reserve_here = room.admits(viewer_category, member_room_ids)
 
     cells = []
     for slot_start in starts:
@@ -261,6 +274,7 @@ def public_grid(
 
     # Resolved once for the whole grid rather than once per cell.
     viewer_category = instruments.category_for_user(user)
+    viewer_member_rooms = room_access.member_room_ids(user)
 
     rows = []
     for room in rooms:
@@ -272,6 +286,7 @@ def public_grid(
             closure_map=closure_map,
             block_map=block_map,
             viewer_category=viewer_category,
+            member_room_ids=viewer_member_rooms,
         )
         by_start = {cell.slot_start: cell for cell in cells}
         # Keep the column set stable even when the day is closed or shortened.
@@ -330,6 +345,7 @@ def current_slot_cell(room: Room, now, *, user=None) -> SlotCell:
         now,
         user=user,
         viewer_category=instruments.category_for_user(user),
+        member_room_ids=room_access.member_room_ids(user),
     )
     for cell in cells:
         if cell.slot_start == slot_start:

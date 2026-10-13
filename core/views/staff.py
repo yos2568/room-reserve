@@ -15,6 +15,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
+from django.db.models.functions import Lower
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -425,6 +426,84 @@ def upcoming_bookings(request):
             "operation_key": str(uuid.uuid4()),
         },
     )
+
+
+# --- Members-only room access lists (D-42) ------------------------------------
+
+
+@staff_required
+@require_GET
+def room_access(request):
+    """The access list of every members-only room, with who already has an account."""
+    rooms = list(
+        Room.objects.filter(members_only=True).order_by("position", "number").prefetch_related("members")
+    )
+    listed = {member.email for room in rooms for member in room.members.all()}
+    # Matched case-insensitively, exactly as reservation matches them.
+    with_account = set(
+        User.objects.filter(is_active=True)
+        .annotate(email_lower=Lower("email"))
+        .filter(email_lower__in=listed)
+        .values_list("email_lower", flat=True)
+    )
+    return render(
+        request,
+        "core/staff/room_access.html",
+        {"rooms": rooms, "with_account": with_account, "operation_key": str(uuid.uuid4())},
+    )
+
+
+@staff_required
+@require_POST
+def add_room_members(request, pk: int):
+    from core.services import room_access as room_access_service
+
+    room = get_object_or_404(Room, pk=pk, members_only=True)
+    entries, skipped = room_access_service.parse_pasted_rows(request.POST.get("rows") or "")
+    if not entries:
+        messages.error(
+            request,
+            "ไม่พบอีเมลในข้อความที่วาง / No email addresses were found in the pasted rows.",
+        )
+        return redirect("core:staff_room_access")
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_add_room_members",
+        payload={"room": pk, "entries": sorted(email for _, email in entries)},
+        key=operation_key(request),
+        body=lambda ctx: _success(**room_access_service.add_members(ctx, room=room, entries=entries)),
+    )
+    if outcome.ok:
+        added = outcome.data.get("added", 0)
+        already = outcome.data.get("already_listed", 0)
+        add_outcome_message(
+            request,
+            outcome,
+            success_message=(
+                f"เพิ่ม {added} คน (มีอยู่แล้ว {already} คน, ข้าม {len(skipped)} บรรทัดที่ไม่มีอีเมล) / "
+                f"Added {added} (already listed {already}; skipped {len(skipped)} lines without an email)."
+            ),
+        )
+    else:
+        add_outcome_message(request, outcome)
+    return redirect("core:staff_room_access")
+
+
+@staff_required
+@require_POST
+def remove_room_member(request, pk: int, member_id: int):
+    from core.services import room_access as room_access_service
+
+    room = get_object_or_404(Room, pk=pk, members_only=True)
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_remove_room_member",
+        payload={"room": pk, "member": member_id},
+        key=operation_key(request),
+        body=lambda ctx: _success(**room_access_service.remove_member(ctx, room=room, member_id=member_id)),
+    )
+    add_outcome_message(request, outcome, success_message="นำออกจากรายชื่อแล้ว / Removed from the list.")
+    return redirect("core:staff_room_access")
 
 
 # --- Users, violations and sanctions ------------------------------------------

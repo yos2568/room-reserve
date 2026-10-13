@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from core.models import Suspension, User
 
-from . import instruments
+from . import instruments, room_access
 from .errors import Code, OperationRejected
 
 
@@ -81,6 +81,8 @@ def assert_may_reserve_room(user, room, now) -> None:
     """
     assert_may_use_room(user, room, now)
 
+    if room.members_only and room.pk not in room_access.member_room_ids(user):
+        raise OperationRejected(Code.ROOM_MEMBERS_ONLY, room_id=room.pk)
     if not room.may_be_reserved_by(instruments.category_for_user(user)):
         raise OperationRejected(
             Code.ROOM_NOT_FOR_INSTRUMENT,

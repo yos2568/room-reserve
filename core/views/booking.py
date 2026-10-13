@@ -18,7 +18,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from core.models import Booking, RecurringReservation, Room
-from core.services import availability, clock, instruments, sanctions, slots, suggest
+from core.services import availability, clock, instruments, room_access, sanctions, slots, suggest
 from core.services import booking as booking_service
 from core.services import cancel as cancel_service
 from core.services import walkin as walkin_service
@@ -67,7 +67,9 @@ def _ics_escape(value: str) -> str:
 
 
 def _may_reserve(room: Room, user) -> bool:
-    return not room.availability_only and room.may_be_reserved_by(instruments.category_for_user(user))
+    return not room.availability_only and room.admits(
+        instruments.category_for_user(user), room_access.member_room_ids(user)
+    )
 
 
 def _booking_details(request) -> dict[str, str]:

@@ -33,6 +33,8 @@
         <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Incidents" %}</a>
         {% url 'core:staff_roster' as section_url %}
         <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Roster" %}</a>
+        {% url 'core:staff_room_access' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Room access lists" %}</a>
       </div>
     </details>
     <details class="rounded-md border border-slate-200 bg-white p-3" {% if staff_nav_open == "records" %}open{% endif %}><summary class="cursor-pointer py-2 font-semibold">{% trans "Settings and records" %}</summary>

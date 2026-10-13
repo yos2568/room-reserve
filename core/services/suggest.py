@@ -22,7 +22,7 @@ from dataclasses import dataclass
 
 from core.models import BLOCKING_STATUSES, Booking, Room
 
-from . import availability, calendar, clock, instruments, quota, slots
+from . import availability, calendar, clock, instruments, quota, room_access, slots
 from .eligibility import account_block_code, is_suspended
 from .errors import OperationRejected
 
@@ -95,12 +95,13 @@ def for_slot(slot_start, now, *, user, exclude_booking_id: int | None = None) ->
     is excluded even when a later state would allow it.
     """
     viewer_category = instruments.category_for_user(user)
+    viewer_member_rooms = room_access.member_room_ids(user)
     conflicts = _viewer_conflicts(user, exclude_booking_id=exclude_booking_id)
     rooms = list(Room.objects.filter(is_active=True).prefetch_related("allowed_categories"))
 
     found = []
     for room in rooms:
-        if room.availability_only or not room.may_be_reserved_by(viewer_category):
+        if room.availability_only or not room.admits(viewer_category, viewer_member_rooms):
             continue
         try:
             calendar.assert_slot_open(slot_start, room)
@@ -173,7 +174,9 @@ def _free_now(
     cards = []
     # Neither kind can be walked into: availability-only rooms (301) are for
     # viewing, and approval rooms go through staff (see walkin.use_now).
-    room_query = Room.objects.filter(is_active=True, availability_only=False, requires_approval=False)
+    room_query = Room.objects.filter(
+        is_active=True, availability_only=False, requires_approval=False, members_only=False
+    )
     if room_number:
         room_query = room_query.filter(number=room_number)
     if capacity_min:
@@ -214,6 +217,7 @@ def _hour_groups(
     viewer is not suggested here either.
     """
     viewer_category = instruments.category_for_user(user)
+    viewer_member_rooms = room_access.member_room_ids(user)
     conflicts = _viewer_conflicts(user)
     grid = availability.public_grid(
         local_date,
@@ -227,7 +231,7 @@ def _hour_groups(
     by_slot: dict[object, list] = {}
     for row in grid["rows"]:
         room = row["room"]
-        if not room.may_be_reserved_by(viewer_category):
+        if not room.admits(viewer_category, viewer_member_rooms):
             continue
         for cell in row["cells"]:
             if not cell.can_reserve or cell.slot_start <= now:

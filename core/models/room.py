@@ -51,6 +51,14 @@ class Room(models.Model):
         choices=ReservationScope.choices,
         default=ReservationScope.EVERYONE,
     )
+    members_only = models.BooleanField(
+        _("listed people only"),
+        default=False,
+        help_text=_(
+            "Only the people on this room's access list, and staff, may reserve it. "
+            "Nobody may walk in (D-42)."
+        ),
+    )
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -75,6 +83,17 @@ class Room(models.Model):
     def allowed_category_values(self) -> list[str]:
         """Categories permitted to reserve. Uses the prefetch cache when present."""
         return [row.category for row in self.allowed_categories.all()]
+
+    def admits(self, category: str | None, member_room_ids=frozenset()) -> bool:
+        """Whether a viewer may reserve this room in advance.
+
+        ``member_room_ids`` is the set of members-only rooms whose access list
+        names the viewer (see ``core.services.room_access.member_room_ids``),
+        resolved once per request by the caller. Both rules must agree.
+        """
+        if self.members_only and self.pk not in member_room_ids:
+            return False
+        return self.may_be_reserved_by(category)
 
     def may_be_reserved_by(self, category: str | None) -> bool:
         """Whether a student in ``category`` may reserve this room in advance.
@@ -111,6 +130,40 @@ class RoomAdministrator(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} → {self.room}"
+
+
+class RoomMember(models.Model):
+    """One person on a members-only room's access list, matched by email (D-42).
+
+    Staff maintain the list on the room's access screen. A person is matched by
+    the email address on their account, compared case-insensitively, so the
+    list works whether or not that person is in the department roster.
+    """
+
+    room = models.ForeignKey("core.Room", on_delete=models.CASCADE, related_name="members")
+    email = models.EmailField(_("email"))
+    name = models.CharField(_("name"), max_length=200, blank=True)
+    added_by = models.ForeignKey(
+        "core.User",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="room_members_added",
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["room", "name", "email"]
+        constraints = [
+            models.UniqueConstraint(fields=["room", "email"], name="room_member_unique"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.email} → {self.room}"
+
+    def save(self, *args, **kwargs):
+        self.email = (self.email or "").strip().lower()
+        super().save(*args, **kwargs)
 
 
 class Weekday(models.IntegerChoices):

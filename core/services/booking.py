@@ -31,6 +31,7 @@ from .outbox import enqueue
 from .policy import current_policy
 from .quota import assert_quota_and_adjacency, no_show_reclaim
 from .refs import reload_for_update
+from .room_access import is_booking_staff
 
 logger = logging.getLogger(__name__)
 
@@ -196,14 +197,6 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
         "status": booking.status,
         "deadline": deadline.isoformat(),
     }
-
-
-def is_booking_staff(user) -> bool:
-    """Operational staff and the maintainer: may approve, and book outside student limits."""
-    return bool(
-        getattr(user, "is_active", False)
-        and (getattr(user, "is_superuser", False) or getattr(user, "is_operational_staff", False))
-    )
 
 
 def build_staff_payload(room: Room, local_date, start_hour: int, end_hour: int, details=None) -> dict:

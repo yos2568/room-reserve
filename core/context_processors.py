@@ -15,6 +15,7 @@ STAFF_NAV_GROUPS = {
     "staff_calendar": "operations",
     "staff_incidents": "operations",
     "staff_roster": "operations",
+    "staff_room_access": "operations",
     "staff_invitations": "records",
     "staff_audit": "records",
     "staff_stats": "records",
