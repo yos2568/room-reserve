@@ -4545,3 +4545,127 @@ msgstr ""
 
 msgid "Correct student ID"
 msgstr "แก้ไขรหัสนิสิต"
+
+#. D-44: the home page's "right now" board and the staff booking timeline.
+msgid "Right now · %(time)s"
+msgstr "ขณะนี้ · %(time)s น."
+
+msgid ""
+"A free practice room can be used straight away until the end of the hour, or "
+"reserved ahead."
+msgstr "ห้องซ้อมที่ว่างเข้าใช้ได้ทันทีจนจบชั่วโมง หรือจองล่วงหน้าก็ได้"
+
+msgid "%(counter)s room is free right now"
+msgid_plural "%(counter)s rooms are free right now"
+msgstr[0] "ตอนนี้มีห้องว่าง %(counter)s ห้อง"
+
+msgid "In use or booked"
+msgstr "ใช้อยู่หรือมีคนจอง"
+
+msgid "Show rooms"
+msgstr "แสดงห้อง"
+
+msgid "Free now"
+msgstr "ว่างตอนนี้"
+
+msgid "Practice rooms"
+msgstr "ห้องซ้อม"
+
+msgid "Classrooms and meeting room"
+msgstr "ห้องเรียนและห้องประชุม"
+
+msgid "Classrooms"
+msgstr "ห้องเรียน"
+
+msgid "Meeting room"
+msgstr "ห้องประชุม"
+
+msgid "Reserve at once, or walk in while a room is free"
+msgstr "จองได้ทันที หรือเข้าใช้ได้เลยถ้าห้องว่าง"
+
+msgid "Send a request; staff approve it"
+msgstr "ส่งคำขอ แล้วรอเจ้าหน้าที่อนุมัติ"
+
+msgid "For the students on its list"
+msgstr "สำหรับนิสิตที่มีรายชื่อ"
+
+msgid "Free until %(until)s"
+msgstr "ว่างถึง %(until)s"
+
+msgid "%(counter)s minute left this hour"
+msgid_plural "%(counter)s minutes left this hour"
+msgstr[0] "ชั่วโมงนี้เหลือ %(counter)s นาที"
+
+msgid "Free again at %(at)s"
+msgstr "ว่างอีกครั้ง %(at)s"
+
+msgid "No free hour left today"
+msgstr "วันนี้ไม่มีช่วงว่างแล้ว"
+
+msgid "Today, hour by hour"
+msgstr "วันนี้ รายชั่วโมง"
+
+msgid "Needs approval"
+msgstr "ต้องอนุมัติ"
+
+msgid "Request %(at)s"
+msgstr "ส่งคำขอ %(at)s"
+
+msgid "Reserve %(at)s"
+msgstr "จอง %(at)s"
+
+msgid "Room details"
+msgstr "ข้อมูลห้อง"
+
+msgid "No room matches. Show all rooms to see the rest."
+msgstr "ไม่มีห้องที่ตรงเงื่อนไข เลือก “ทุกห้อง” เพื่อดูห้องอื่น"
+
+msgid "Today's bar:"
+msgstr "แถบเวลาวันนี้:"
+
+msgid "Now"
+msgstr "ตอนนี้"
+
+msgid "Plan ahead"
+msgstr "จองล่วงหน้า"
+
+msgid "Booking timeline"
+msgstr "ตารางการจอง"
+
+msgid ""
+"Select a booking to see who made it and act on it. Select an empty hour to "
+"book that room for the department."
+msgstr "เลือกแถบการจองเพื่อดูผู้จองและจัดการ เลือกช่องว่างเพื่อจองห้องนั้นให้ภาควิชา"
+
+msgid "Legend"
+msgstr "คำอธิบายสี"
+
+msgid "Rooms by hour"
+msgstr "ห้องตามชั่วโมง"
+
+msgid "Book %(room)s at %(hour)s:00"
+msgstr "จอง %(room)s เวลา %(hour)s:00"
+
+msgid "Rooms are closed on this date."
+msgstr "วันนี้ห้องปิด"
+
+msgid "Close"
+msgstr "ปิด"
+
+msgid "Message to the student (optional)"
+msgstr "ข้อความถึงนิสิต (ไม่บังคับ)"
+
+msgid "Check in for the student"
+msgstr "เช็กอินแทนนิสิต"
+
+msgid "Reason for ending early"
+msgstr "เหตุผลที่จบก่อนเวลา"
+
+msgid "Cancel booking"
+msgstr "ยกเลิกการจอง"
+
+msgid "No booking selected"
+msgstr "ยังไม่ได้เลือกการจอง"
+
+msgid "Select a bar on the timeline to see its details here."
+msgstr "เลือกแถบในตารางเพื่อดูรายละเอียดที่นี่"

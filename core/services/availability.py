@@ -356,3 +356,106 @@ def current_slot_cell(room: Room, now, *, user=None) -> SlotCell:
         slot_end=slots.slot_end_for(slot_start),
         state=SlotState.CLOSED,
     )
+
+
+# --- The "right now" status board on the home page (D-44) ---------------------
+
+# How each hour reads on a room's day strip. Students' names never appear: the
+# board is public, like the grid it is built from.
+_STRIP_KIND = {
+    SlotState.PAST: "past",
+    SlotState.COMPLETED: "past",
+    SlotState.IN_USE: "busy",
+    SlotState.HELD: "busy",
+    SlotState.TAKEN: "busy",
+    SlotState.FREE_NOW: "free",
+    SlotState.BOOKABLE: "free",
+    SlotState.RESTRICTED: "free",
+    SlotState.OUTSIDE_HORIZON: "free",
+    SlotState.VIEW_ONLY: "closed",
+}
+
+
+def _strip_kind(cell: SlotCell) -> str:
+    if cell.state == SlotState.CLOSED:
+        return "class" if cell.block_reason else "closed"
+    return _STRIP_KIND.get(cell.state, "closed")
+
+
+def _room_kind(room: Room) -> str:
+    if room.members_only:
+        return "meeting"
+    if room.requires_approval or room.availability_only:
+        return "teaching"
+    return "practice"
+
+
+@dataclass
+class StatusCard:
+    room: Room
+    kind: str  # practice | teaching | meeting
+    now: str  # free | busy | class | closed
+    strip: list
+    now_cell: SlotCell
+    free_until: object = None  # local time the current free run ends
+    next_free: object = None  # local start of the next free hour, later today
+    next_bookable: SlotCell | None = None
+
+
+def status_board(rows: list, now) -> dict | None:
+    """Every room's state for the hour in progress, from today's grid rows.
+
+    ``None`` outside opening hours, when there is no "now" to describe. Each
+    card says what the room is doing, until when, what is free next, and the
+    next hour the viewer could reserve.
+    """
+    current = slots.floor_to_slot(now)
+    cards = []
+    for row in rows:
+        cells = row["cells"]
+        index = next((i for i, cell in enumerate(cells) if cell.slot_start == current), None)
+        if index is None:
+            return None
+        kinds = [_strip_kind(cell) for cell in cells]
+        now_kind = kinds[index]
+        run_end = index
+        while run_end + 1 < len(kinds) and kinds[run_end + 1] == now_kind:
+            run_end += 1
+        later = cells[index + 1 :]
+        card = StatusCard(
+            room=row["room"],
+            kind=_room_kind(row["room"]),
+            now=now_kind,
+            strip=[{"kind": kind, "cell": cell} for kind, cell in zip(kinds, cells, strict=True)],
+            now_cell=cells[index],
+            next_bookable=next((cell for cell in later if cell.can_reserve), None),
+        )
+        if now_kind == "free":
+            card.free_until = cells[run_end].local_end
+        else:
+            card.next_free = next(
+                (cells[i].local_start for i in range(run_end + 1, len(cells)) if kinds[i] == "free"), None
+            )
+        cards.append(card)
+
+    counts = {
+        kind: sum(1 for card in cards if card.now == kind) for kind in ("free", "busy", "class", "closed")
+    }
+    groups = [
+        (kind, [card for card in cards if card.kind == kind]) for kind in ("practice", "teaching", "meeting")
+    ]
+    return {
+        "cards": cards,
+        "counts": counts,
+        "groups": [(kind, members) for kind, members in groups if members],
+        "now_offset": _now_offset(now, rows),
+    }
+
+
+def _now_offset(now, rows) -> int:
+    """Where "now" falls across the day's columns, as a whole percentage (0–100)."""
+    starts = [cell.slot_start for cell in rows[0]["cells"]] if rows else []
+    if not starts:
+        return 0
+    span = (slots.slot_end_for(starts[-1]) - starts[0]).total_seconds()
+    return max(0, min(100, round((now - starts[0]).total_seconds() * 100 / span)))

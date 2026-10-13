@@ -485,3 +485,25 @@ for a small, known group. Staff can correct a mistyped ID on the Users screen
 (Manage → Correct student ID, audited, refused if another account holds the ID
 or the account is linked to a roster row). The generic registration response is
 unchanged, so the rule does not reveal who is listed.
+
+**D-44 — The home page leads with every room's state now; staff get a booking timeline (13 October 2026).**
+After a design review against booking-dashboard references, the owner chose to
+build the two screens used most each day. The home page keeps its timetable
+(now under "Plan ahead") but, for today's unfiltered view during opening hours,
+first shows a "right now" board: how many rooms are free, in use or booked, in
+class or closed; then one card per room, grouped into practice rooms,
+classrooms and the meeting room, each with its state, a plain line ("Free until
+16:00", "Free again at 14:00"), a strip of today's hours with a now-marker, and
+one action that fits — Use now, Reserve or Request the next free hour, or Room
+details. It is built from the same grid cells as the timetable, so the two
+cannot disagree, and like the grid it never shows who booked. Staff get a
+timeline: every room down, the day's hours across, each booking a bar coloured
+and labelled by status beside class hours and closures, with a current-time
+line. Selecting a bar shows who booked and the actions that apply (approve or
+reject, check in for the student, end early, cancel), each returning to the
+same day; selecting an empty future hour opens Book a room with that room, date
+and hour filled in. Status is never shown by colour alone: every state also has
+a text label, and "waiting for approval" a dashed outline. Bars are placed with
+CSS classes rather than inline styles, keeping the templates free of inline
+style attributes.
+

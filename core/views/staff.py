@@ -339,7 +339,52 @@ def _render_book_room(request, *, values=None, status=200):
 @staff_required
 @require_GET
 def book_room(request):
-    return _render_book_room(request, values={"room": _int_or_none(request.GET.get("room"))})
+    # The timeline's empty hours link here with the room, date and hour filled in.
+    start_hour = _int_or_none(request.GET.get("start_hour"))
+    return _render_book_room(
+        request,
+        values={
+            "room": _int_or_none(request.GET.get("room")),
+            "date": (request.GET.get("date") or "")[:10],
+            "start_hour": start_hour,
+            "end_hour": start_hour + 1 if start_hour is not None else None,
+        },
+    )
+
+
+@staff_required
+@require_GET
+def timeline(request):
+    """Every room's day as bars on an hour axis, with the selected booking's details (D-44)."""
+    from core.services.timeline import day_timeline
+
+    moment = now()
+    today = timezone.localdate(moment)
+    try:
+        local_date = date.fromisoformat(request.GET.get("date") or "")
+    except ValueError:
+        local_date = today
+    selected = None
+    booking_id = _int_or_none(request.GET.get("booking"))
+    if booking_id:
+        selected = (
+            Booking.objects.filter(pk=booking_id, slot_date=local_date).select_related("user", "room").first()
+        )
+    return render(
+        request,
+        "core/staff/timeline.html",
+        {
+            "timeline": day_timeline(local_date, moment),
+            "local_date": local_date,
+            "today_date": today,
+            "is_today": local_date == today,
+            "prev_date": local_date - timedelta(days=1),
+            "next_date": local_date + timedelta(days=1),
+            "selected": selected,
+            "moment": moment,
+            "operation_key": str(uuid.uuid4()),
+        },
+    )
 
 
 @staff_required
@@ -1491,7 +1536,8 @@ def decide_booking_approval(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect("core:room_admin")
+    # The timeline (D-44) sends ``next`` to come back to the same day.
+    return redirect_back(request, "core:room_admin")
 
 
 @maintainer_required

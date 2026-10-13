@@ -38,6 +38,11 @@
     </div>
   </section>
 
+  {% if board %}
+    {% include "core/partials/status_board.html" %}
+    <h2 class="mt-8 text-xl font-bold text-[#10264a]">{% trans "Plan ahead" %}</h2>
+  {% endif %}
+
   <form method="get" class="filter-panel card mt-4" aria-label="{% trans 'Find a suitable room' %}">
     <input type="hidden" name="date" value="{{ local_date|date:'Y-m-d' }}">
     <div class="filter-row">

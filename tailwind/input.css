@@ -948,3 +948,59 @@ textarea {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* --- Room status board (home) and staff timeline (D-44) ------------------------
+   Status is never colour alone: every state also carries a text label, and
+   "waiting for approval" adds a dashed outline. */
+.status-tiles { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+.status-tile { border: 1px solid #dde5ee; border-radius: 1.1rem; background: #fff; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.status-tile-n { font-size: 2.25rem; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; color: #10264a; }
+.status-swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 0.25rem; flex: none; }
+.status-cards { display: grid; gap: 0.875rem; grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr)); }
+.status-card { border: 1px solid #dde5ee; border-radius: 1.25rem; background: #fff; padding: 1.1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.status-card.is-free { box-shadow: 0 0 0 2px #a7f3d0; }
+.status-pill { display: inline-flex; align-items: center; gap: 0.375rem; border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.8125rem; font-weight: 600; white-space: nowrap; border: 1px solid transparent; }
+.status-pill.is-free { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+.status-pill.is-busy { background: #fff; color: #065f46; border-color: #10b981; }
+.status-pill.is-class { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+.status-pill.is-closed { background: #e2e8f0; color: #334155; border-color: #cbd5e1; }
+.status-pill.is-pending { background: #fef3c7; color: #854d0e; border: 1.5px dashed #d97706; }
+.status-pill.is-booked { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
+.status-pill.is-staff { background: #153964; color: #fff; }
+.status-pill.is-done { background: #eef1f5; color: #475569; border-color: #d5dce6; }
+.status-pill.is-noshow { background: #ffe4e6; color: #9f1239; border-color: #fda4af; }
+.day-strip { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
+.day-strip > span { height: 0.875rem; border-radius: 0.25rem; }
+.strip-past { background: #e8edf3; }
+.strip-free { background: #ecfdf5; box-shadow: inset 0 0 0 1px #6ee7b7; }
+.strip-busy { background: #10b981; }
+.strip-class { background: #c4b5fd; }
+.strip-closed { background: repeating-linear-gradient(135deg, #cbd5e1 0 3px, #f1f5f9 3px 6px); }
+.now-marker { position: absolute; top: -0.25rem; bottom: -0.25rem; width: 2px; border-radius: 2px; background: #c31749; pointer-events: none; }
+.filter-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.filter-chip { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 44px; padding: 0 1rem; border-radius: 999px; border: 1px solid #cbd6e3; background: #fff; color: #33496a; font-size: 0.875rem; font-weight: 600; text-decoration: none; }
+.filter-chip[aria-current="true"] { background: #153964; border-color: #153964; color: #fff; }
+
+.timeline { min-width: 62rem; }
+.timeline-row { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); border-bottom: 1px solid #eef2f7; }
+.timeline-track { position: relative; display: grid; grid-template-columns: repeat(var(--tl-cols, 12), minmax(0, 1fr)); align-items: center; min-height: 3rem; background-image: linear-gradient(to right, #e3e9f1 1px, transparent 1px); background-size: calc(100% / var(--tl-cols, 12)) 100%; }
+.timeline-cols-10 { --tl-cols: 10; } .timeline-cols-11 { --tl-cols: 11; } .timeline-cols-12 { --tl-cols: 12; }
+.timeline-cols-13 { --tl-cols: 13; } .timeline-cols-14 { --tl-cols: 14; }
+.timeline-bar { grid-row: 1; display: block; height: 2.25rem; margin: 0 3px; border-radius: 0.6rem; padding: 0 0.6rem; font-size: 0.8125rem; font-weight: 600; line-height: 2.25rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-decoration: none; min-width: 0; border: 1px solid transparent; }
+.timeline-bar.is-selected { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #c31749; }
+.timeline-bar.is-done { background: #eef1f5; color: #475569; border-color: #d5dce6; }
+.timeline-bar.is-inuse { background: #d1fae5; color: #065f46; border-color: #34d399; }
+.timeline-bar.is-booked { background: #dbeafe; color: #1e3a8a; border-color: #93c5fd; }
+.timeline-bar.is-pending { background: #fef3c7; color: #854d0e; border: 1.5px dashed #d97706; }
+.timeline-bar.is-staff { background: #153964; color: #fff; }
+.timeline-bar.is-class { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+.timeline-bar.is-closed { background: repeating-linear-gradient(135deg, #e2e8f0 0 6px, #f8fafc 6px 12px); color: #334155; border-color: #cbd5e1; }
+.timeline-bar.is-noshow { background: #ffe4e6; color: #9f1239; border-color: #fda4af; }
+.timeline-empty { grid-row: 1; height: 2.25rem; margin: 0 3px; border-radius: 0.6rem; }
+.timeline-empty:hover, .timeline-empty:focus-visible { background: #f1f5f9; box-shadow: inset 0 0 0 1px #94a3b8; }
+.timeline-overlay { position: absolute; left: 9.5rem; right: 0; top: 0; bottom: 0; pointer-events: none; z-index: 1; }
+.timeline-past { position: absolute; top: 0; bottom: 0; left: 0; background: rgb(16 38 74 / 0.035); pointer-events: none; }
+.tl-s1{grid-column-start:1}.tl-s2{grid-column-start:2}.tl-s3{grid-column-start:3}.tl-s4{grid-column-start:4}.tl-s5{grid-column-start:5}.tl-s6{grid-column-start:6}.tl-s7{grid-column-start:7}.tl-s8{grid-column-start:8}.tl-s9{grid-column-start:9}.tl-s10{grid-column-start:10}.tl-s11{grid-column-start:11}.tl-s12{grid-column-start:12}.tl-s13{grid-column-start:13}.tl-s14{grid-column-start:14}
+.tl-e2{grid-column-end:2}.tl-e3{grid-column-end:3}.tl-e4{grid-column-end:4}.tl-e5{grid-column-end:5}.tl-e6{grid-column-end:6}.tl-e7{grid-column-end:7}.tl-e8{grid-column-end:8}.tl-e9{grid-column-end:9}.tl-e10{grid-column-end:10}.tl-e11{grid-column-end:11}.tl-e12{grid-column-end:12}.tl-e13{grid-column-end:13}.tl-e14{grid-column-end:14}.tl-e15{grid-column-end:15}
+.now-at-0{left:0%}.now-at-1{left:1%}.now-at-2{left:2%}.now-at-3{left:3%}.now-at-4{left:4%}.now-at-5{left:5%}.now-at-6{left:6%}.now-at-7{left:7%}.now-at-8{left:8%}.now-at-9{left:9%}.now-at-10{left:10%}.now-at-11{left:11%}.now-at-12{left:12%}.now-at-13{left:13%}.now-at-14{left:14%}.now-at-15{left:15%}.now-at-16{left:16%}.now-at-17{left:17%}.now-at-18{left:18%}.now-at-19{left:19%}.now-at-20{left:20%}.now-at-21{left:21%}.now-at-22{left:22%}.now-at-23{left:23%}.now-at-24{left:24%}.now-at-25{left:25%}.now-at-26{left:26%}.now-at-27{left:27%}.now-at-28{left:28%}.now-at-29{left:29%}.now-at-30{left:30%}.now-at-31{left:31%}.now-at-32{left:32%}.now-at-33{left:33%}.now-at-34{left:34%}.now-at-35{left:35%}.now-at-36{left:36%}.now-at-37{left:37%}.now-at-38{left:38%}.now-at-39{left:39%}.now-at-40{left:40%}.now-at-41{left:41%}.now-at-42{left:42%}.now-at-43{left:43%}.now-at-44{left:44%}.now-at-45{left:45%}.now-at-46{left:46%}.now-at-47{left:47%}.now-at-48{left:48%}.now-at-49{left:49%}.now-at-50{left:50%}.now-at-51{left:51%}.now-at-52{left:52%}.now-at-53{left:53%}.now-at-54{left:54%}.now-at-55{left:55%}.now-at-56{left:56%}.now-at-57{left:57%}.now-at-58{left:58%}.now-at-59{left:59%}.now-at-60{left:60%}.now-at-61{left:61%}.now-at-62{left:62%}.now-at-63{left:63%}.now-at-64{left:64%}.now-at-65{left:65%}.now-at-66{left:66%}.now-at-67{left:67%}.now-at-68{left:68%}.now-at-69{left:69%}.now-at-70{left:70%}.now-at-71{left:71%}.now-at-72{left:72%}.now-at-73{left:73%}.now-at-74{left:74%}.now-at-75{left:75%}.now-at-76{left:76%}.now-at-77{left:77%}.now-at-78{left:78%}.now-at-79{left:79%}.now-at-80{left:80%}.now-at-81{left:81%}.now-at-82{left:82%}.now-at-83{left:83%}.now-at-84{left:84%}.now-at-85{left:85%}.now-at-86{left:86%}.now-at-87{left:87%}.now-at-88{left:88%}.now-at-89{left:89%}.now-at-90{left:90%}.now-at-91{left:91%}.now-at-92{left:92%}.now-at-93{left:93%}.now-at-94{left:94%}.now-at-95{left:95%}.now-at-96{left:96%}.now-at-97{left:97%}.now-at-98{left:98%}.now-at-99{left:99%}.now-at-100{left:100%}
+.past-to-0{width:0%}.past-to-1{width:1%}.past-to-2{width:2%}.past-to-3{width:3%}.past-to-4{width:4%}.past-to-5{width:5%}.past-to-6{width:6%}.past-to-7{width:7%}.past-to-8{width:8%}.past-to-9{width:9%}.past-to-10{width:10%}.past-to-11{width:11%}.past-to-12{width:12%}.past-to-13{width:13%}.past-to-14{width:14%}.past-to-15{width:15%}.past-to-16{width:16%}.past-to-17{width:17%}.past-to-18{width:18%}.past-to-19{width:19%}.past-to-20{width:20%}.past-to-21{width:21%}.past-to-22{width:22%}.past-to-23{width:23%}.past-to-24{width:24%}.past-to-25{width:25%}.past-to-26{width:26%}.past-to-27{width:27%}.past-to-28{width:28%}.past-to-29{width:29%}.past-to-30{width:30%}.past-to-31{width:31%}.past-to-32{width:32%}.past-to-33{width:33%}.past-to-34{width:34%}.past-to-35{width:35%}.past-to-36{width:36%}.past-to-37{width:37%}.past-to-38{width:38%}.past-to-39{width:39%}.past-to-40{width:40%}.past-to-41{width:41%}.past-to-42{width:42%}.past-to-43{width:43%}.past-to-44{width:44%}.past-to-45{width:45%}.past-to-46{width:46%}.past-to-47{width:47%}.past-to-48{width:48%}.past-to-49{width:49%}.past-to-50{width:50%}.past-to-51{width:51%}.past-to-52{width:52%}.past-to-53{width:53%}.past-to-54{width:54%}.past-to-55{width:55%}.past-to-56{width:56%}.past-to-57{width:57%}.past-to-58{width:58%}.past-to-59{width:59%}.past-to-60{width:60%}.past-to-61{width:61%}.past-to-62{width:62%}.past-to-63{width:63%}.past-to-64{width:64%}.past-to-65{width:65%}.past-to-66{width:66%}.past-to-67{width:67%}.past-to-68{width:68%}.past-to-69{width:69%}.past-to-70{width:70%}.past-to-71{width:71%}.past-to-72{width:72%}.past-to-73{width:73%}.past-to-74{width:74%}.past-to-75{width:75%}.past-to-76{width:76%}.past-to-77{width:77%}.past-to-78{width:78%}.past-to-79{width:79%}.past-to-80{width:80%}.past-to-81{width:81%}.past-to-82{width:82%}.past-to-83{width:83%}.past-to-84{width:84%}.past-to-85{width:85%}.past-to-86{width:86%}.past-to-87{width:87%}.past-to-88{width:88%}.past-to-89{width:89%}.past-to-90{width:90%}.past-to-91{width:91%}.past-to-92{width:92%}.past-to-93{width:93%}.past-to-94{width:94%}.past-to-95{width:95%}.past-to-96{width:96%}.past-to-97{width:97%}.past-to-98{width:98%}.past-to-99{width:99%}.past-to-100{width:100%}

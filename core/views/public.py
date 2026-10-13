@@ -160,7 +160,29 @@ def grid(request):
     """The whole availability grid: configured rooms by twelve hourly slots."""
     moment = now()
     local_date = _parse_date(request.GET.get("date"), clock.local_date(moment))
-    return render(request, "core/grid.html", _grid_context(request, local_date))
+    context = _grid_context(request, local_date)
+    # The "right now" board leads the page for today's unfiltered view (D-44).
+    filtered = context["selected_room"] or context["equipment_query"] or context["capacity_min"]
+    board = (
+        availability.status_board(context["grid"]["rows"], context["moment"])
+        if context["is_today"] and not filtered
+        else None
+    )
+    if board is not None:
+        show = request.GET.get("show") or ""
+        show = show if show in {"free", "practice", "teaching"} else ""
+        groups = []
+        for kind, cards in board["groups"]:
+            if show == "practice" and kind != "practice":
+                continue
+            if show == "teaching" and kind == "practice":
+                continue
+            if show == "free":
+                cards = [card for card in cards if card.now == "free"]
+            if cards:
+                groups.append((kind, cards))
+        context.update({"board": board, "board_groups": groups, "board_show": show})
+    return render(request, "core/grid.html", context)
 
 
 @require_GET

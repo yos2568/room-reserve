@@ -1,0 +1,114 @@
+{% load i18n %}
+{# The "right now" board (D-44): every room's state for the hour in progress. #}
+<section id="now" class="mt-4 space-y-5" aria-labelledby="now-heading">
+  <div class="flex flex-wrap items-stretch gap-5">
+    <div class="flex min-w-[16rem] flex-1 flex-col justify-center gap-1">
+      <p class="flex items-center gap-2 text-sm text-slate-600">
+        <span class="status-swatch !rounded-full !bg-[#c31749] !h-2 !w-2" aria-hidden="true"></span>
+        {% blocktrans with time=moment|time:"H:i" %}Right now · {{ time }}{% endblocktrans %}
+      </p>
+      <h2 id="now-heading" class="text-3xl font-bold leading-tight text-[#10264a] sm:text-4xl">
+        {% blocktrans count counter=board.counts.free %}{{ counter }} room is free right now{% plural %}{{ counter }} rooms are free right now{% endblocktrans %}
+      </h2>
+      <p class="text-sm text-slate-700">{% trans "A free practice room can be used straight away until the end of the hour, or reserved ahead." %}</p>
+    </div>
+    <div class="status-tiles min-w-[18rem] flex-[2]">
+      <div class="status-tile">
+        <span class="flex items-center gap-2 text-sm font-medium text-slate-700"><span class="status-swatch strip-free" aria-hidden="true"></span>{% trans "Free" %}</span>
+        <span class="status-tile-n">{{ board.counts.free }}</span>
+      </div>
+      <div class="status-tile">
+        <span class="flex items-center gap-2 text-sm font-medium text-slate-700"><span class="status-swatch strip-busy" aria-hidden="true"></span>{% trans "In use or booked" %}</span>
+        <span class="status-tile-n">{{ board.counts.busy }}</span>
+      </div>
+      <div class="status-tile">
+        <span class="flex items-center gap-2 text-sm font-medium text-slate-700"><span class="status-swatch strip-class" aria-hidden="true"></span>{% trans "Class" %}</span>
+        <span class="status-tile-n">{{ board.counts.class }}</span>
+      </div>
+      <div class="status-tile">
+        <span class="flex items-center gap-2 text-sm font-medium text-slate-700"><span class="status-swatch strip-closed" aria-hidden="true"></span>{% trans "Closed" %}</span>
+        <span class="status-tile-n">{{ board.counts.closed }}</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="filter-chips" aria-label="{% trans 'Show rooms' %}">
+    <a class="filter-chip" href="?#now" {% if not board_show %}aria-current="true"{% endif %}>{% trans "All rooms" %}</a>
+    <a class="filter-chip" href="?show=free#now" {% if board_show == "free" %}aria-current="true"{% endif %}>{% trans "Free now" %}</a>
+    <a class="filter-chip" href="?show=practice#now" {% if board_show == "practice" %}aria-current="true"{% endif %}>{% trans "Practice rooms" %}</a>
+    <a class="filter-chip" href="?show=teaching#now" {% if board_show == "teaching" %}aria-current="true"{% endif %}>{% trans "Classrooms and meeting room" %}</a>
+  </nav>
+
+  {% for kind, cards in board_groups %}
+    <section class="space-y-3" aria-labelledby="group-{{ kind }}">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h3 id="group-{{ kind }}" class="text-lg font-bold text-[#10264a]">{% if kind == "practice" %}{% trans "Practice rooms" %}{% elif kind == "teaching" %}{% trans "Classrooms" %}{% else %}{% trans "Meeting room" %}{% endif %}</h3>
+        <span class="text-sm text-slate-600">{% if kind == "practice" %}{% trans "Reserve at once, or walk in while a room is free" %}{% elif kind == "teaching" %}{% trans "Send a request; staff approve it" %}{% else %}{% trans "For the students on its list" %}{% endif %}</span>
+      </div>
+      <div class="status-cards">
+        {% for card in cards %}
+          <article class="status-card {% if card.now == 'free' %}is-free{% endif %}" aria-labelledby="card-{{ card.room.pk }}">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <h4 id="card-{{ card.room.pk }}" class="text-2xl font-bold leading-tight text-[#10264a]">{{ card.room }}</h4>
+              </div>
+              {% if card.now == "free" %}
+                <span class="status-pill is-free">{% trans "Free" %}</span>
+              {% elif card.now == "busy" %}
+                <span class="status-pill is-busy">{% if card.now_cell.state == "in_use" %}{% trans "In use" %}{% else %}{% trans "Booked" %}{% endif %}</span>
+              {% elif card.now == "class" %}
+                <span class="status-pill is-class">{% trans "Class" %}</span>
+              {% else %}
+                <span class="status-pill is-closed">{% trans "Closed" %}</span>
+              {% endif %}
+            </div>
+
+            <p class="text-[15px] font-semibold {% if card.now == 'free' %}text-emerald-800{% else %}text-slate-700{% endif %}">
+              {% if card.now == "free" %}
+                {% blocktrans with until=card.free_until|time:"H:i" %}Free until {{ until }}{% endblocktrans %}{% if card.now_cell.can_use_now %} · {% blocktrans count counter=card.now_cell.remaining_minutes %}{{ counter }} minute left this hour{% plural %}{{ counter }} minutes left this hour{% endblocktrans %}{% endif %}
+              {% else %}
+                {% if card.next_free %}{% blocktrans with at=card.next_free|time:"H:i" %}Free again at {{ at }}{% endblocktrans %}{% else %}{% trans "No free hour left today" %}{% endif %}
+              {% endif %}
+            </p>
+
+            <div>
+              <div class="day-strip" role="img" aria-label="{% trans 'Today, hour by hour' %}">
+                {% for slot in card.strip %}<span class="strip-{{ slot.kind }}" title="{{ slot.cell.local_start|time:'H:i' }}"></span>{% endfor %}
+                <span class="now-marker now-at-{{ board.now_offset }}" aria-hidden="true"></span>
+              </div>
+              <div class="mt-1 flex justify-between text-[11px] text-slate-600" aria-hidden="true">
+                <span>{{ card.strip.0.cell.local_start|time:"H:i" }}</span>{% with last=card.strip|last %}<span>{{ last.cell.local_end|time:"H:i" }}</span>{% endwith %}
+              </div>
+            </div>
+
+            <div class="flex min-h-[26px] flex-wrap gap-1.5">
+              {% if card.room.requires_approval %}<span class="chip">{% trans "Needs approval" %}</span>{% endif %}
+              {% if card.room.members_only %}<span class="chip">{% trans "Listed students only" %}</span>{% endif %}
+              {% if card.room.is_restricted %}{% for row in card.room.allowed_categories.all %}<span class="chip">{{ row.get_category_display }}</span>{% endfor %}{% endif %}
+            </div>
+
+            {% if card.now_cell.can_use_now %}
+              <a class="btn-primary w-full !bg-emerald-700 hover:!bg-emerald-800" href="{% url 'core:use_now' room_id=card.room.pk slot=card.now_cell.slot_key %}">{% trans "Use now" %}</a>
+            {% elif card.next_bookable %}
+              <a class="btn-primary w-full" href="{% url 'core:book_slot' room_id=card.room.pk slot=card.next_bookable.slot_key %}">{% if card.room.requires_approval %}{% blocktrans with at=card.next_bookable.local_start|time:"H:i" %}Request {{ at }}{% endblocktrans %}{% else %}{% blocktrans with at=card.next_bookable.local_start|time:"H:i" %}Reserve {{ at }}{% endblocktrans %}{% endif %}</a>
+            {% else %}
+              <a class="btn-secondary w-full" href="{% url 'core:room_profile' room_id=card.room.pk %}">{% trans "Room details" %}</a>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% empty %}
+    <p class="card text-sm">{% trans "No room matches. Show all rooms to see the rest." %}</p>
+  {% endfor %}
+
+  <p class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
+    <span class="font-semibold text-slate-700">{% trans "Today's bar:" %}</span>
+    <span class="inline-flex items-center gap-1.5"><span class="status-swatch strip-free" aria-hidden="true"></span>{% trans "Free" %}</span>
+    <span class="inline-flex items-center gap-1.5"><span class="status-swatch strip-busy" aria-hidden="true"></span>{% trans "In use or booked" %}</span>
+    <span class="inline-flex items-center gap-1.5"><span class="status-swatch strip-class" aria-hidden="true"></span>{% trans "Class" %}</span>
+    <span class="inline-flex items-center gap-1.5"><span class="status-swatch strip-closed" aria-hidden="true"></span>{% trans "Closed" %}</span>
+    <span class="inline-flex items-center gap-1.5"><span class="status-swatch strip-past" aria-hidden="true"></span>{% trans "Finished" %}</span>
+    <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3.5 w-0.5 bg-[#c31749]" aria-hidden="true"></span>{% trans "Now" %}</span>
+  </p>
+</section>

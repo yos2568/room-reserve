@@ -56,6 +56,7 @@ urlpatterns = [
     path("staff/book/", views.staff.book_room, name="staff_book_room"),
     path("staff/book/create/", views.staff.create_staff_booking, name="staff_create_booking"),
     path("staff/upcoming/", views.staff.upcoming_bookings, name="staff_upcoming"),
+    path("staff/timeline/", views.staff.timeline, name="staff_timeline"),
     path("staff/room-access/", views.staff.room_access, name="staff_room_access"),
     path("staff/room-access/<int:pk>/add/", views.staff.add_room_members, name="staff_add_room_members"),
     path(

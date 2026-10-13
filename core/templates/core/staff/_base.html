@@ -13,6 +13,8 @@
         <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Today" %}{% if pending %} ({{ pending|length }}){% endif %}</a>
         {% url 'core:staff_users' as section_url %}
         <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Users" %}</a>
+        {% url 'core:staff_timeline' as section_url %}
+        <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Booking timeline" %}</a>
         {% url 'core:staff_upcoming' as section_url %}
         <a class="btn-secondary" {% if request.path == section_url %}aria-current="page"{% endif %} href="{{ section_url }}">{% trans "Upcoming bookings" %}</a>
         {% url 'core:staff_book_room' as section_url %}
