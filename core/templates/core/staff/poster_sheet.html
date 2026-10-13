@@ -27,10 +27,13 @@
         <p class="text-lg font-medium">{% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Open Monday to Friday, {{ open }}:00–{{ close }}:00{% endblocktrans %}</p>
         <ol class="mx-auto mt-3 max-w-[150mm] list-decimal space-y-1 ps-6 text-start text-base">
           <li>{% blocktrans with minutes=policy.checkin_grace_minutes %}If you booked this hour, check in within {{ minutes }} minutes of the start.{% endblocktrans %}</li>
-          <li>{% trans "If the hour is free, confirm you are here to use it now." %}</li>
+          {% if not card.room.members_only and not card.room.requires_approval %}<li>{% trans "If the hour is free, confirm you are here to use it now." %}</li>{% endif %}
           <li>{% trans "The session ends at the hour boundary." %}</li>
         </ol>
         <p class="mt-4 break-all text-sm text-slate-700">{{ card.target }}</p>
+        {% if card.room.members_only %}
+          <p class="mt-3 text-base font-medium">{% trans "This room is for listed students only and cannot be used as a walk-in. Reserve it in advance instead." %}</p>
+        {% endif %}
         {% if card.room.is_restricted %}
           <p class="mt-3 text-base font-medium">
             {% blocktrans %}Piano and percussion students may reserve this room in advance. Once an hour has started, anyone may use it if it is still free.{% endblocktrans %}

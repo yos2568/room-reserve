@@ -69,6 +69,9 @@ def use_now(ctx, *, room: Room) -> dict:
     if room.requires_approval:
         # Every path into an approval room goes through staff; a walk-in cannot.
         raise OperationRejected(Code.APPROVAL_ROOM_NO_WALK_IN, room_id=room.pk)
+    if room.members_only:
+        # A walk-in would let anyone into a room kept for its listed people.
+        raise OperationRejected(Code.MEMBERS_ROOM_NO_WALK_IN, room_id=room.pk)
     assert_slot_open(slot_start, room)
 
     code, blocker = room_availability_for_now(room, slot_start, now)

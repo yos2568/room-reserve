@@ -216,7 +216,14 @@ def ensure_rooms(
         if config:
             profile_updates = {}
             staff_managed = _profile_managed_by_staff(room)
-            for field in ("label", "capacity", "equipment", "requires_approval", "availability_only"):
+            for field in (
+                "label",
+                "capacity",
+                "equipment",
+                "requires_approval",
+                "availability_only",
+                "members_only",
+            ):
                 if staff_managed and field in STAFF_PROFILE_FIELDS:
                     continue
                 if field in config and getattr(room, field) != config[field]:

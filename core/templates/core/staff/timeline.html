@@ -1,0 +1,146 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Booking timeline" %}{% endblock %}
+
+{% block staff_content %}
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <nav aria-label="{% trans 'Choose a date' %}" class="flex flex-wrap items-center gap-2">
+      <a class="btn-secondary" href="?date={{ prev_date|date:'Y-m-d' }}" aria-label="{% trans 'Previous day' %}">‹</a>
+      <span class="px-1 text-base font-semibold text-[#10264a]">{{ local_date|date:"D j M Y" }}</span>
+      <a class="btn-secondary" href="?date={{ next_date|date:'Y-m-d' }}" aria-label="{% trans 'Next day' %}">›</a>
+      {% if not is_today %}<a class="btn-secondary" href="?date={{ today_date|date:'Y-m-d' }}">{% trans "Today" %}</a>{% endif %}
+    </nav>
+    <a class="btn-primary" href="{% url 'core:staff_book_room' %}">{% trans "Book a room" %}</a>
+  </div>
+  <p class="mt-2 text-sm text-slate-700">{% trans "Select a booking to see who made it and act on it. Select an empty hour to book that room for the department." %}</p>
+
+  <p class="mt-3 flex flex-wrap gap-2" aria-label="{% trans 'Legend' %}">
+    <span class="status-pill is-booked">{% trans "Booked" %}</span>
+    <span class="status-pill is-busy">{% trans "In use" %}</span>
+    <span class="status-pill is-pending">{% trans "Waiting for approval" %}</span>
+    <span class="status-pill is-staff">{% trans "Staff booking" %}</span>
+    <span class="status-pill is-class">{% trans "Class" %}</span>
+    <span class="status-pill is-closed">{% trans "Closed" %}</span>
+    <span class="status-pill is-done">{% trans "Finished" %}</span>
+    <span class="status-pill is-noshow">{% trans "No-show" %}</span>
+  </p>
+
+  <div class="mt-4 flex flex-wrap items-start gap-5">
+    <section class="card min-w-0 flex-[999_1_62rem] !p-0" aria-label="{% trans 'Rooms by hour' %}">
+      {% if timeline.hours %}
+        <div class="overflow-x-auto">
+          <div class="timeline px-4 pb-4 pt-2">
+            <div class="timeline-row !border-0">
+              <span></span>
+              <div class="timeline-track timeline-cols-{{ timeline.columns|length }} !min-h-0 !bg-none py-2 text-xs text-slate-600">
+                {% for hour in timeline.columns %}<span class="pl-1.5">{{ hour|stringformat:"02d" }}:00</span>{% endfor %}
+              </div>
+            </div>
+            <div class="relative">
+              {% if timeline.now_percent is not None %}
+                <div class="timeline-overlay" aria-hidden="true">
+                  <div class="timeline-past past-to-{{ timeline.now_percent }}"></div>
+                  <span class="now-marker now-at-{{ timeline.now_percent }}"></span>
+                </div>
+              {% endif %}
+              {% for kind, rows in timeline.groups %}
+                <h2 class="border-b border-slate-200 pb-1.5 pt-4 text-sm font-bold text-slate-700">{% if kind == "practice" %}{% trans "Practice rooms" %}{% elif kind == "teaching" %}{% trans "Classrooms" %}{% else %}{% trans "Meeting room" %}{% endif %}</h2>
+                {% for row in rows %}
+                  <div class="timeline-row">
+                    <div class="flex min-w-0 flex-col justify-center pr-3">
+                      <span class="truncate text-sm font-semibold text-[#10264a]">{{ row.room }}</span>
+                    </div>
+                    <div class="timeline-track timeline-cols-{{ timeline.columns|length }}{% if row.has_lanes %} has-lanes{% endif %}">
+                      {% for col_hour, col in row.gaps %}
+                        <a class="timeline-empty tl-s{{ col }} tl-e{{ col|add:1 }}" href="{% url 'core:staff_book_room' %}?room={{ row.room.pk }}&date={{ local_date|date:'Y-m-d' }}&start_hour={{ col_hour }}"><span class="sr-only">{% blocktrans with room=row.room hour=col_hour|stringformat:"02d" %}Book {{ room }} at {{ hour }}:00{% endblocktrans %}</span></a>
+                      {% endfor %}
+                      {% for bar in row.bars %}
+                        {% if bar.booking %}
+                          <a class="timeline-bar is-{{ bar.kind }} tl-s{{ bar.col_start }} tl-e{{ bar.col_end }}{% if bar.lane == 2 %} lane-2{% endif %}{% if selected and selected.pk == bar.booking.pk %} is-selected{% endif %}" href="?date={{ local_date|date:'Y-m-d' }}&booking={{ bar.booking.pk }}#detail" title="{{ bar.label }}" {% if selected and selected.pk == bar.booking.pk %}aria-current="true"{% endif %}>{{ bar.label }}{% if bar.lane == 2 %}<span class="sr-only"> · {% trans "Overlaps a class or closure" %}</span>{% endif %}</a>
+                        {% else %}
+                          <span class="timeline-bar is-{{ bar.kind }} tl-s{{ bar.col_start }} tl-e{{ bar.col_end }}" title="{{ bar.label }}">{% if bar.kind == "class" %}{% trans "Class" %}{% else %}{% trans "Closed" %}{% endif %}{% if bar.label %} · {{ bar.label }}{% endif %}</span>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <p class="p-5 text-sm">{% trans "Rooms are closed on this date." %}</p>
+      {% endif %}
+    </section>
+
+    <aside id="detail" class="card flex min-w-0 flex-[1_1_20rem] flex-col gap-4 !p-5 scroll-mt-4" aria-labelledby="detail-heading">
+      {% if selected %}
+        <div class="flex items-center justify-between gap-2">
+          {% if selected.status == "PENDING_APPROVAL" %}<span class="status-pill is-pending">{% trans "Waiting for approval" %}</span>
+          {% elif selected.in_progress %}<span class="status-pill is-busy">{% trans "In use" %}</span>
+          {% elif selected.status == "COMPLETED" %}<span class="status-pill is-done">{% trans "Finished" %}</span>
+          {% elif selected.status == "NO_SHOW" %}<span class="status-pill is-noshow">{% trans "No-show" %}</span>
+          {% elif selected.is_staff_booking %}<span class="status-pill is-staff">{% trans "Staff booking" %}</span>
+          {% else %}<span class="status-pill is-booked">{% trans "Booked" %}</span>{% endif %}
+          <a class="text-sm" href="?date={{ local_date|date:'Y-m-d' }}">{% trans "Close" %}</a>
+        </div>
+        <div>
+          <h2 id="detail-heading" class="text-2xl font-bold leading-tight text-[#10264a]">{{ selected.room }}</h2>
+          <p class="mt-1 text-base text-slate-700">{{ selected.local_start|date:"D j M" }} · {{ selected.local_start|time:"H:i" }}–{{ selected.local_end|time:"H:i" }}</p>
+        </div>
+        <dl class="grid grid-cols-[6rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
+          <dt class="text-slate-600">{% trans "Booked by" %}</dt><dd class="font-semibold">{{ selected.user.display_name }}</dd>
+          <dt class="text-slate-600">{% trans "Student ID" %}</dt><dd>{{ selected.user.institutional_id }}</dd>
+          <dt class="text-slate-600">{% trans "Title" %}</dt><dd>{{ selected.title|default:"—" }}</dd>
+          {% if selected.purpose %}<dt class="text-slate-600">{% trans "Details" %}</dt><dd>{{ selected.purpose }}</dd>{% endif %}
+          {% if selected.participant_names %}<dt class="text-slate-600">{% trans "Participants" %}</dt><dd>{{ selected.participant_names }}</dd>{% endif %}
+          {% if selected.approval_note %}<dt class="text-slate-600">{% trans "Note" %}</dt><dd>{{ selected.approval_note }}</dd>{% endif %}
+        </dl>
+
+        {% if selected.status == "PENDING_APPROVAL" %}
+          <form method="post" action="{% url 'core:staff_decide_booking_approval' pk=selected.pk %}" class="space-y-2">
+            {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <label class="label" for="decision-note">{% trans "Message to the student (optional)" %}</label>
+            <input class="field" id="decision-note" name="note" maxlength="1000">
+            <div class="flex flex-wrap gap-2">
+              <button class="btn-primary" name="decision" value="APPROVED" type="submit">{% trans "Approve" %}</button>
+              <button class="btn-danger" name="decision" value="REJECTED" type="submit">{% trans "Reject" %}</button>
+            </div>
+          </form>
+        {% endif %}
+        {% if selected.status == "SCHEDULED" and not selected.is_staff_booking and selected.slot_start <= moment and moment < selected.deadline %}
+          <form method="post" action="{% url 'core:staff_assisted_check_in' pk=selected.pk %}" class="space-y-2">
+            {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <label class="label" for="checkin-reason">{% trans "Attendance verified how?" %}</label>
+            <input class="field" id="checkin-reason" name="reason" required>
+            <button class="btn-secondary" type="submit">{% trans "Check in for the student" %}</button>
+          </form>
+        {% endif %}
+        {% if selected.in_progress %}
+          <form method="post" action="{% url 'core:staff_complete_early' pk=selected.pk %}" class="space-y-2">
+            {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <label class="label" for="end-reason">{% trans "Reason for ending early" %}</label>
+            <input class="field" id="end-reason" name="reason" required>
+            <button class="btn-danger" type="submit">{% trans "End early" %}</button>
+          </form>
+        {% endif %}
+        {% if selected.status == "PENDING_APPROVAL" or selected.status == "SCHEDULED" and not selected.in_progress %}
+          <form method="post" action="{% url 'core:staff_cancel_booking' pk=selected.pk %}" class="space-y-2">
+            {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+            <input type="hidden" name="next" value="{{ request.path }}?date={{ local_date|date:'Y-m-d' }}">
+            <label class="label" for="cancel-reason">{% trans "Cancellation reason" %}</label>
+            <input class="field" id="cancel-reason" name="reason" required>
+            <button class="btn-danger" type="submit">{% trans "Cancel booking" %}</button>
+          </form>
+        {% endif %}
+      {% else %}
+        <h2 id="detail-heading" class="text-lg font-bold text-[#10264a]">{% trans "No booking selected" %}</h2>
+        <p class="text-sm text-slate-700">{% trans "Select a bar on the timeline to see its details here." %}</p>
+      {% endif %}
+    </aside>
+  </div>
+{% endblock %}

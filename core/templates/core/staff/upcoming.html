@@ -1,0 +1,75 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Upcoming bookings" %}{% endblock %}
+
+{% block staff_content %}
+  <section class="card">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 class="text-base font-semibold">{% trans "Every booking that has not finished yet" %}</h2>
+        <p class="mt-1 text-sm text-slate-700">{% trans "Students' bookings and staff bookings in every room. Requests waiting for approval are decided on Room approvals." %}</p>
+      </div>
+      <form method="get" class="flex flex-wrap items-end gap-2">
+        <div>
+          <label class="label" for="room">{% trans "Room" %}</label>
+          <select class="field" id="room" name="room">
+            <option value="">{% trans "All rooms" %}</option>
+            {% for room in rooms %}
+              <option value="{{ room.pk }}" {% if selected_room == room.pk %}selected{% endif %}>{{ room }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn-secondary" type="submit">{% trans "Show" %}</button>
+      </form>
+    </div>
+    <p class="mt-3"><a class="btn-primary" href="{% url 'core:staff_book_room' %}">{% trans "Book a room" %}</a></p>
+
+    {% if bookings %}
+      {% regroup bookings by slot_date as days %}
+      {% for day in days %}
+        <h3 class="mt-5 font-semibold">{{ day.grouper|date:"l j F Y" }}</h3>
+        <ul class="mt-2 divide-y divide-slate-200 text-sm">
+          {% for booking in day.list %}
+            <li class="flex flex-wrap items-start justify-between gap-3 py-3">
+              <div class="min-w-0">
+                <p class="font-semibold">{{ booking.local_start|date:"H:i" }}–{{ booking.local_end|date:"H:i" }} · {{ booking.room }}</p>
+                <p class="mt-1">{% trans "Booked by" %}: {{ booking.user.display_name }} <span class="text-xs text-slate-600">({{ booking.user.institutional_id }})</span></p>
+                <p class="mt-1">
+                  {% if booking.is_staff_booking %}<span class="chip">{% trans "Staff booking" %}</span>{% endif %}
+                  {{ booking.get_status_display }}
+                </p>
+                {% if booking.title %}<p class="mt-1 font-medium">{{ booking.title }}</p>{% endif %}
+                {% if booking.purpose %}<p class="text-xs text-slate-600">{{ booking.purpose }}</p>{% endif %}
+              </div>
+              <div>
+                {% if booking.status == 'PENDING_APPROVAL' %}
+                  <a class="btn-primary" href="{% url 'core:room_admin' %}">{% trans "Approve or reject" %}</a>
+                {% elif booking.in_progress %}
+                  <form method="post" action="{% url 'core:staff_complete_early' pk=booking.pk %}" class="flex flex-wrap items-center gap-1">
+                    {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <label class="sr-only" for="end-{{ booking.pk }}">{% trans "Reason for ending early" %}</label>
+                    <input class="field !py-1" id="end-{{ booking.pk }}" name="reason" placeholder="{% trans 'Reason for ending early' %}" required>
+                    <button class="btn-danger" type="submit">{% trans "End early" %}</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{% url 'core:staff_cancel_booking' pk=booking.pk %}" class="flex flex-wrap items-center gap-1">
+                    {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <label class="sr-only" for="cancel-{{ booking.pk }}">{% trans "Cancellation reason" %}</label>
+                    <input class="field !py-1" id="cancel-{{ booking.pk }}" name="reason" placeholder="{% trans 'Cancellation reason' %}" required>
+                    <button class="btn-danger" type="submit">{% trans "Cancel" %}</button>
+                  </form>
+                {% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endfor %}
+      {% if truncated %}<p class="mt-3 text-sm">{% trans "Only the first 500 are shown. Choose a room to narrow the list." %}</p>{% endif %}
+    {% else %}
+      <p class="mt-4 text-sm">{% trans "No upcoming bookings." %}</p>
+    {% endif %}
+  </section>
+{% endblock %}

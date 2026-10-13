@@ -114,7 +114,9 @@ def test_restricted_accounts_see_availability_without_booking_links(frozen, room
         response = client.get(path)
         assert response.status_code == 200
         html = response.content.decode()
-        assert "Bookable later today" in html
+        # Availability is still shown: the "right now" board on the page (D-44)
+        # and the timetable in the refreshed fragment.
+        assert ("free right now" in html) if path == "/en/" else ("availability-table" in html)
         assert 'aria-label="Reserve ' not in html
         assert 'aria-label="Use ' not in html
         assert "to reserve or use a room." not in html

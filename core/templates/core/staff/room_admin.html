@@ -9,7 +9,11 @@
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="text-base font-semibold">{% trans "Requests awaiting approval" %}</h2>
-          <p class="mt-1 text-sm text-slate-700">{% trans "Only requests for rooms assigned to you appear here. Student details stay inside this staff view." %}</p>
+          {% if approves_every_room %}
+            <p class="mt-1 text-sm text-slate-700">{% trans "You are staff, so you can approve requests for every room, including your own. Staff bookings made on Book a room are confirmed without approval." %}</p>
+          {% else %}
+            <p class="mt-1 text-sm text-slate-700">{% trans "Only requests for rooms assigned to you appear here. Student details stay inside this staff view." %}</p>
+          {% endif %}
         </div>
         <span class="chip">{{ pending|length }} {% trans "pending" %}</span>
       </div>

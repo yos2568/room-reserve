@@ -427,3 +427,120 @@ Email verification still proves ownership, and the existing roster match then
 approves the account. Addresses are still never derived from student IDs, and a
 mistyped roster address (such as `gmail.con`) must be corrected in the roster
 before that student can receive the verification email.
+
+**D-41 — Staff book rooms for the department, outside the student limits (13 October 2026).**
+The department admin reported four problems: they could not book more than two
+days ahead, could not book 17:00–20:00 as one booking, could not find students'
+requests, and their own room-301 booking waited for approval with nobody sure
+who should approve it. All four followed from staff booking through the student
+flow under the student rules, which the design had kept on purpose ("staff do
+not bypass booking rules"). The owner chose to change that for operational staff
+and the maintainer only. A new staff screen, **Book a room**, holds one room for
+several consecutive hours, up to `STAFF_BOOKING_HORIZON_DAYS` (default 90) ahead,
+confirmed at once. The two-day window, daily quota, upcoming-hours cap, adjacency
+rule and room audience do not apply; opening hours, closures and class hours
+still do, and an hour anyone already holds is never taken over — either every
+hour is booked or none is. Each hour is an ordinary one-hour booking marked
+`is_staff_booking`: it blocks the grid like any reservation, needs no check-in,
+is never recorded as a no-show or a strike, gets no reminder email, and completes
+when its hour ends. When staff reserve an approval room through the ordinary
+timetable, the request is approved as made instead of waiting for themselves.
+Teachers named as room administrators are unchanged. A new **Upcoming bookings**
+screen lists every booking that has not finished, and the Today screen points to
+Room approvals whenever student requests are waiting. Students' rules are
+unchanged.
+
+**D-42 — A conference room for the master's students, by access list (13 October 2026).**
+The owner asked for a new conference room that only the master's students on a
+list the department supplies may reserve, with the admin keeping full control.
+Room `ป.โท` ("ห้องประชุม ป.โท") is configured as `members_only`. Its access list
+(`RoomMember`: name and email) is kept by staff on **Room access lists**, where
+rows copied from the department's spreadsheet are pasted in; the list is never
+stored in code or settings, so names and addresses stay out of the repository.
+A person is matched by the email address on their account, ignoring case,
+because the supplied list gives emails but not student IDs for the second-year
+students. Listed people reserve it like any general room — confirmed at once,
+under the usual student limits. Everyone else sees the room on the timetable
+marked "Listed students only" and cannot reserve it; nobody walks in, since a
+walk-in would bypass the list. Staff may reserve it from the timetable and from
+Book a room (D-41). Removing someone from the list keeps any booking they have
+already made, as an audience change does. A listed person still needs an
+approved account to book, and an account still needs a student ID: a listed
+email only helps once an account with that same email exists.
+
+**D-43 — A room-listed address may register and is approved automatically (13 October 2026).**
+The second-year master's students on the conference-room list (D-42) were given
+by the department with personal email addresses and no student IDs, so under
+D-40 they could not register at all. The owner chose to let them register with
+that address, type their own ID, and be approved once they confirm the email.
+Registration and email change now also accept an address on the access list of
+an active members-only room. The emailed link proves the registrant owns the
+address and the department's list vouches that it belongs to one of its
+students, so on confirmation the account is approved automatically ("Automatic:
+verified email is on a department room access list."), whatever its domain. A
+verified account still pending when its address is added to a list is approved
+at that moment. A rejected account is never approved this way. The student ID
+is the one the student typed and is not checked: the owner accepted that risk
+for a small, known group. Staff can correct a mistyped ID on the Users screen
+(Manage → Correct student ID, audited, refused if another account holds the ID
+or the account is linked to a roster row). The generic registration response is
+unchanged, so the rule does not reveal who is listed.
+
+**D-44 — The home page leads with every room's state now; staff get a booking timeline (13 October 2026).**
+After a design review against booking-dashboard references, the owner chose to
+build the two screens used most each day. The home page keeps its timetable
+(now under "Plan ahead") but, for today's unfiltered view during opening hours,
+first shows a "right now" board: how many rooms are free, in use or booked, in
+class or closed; then one card per room, grouped into practice rooms,
+classrooms and the meeting room, each with its state, a plain line ("Free until
+16:00", "Free again at 14:00"), a strip of today's hours with a now-marker, and
+one action that fits — Use now, Reserve or Request the next free hour, or Room
+details. It is built from the same grid cells as the timetable, so the two
+cannot disagree, and like the grid it never shows who booked. Staff get a
+timeline: every room down, the day's hours across, each booking a bar coloured
+and labelled by status beside class hours and closures, with a current-time
+line. Selecting a bar shows who booked and the actions that apply (approve or
+reject, check in for the student, end early, cancel), each returning to the
+same day; selecting an empty future hour opens Book a room with that room, date
+and hour filled in. Status is never shown by colour alone: every state also has
+a text label, and "waiting for approval" a dashed outline. Bars are placed with
+CSS classes rather than inline styles, keeping the templates free of inline
+style attributes.
+
+**Review follow-up to D-41–D-44 (13 October 2026).** A code review of these
+changes found, and this change fixes:
+- *D-41.* Every booking a staff account makes is a staff booking (no check-in,
+  never a no-show or strike), not only those from Book a room; a staff move into
+  an approval room is approved as made, and a student's clears any old approval.
+  Staff holds are exempt from the one-room-per-hour constraint, so one event may
+  hold several rooms at once; students keep the constraint.
+- *D-43.* A room-listed address may not register with, or be approved under, an
+  ID the active roster gives to another student. An account approved from a room
+  list never has its self-declared instrument trusted (D-30 needs a person's
+  approval). Correct student ID applies to student accounts only, validates the
+  ID, and refuses an ID the roster gives to someone else.
+- *D-44.* The home board refreshes itself every 30 seconds like the timetable,
+  and is built only on pages that show it. On the timeline, a walk-in after a
+  no-show is the only bar for its hour.
+
+
+**Second review follow-up to D-41–D-44 (13 October 2026).** An independent
+review found, and this change fixes:
+- *D-43.* An instrument staff set on the Users screen is trusted for an account
+  approved from a room list (`User.declared_category_confirmed`, migration 0019);
+  the student's own declaration still is not.
+- *D-41.* The staff booking horizon counts whole Bangkok dates, so every hour of
+  the last date Book a room offers is bookable.
+- *D-42.* A student not on a members-only room's list is told so, instead of the
+  piano/percussion refusal. Door posters offer "use a free hour now" only where
+  walk-ins are allowed (not members-only or approval rooms).
+- *D-44.* The timeline lays out any span of opening hours a calendar override
+  allows (1–24 columns). A booking that overlaps a class or closure added after it
+  is drawn on a second line under it, not hidden behind it.
+
+- *D-41, owner's decision.* A staff booking in progress is protected like a
+  checked-in session. Staff do not check in, so from the start of its hour a staff
+  booking is *in use* (set by reconciliation, which every action runs first). It
+  can no longer be cancelled and released to a walk-in; staff use End early, and
+  the hour stays occupied. A closure or room/account deactivation counts it as an
+  active session needing acknowledgement and on-site review.

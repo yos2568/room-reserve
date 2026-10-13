@@ -22,10 +22,34 @@ from core.services.policy import current_policy
 
 from ._helpers import now, safe_next_url
 
+# How long a booking chosen before registering is remembered by the browser.
+# Long enough to confirm the email; short enough that, on a shared computer, the
+# next person to sign in is not sent to someone else's abandoned selection.
+ONBOARDING_NEXT_TTL_SECONDS = 60 * 60
+
+
+def _remember_onboarding_next(request, next_url: str) -> None:
+    request.session["onboarding_next"] = {"url": next_url, "at": now().timestamp()}
+
+
+def _remembered_onboarding_next(request) -> str:
+    saved = request.session.get("onboarding_next")
+    if not isinstance(saved, dict) or now().timestamp() - saved.get("at", 0) > ONBOARDING_NEXT_TTL_SECONDS:
+        request.session.pop("onboarding_next", None)
+        return ""
+    return saved.get("url") or ""
+
 
 def _onboarding_next(request):
-    candidate = request.POST.get("next") or request.GET.get("next") or request.session.get("onboarding_next")
-    return safe_next_url(request, candidate, "core:my_bookings") if candidate else ""
+    """The page to return to after signing in, or "" when there is none.
+
+    An unsafe (off-site) destination is dropped rather than replaced, so the
+    pages never promise a return to a selection that will not happen.
+    """
+    candidate = request.POST.get("next") or request.GET.get("next") or _remembered_onboarding_next(request)
+    if not candidate:
+        return ""
+    return candidate if safe_next_url(request, candidate, "core:my_bookings") == candidate else ""
 
 
 def _login_destination(request):
@@ -63,7 +87,7 @@ def register(request):
     if request.user.is_authenticated:
         return redirect(next_url or "core:my_bookings")
     if next_url:
-        request.session["onboarding_next"] = next_url
+        _remember_onboarding_next(request, next_url)
 
     registration_type = (
         (request.POST.get("account_type") or request.GET.get("type") or "student").strip().lower()

@@ -116,6 +116,9 @@ class User(AbstractUser):
             "link, when it exists, is authoritative over this value."
         ),
     )
+    # True once staff set the instrument on the Users screen. An account
+    # approved from a room access list (D-43) is trusted only on that.
+    declared_category_confirmed = models.BooleanField(default=False)
 
     # Operational staff (ten named accounts) are distinct from the technical
     # maintainer, who is the only superuser (V3 section 1 and section 8).

@@ -16,7 +16,7 @@ from django.conf import settings
 
 from core.models import BLOCKING_STATUSES, Booking, Closure, Room
 
-from . import clock, instruments, slots
+from . import clock, instruments, room_access, slots
 from .calendar import day_hours, weekly_blocks_for_date
 
 
@@ -75,7 +75,12 @@ class SlotCell:
     def can_use_now(self) -> bool:
         # A room that needs staff approval cannot be walked into: the walk-in
         # would skip the approval its reservations go through.
-        return self.state == SlotState.FREE_NOW and not self.room.requires_approval
+        # A members-only room cannot either: it is kept for its listed people.
+        return (
+            self.state == SlotState.FREE_NOW
+            and not self.room.requires_approval
+            and not self.room.members_only
+        )
 
     @property
     def is_short(self) -> bool:
@@ -106,7 +111,15 @@ def _closures_for(local_date, room_ids):
 
 
 def room_day_cells(
-    room: Room, local_date, now, *, user=None, closure_map=None, block_map=None, viewer_category=None
+    room: Room,
+    local_date,
+    now,
+    *,
+    user=None,
+    closure_map=None,
+    block_map=None,
+    viewer_category=None,
+    member_room_ids=frozenset(),
 ) -> list[SlotCell]:
     """Every slot cell for one room on one local date.
 
@@ -127,7 +140,7 @@ def room_day_cells(
     bookings = _bookings_by_slot(local_date, [room.pk])
     user_id = getattr(user, "pk", None)
     horizon_last = clock.local_date(now) + timedelta(days=settings.HORIZON_DAYS)
-    can_reserve_here = room.may_be_reserved_by(viewer_category)
+    can_reserve_here = room.admits(viewer_category, member_room_ids)
 
     cells = []
     for slot_start in starts:
@@ -261,6 +274,7 @@ def public_grid(
 
     # Resolved once for the whole grid rather than once per cell.
     viewer_category = instruments.category_for_user(user)
+    viewer_member_rooms = room_access.member_room_ids(user)
 
     rows = []
     for room in rooms:
@@ -272,6 +286,7 @@ def public_grid(
             closure_map=closure_map,
             block_map=block_map,
             viewer_category=viewer_category,
+            member_room_ids=viewer_member_rooms,
         )
         by_start = {cell.slot_start: cell for cell in cells}
         # Keep the column set stable even when the day is closed or shortened.
@@ -330,6 +345,7 @@ def current_slot_cell(room: Room, now, *, user=None) -> SlotCell:
         now,
         user=user,
         viewer_category=instruments.category_for_user(user),
+        member_room_ids=room_access.member_room_ids(user),
     )
     for cell in cells:
         if cell.slot_start == slot_start:
@@ -340,3 +356,106 @@ def current_slot_cell(room: Room, now, *, user=None) -> SlotCell:
         slot_end=slots.slot_end_for(slot_start),
         state=SlotState.CLOSED,
     )
+
+
+# --- The "right now" status board on the home page (D-44) ---------------------
+
+# How each hour reads on a room's day strip. Students' names never appear: the
+# board is public, like the grid it is built from.
+_STRIP_KIND = {
+    SlotState.PAST: "past",
+    SlotState.COMPLETED: "past",
+    SlotState.IN_USE: "busy",
+    SlotState.HELD: "busy",
+    SlotState.TAKEN: "busy",
+    SlotState.FREE_NOW: "free",
+    SlotState.BOOKABLE: "free",
+    SlotState.RESTRICTED: "free",
+    SlotState.OUTSIDE_HORIZON: "free",
+    SlotState.VIEW_ONLY: "closed",
+}
+
+
+def _strip_kind(cell: SlotCell) -> str:
+    if cell.state == SlotState.CLOSED:
+        return "class" if cell.block_reason else "closed"
+    return _STRIP_KIND.get(cell.state, "closed")
+
+
+def _room_kind(room: Room) -> str:
+    if room.members_only:
+        return "meeting"
+    if room.requires_approval or room.availability_only:
+        return "teaching"
+    return "practice"
+
+
+@dataclass
+class StatusCard:
+    room: Room
+    kind: str  # practice | teaching | meeting
+    now: str  # free | busy | class | closed
+    strip: list
+    now_cell: SlotCell
+    free_until: object = None  # local time the current free run ends
+    next_free: object = None  # local start of the next free hour, later today
+    next_bookable: SlotCell | None = None
+
+
+def status_board(rows: list, now) -> dict | None:
+    """Every room's state for the hour in progress, from today's grid rows.
+
+    ``None`` outside opening hours, when there is no "now" to describe. Each
+    card says what the room is doing, until when, what is free next, and the
+    next hour the viewer could reserve.
+    """
+    current = slots.floor_to_slot(now)
+    cards = []
+    for row in rows:
+        cells = row["cells"]
+        index = next((i for i, cell in enumerate(cells) if cell.slot_start == current), None)
+        if index is None:
+            return None
+        kinds = [_strip_kind(cell) for cell in cells]
+        now_kind = kinds[index]
+        run_end = index
+        while run_end + 1 < len(kinds) and kinds[run_end + 1] == now_kind:
+            run_end += 1
+        later = cells[index + 1 :]
+        card = StatusCard(
+            room=row["room"],
+            kind=_room_kind(row["room"]),
+            now=now_kind,
+            strip=[{"kind": kind, "cell": cell} for kind, cell in zip(kinds, cells, strict=True)],
+            now_cell=cells[index],
+            next_bookable=next((cell for cell in later if cell.can_reserve), None),
+        )
+        if now_kind == "free":
+            card.free_until = cells[run_end].local_end
+        else:
+            card.next_free = next(
+                (cells[i].local_start for i in range(run_end + 1, len(cells)) if kinds[i] == "free"), None
+            )
+        cards.append(card)
+
+    counts = {
+        kind: sum(1 for card in cards if card.now == kind) for kind in ("free", "busy", "class", "closed")
+    }
+    groups = [
+        (kind, [card for card in cards if card.kind == kind]) for kind in ("practice", "teaching", "meeting")
+    ]
+    return {
+        "cards": cards,
+        "counts": counts,
+        "groups": [(kind, members) for kind, members in groups if members],
+        "now_offset": _now_offset(now, rows),
+    }
+
+
+def _now_offset(now, rows) -> int:
+    """Where "now" falls across the day's columns, as a whole percentage (0–100)."""
+    starts = [cell.slot_start for cell in rows[0]["cells"]] if rows else []
+    if not starts:
+        return 0
+    span = (slots.slot_end_for(starts[-1]) - starts[0]).total_seconds()
+    return max(0, min(100, round((now - starts[0]).total_seconds() * 100 / span)))

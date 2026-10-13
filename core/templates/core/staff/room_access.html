@@ -1,0 +1,48 @@
+{% extends "core/staff/_base.html" %}
+{% load i18n %}
+
+{% block staff_title %}{% trans "Room access lists" %}{% endblock %}
+
+{% block staff_content %}
+  {% for room in rooms %}
+    <section class="card {% if not forloop.first %}mt-4{% endif %}" aria-labelledby="access-{{ room.pk }}">
+      <h2 id="access-{{ room.pk }}" class="text-base font-semibold">{{ room }} <span class="text-slate-600">({{ room.members.all|length }})</span></h2>
+      <p class="mt-2 text-sm text-slate-700">{% trans "Only the people below, and staff, can reserve this room. Other students see it on the timetable but cannot book it or walk in. A person is matched by the email address on their account." %}</p>
+
+      <form method="post" action="{% url 'core:staff_add_room_members' pk=room.pk %}" class="mt-4 space-y-2">
+        {% csrf_token %}
+        <input type="hidden" name="operation_key" value="{{ operation_key }}">
+        <label class="label" for="rows-{{ room.pk }}">{% trans "Add people" %}</label>
+        <p class="text-xs text-slate-600">{% trans "Copy the rows from Excel (number, name, email) and paste them here, one person per line. Title and header rows without an email are skipped." %}</p>
+        <textarea class="field" id="rows-{{ room.pk }}" name="rows" rows="6" required></textarea>
+        <button class="btn-primary" type="submit">{% trans "Add to the list" %}</button>
+      </form>
+
+      {% if room.members.all %}
+        <ul class="mt-5 divide-y divide-slate-200 text-sm">
+          {% for member in room.members.all %}
+            <li class="flex flex-wrap items-center justify-between gap-2 py-2">
+              <div class="min-w-0">
+                <p class="font-medium">{{ member.name|default:"—" }}</p>
+                <p class="text-xs text-slate-600">{{ member.email }}</p>
+                {% if member.email in with_account %}
+                  <p class="mt-1 text-xs text-emerald-800">{% trans "Has an account" %}</p>
+                {% else %}
+                  <p class="mt-1 text-xs text-amber-800">{% trans "No account with this email yet" %}</p>
+                {% endif %}
+              </div>
+              <form method="post" action="{% url 'core:staff_remove_room_member' pk=room.pk member_id=member.pk %}">
+                {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
+                <button class="btn-danger" type="submit">{% trans "Remove" %}</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-4 text-sm">{% trans "Nobody is on the list yet, so only staff can reserve this room." %}</p>
+      {% endif %}
+    </section>
+  {% empty %}
+    <p class="card text-sm">{% trans "No room is set to listed people only." %}</p>
+  {% endfor %}
+{% endblock %}

@@ -15,6 +15,14 @@
     </div>
   {% endif %}
 
+  {% if room_requests_waiting %}
+    <section class="card mb-4" aria-labelledby="room-requests-heading">
+      <h2 id="room-requests-heading" class="text-base font-semibold">{% trans "Room requests waiting" %} <span class="text-slate-600">({{ room_requests_waiting }})</span></h2>
+      <p class="mt-2 text-sm text-slate-700">{% trans "Students have asked for rooms that need approval (301, 303, 304). You can approve them." %}</p>
+      <a class="btn-primary mt-3" href="{% url 'core:room_admin' %}">{% trans "Open Room approvals" %}</a>
+    </section>
+  {% endif %}
+
   <section class="card mb-4" id="user-approvals" aria-labelledby="approval-heading">
     <h2 id="approval-heading" class="text-base font-semibold">{% trans "Waiting for approval" %} <span class="text-slate-600">({{ pending|length }})</span></h2>
     <p class="mt-2 text-sm text-slate-700">{% trans "Review the student's details, choose Approve or Reject, then select the reason for your decision. The reason is saved in the audit record." %}</p>
@@ -67,21 +75,22 @@
                   {% if booking.needs_review %} · <span class="text-red-800">{% trans "review needed" %}</span>{% endif %}
                 </td>
                 <td class="p-2">
-                  {% if booking.status == 'SCHEDULED' %}
+                  {% if booking.status == 'SCHEDULED' and not booking.is_staff_booking %}
                     <form method="post" action="{% url 'core:staff_assisted_check_in' pk=booking.pk %}" class="inline-flex items-center gap-1">
                       {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
                       <label class="sr-only" for="ci-{{ booking.pk }}">{% trans "Reason" %}</label>
                       <input class="field !py-1" id="ci-{{ booking.pk }}" name="reason" placeholder="{% trans 'Attendance verified how?' %}" required>
                       <button class="btn-primary" type="submit">{% trans "Check in" %}</button>
                     </form>
-                  {% elif booking.status == 'IN_USE' %}
+                  {% endif %}
+                  {% if booking.in_progress %}
                     <form method="post" action="{% url 'core:staff_complete_early' pk=booking.pk %}" class="inline-flex items-center gap-1">
                       {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
                       <input class="field !py-1" name="reason" placeholder="{% trans 'Evacuation reason' %}" required>
                       <button class="btn-danger" type="submit">{% trans "End early" %}</button>
                     </form>
                   {% endif %}
-                  {% if booking.status == 'SCHEDULED' or booking.status == 'IN_USE' %}
+                  {% if booking.status == 'SCHEDULED' and not booking.in_progress %}
                     <form method="post" action="{% url 'core:staff_cancel_booking' pk=booking.pk %}" class="mt-1 inline-flex items-center gap-1">
                       {% csrf_token %}<input type="hidden" name="operation_key" value="{{ operation_key }}">
                       <input class="field !py-1" name="reason" placeholder="{% trans 'Cancellation reason' %}" required>

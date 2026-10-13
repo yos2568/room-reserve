@@ -167,6 +167,9 @@ HORIZON_DAYS = env_int("POLICY_HORIZON_DAYS", 2)
 # hours past that still render, marked too far ahead to reserve.
 CALENDAR_LAST_DATE = date(2030, 12, 31)
 MAX_UPCOMING_HOURS = env_int("POLICY_MAX_UPCOMING_HOURS", 4)
+# Operational staff and the maintainer may hold a room for a rehearsal or event
+# this far ahead, for several hours in a row, outside the student limits (D-41).
+STAFF_BOOKING_HORIZON_DAYS = env_int("STAFF_BOOKING_HORIZON_DAYS", 90)
 DAILY_QUOTA = env_int("POLICY_DAILY_QUOTA", 2)
 CHECKIN_GRACE_MINUTES = env_int("POLICY_CHECKIN_GRACE_MINUTES", 15)
 STRIKE_WINDOW_DAYS = env_int("POLICY_STRIKE_WINDOW_DAYS", 30)
@@ -218,6 +221,15 @@ ROOM_OVERRIDES = {
         "label": "ห้อง 304 (ห้องบรรยาย 1)",
         "position": 11,
         "requires_approval": True,
+    },
+    # The master's students' conference room (D-42): reservable only by the
+    # people on its access list, which staff keep on the room's access screen,
+    # and by staff. No walk-ins. The list itself is never kept in settings.
+    "ป.โท": {
+        "label": "ห้องประชุม ป.โท",
+        "position": 12,
+        "capacity": 20,
+        "members_only": True,
     },
 }
 

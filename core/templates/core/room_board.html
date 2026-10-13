@@ -87,6 +87,8 @@
           </div>
           {% if cell.block_reason %}
             <p class="room-board-reason">{{ cell.block_reason }}</p>
+          {% elif cell.state == 'restricted' and row.room.members_only %}
+            <p class="room-board-reason">{% trans "This room is reserved for the students on its list. Ask the department office if you should be on it." %}</p>
           {% elif cell.state == 'restricted' %}
             <p class="room-board-reason">{% trans "Reserved in advance for piano and percussion students." %}</p>
           {% elif cell.state == 'view_only' %}

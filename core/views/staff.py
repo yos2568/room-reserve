@@ -15,8 +15,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
+from django.db.models.functions import Lower
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
@@ -56,6 +58,7 @@ from ._helpers import (
     maintainer_required,
     now,
     operation_key,
+    outcome_status,
     redirect_back,
     run_view_operation,
     staff_required,
@@ -162,6 +165,9 @@ def _render_today(request, *, decision_form=None, candidate_id=None, status=200)
             "local_date": local_date,
             "bookings": bookings,
             "pending": pending,
+            "room_requests_waiting": Booking.objects.filter(
+                status=Booking.Status.PENDING_APPROVAL, slot_start__gt=moment
+            ).count(),
             "active_suspensions": active_suspensions,
             "pending_reviews": pending_reviews,
             "failed_mail": failed_mail,
@@ -183,12 +189,18 @@ def _render_today(request, *, decision_form=None, candidate_id=None, status=200)
 def decide_eligibility(request, pk: int):
     user = get_object_or_404(User, pk=pk)
     decision = request.POST.get("decision") or ""
-    reason = request.POST.get("reason") or ""
-    if "reason_choice" in request.POST:
-        form = EligibilityDecisionForm(request.POST, decision=decision, user_id=user.pk)
-        if not form.is_valid():
-            return _render_today(request, decision_form=form, candidate_id=user.pk, status=400)
-        reason = form.audit_reason()
+    form = EligibilityDecisionForm(request.POST, decision=decision, user_id=user.pk)
+    if not form.is_valid():
+        if user.eligibility != User.Eligibility.PENDING or not user.is_active:
+            # Another staff member decided first, so the row with the errors is
+            # no longer on the page; say so rather than show an unexplained error.
+            messages.info(
+                request,
+                "บัญชีนี้ได้รับการพิจารณาแล้ว / This account has already been decided.",
+            )
+            return redirect("core:staff_today")
+        return _render_today(request, decision_form=form, candidate_id=user.pk, status=400)
+    reason = form.audit_reason()
 
     outcome = run_view_operation(
         request=request,
@@ -295,6 +307,250 @@ def resolve_review(request, pk: int):
     return redirect_back(request, "core:staff_today")
 
 
+# --- Staff bookings and the upcoming list (D-41) ------------------------------
+
+
+def _staff_hours():
+    """Selectable start hours and end hours for a staff hold, within opening hours."""
+    first, last = settings.OPENING_SLOT_START_HOUR, settings.LAST_SLOT_START_HOUR
+    return list(range(first, last + 1)), list(range(first + 1, last + 2))
+
+
+def _render_book_room(request, *, values=None, status=200):
+    start_hours, end_hours = _staff_hours()
+    today_local = timezone.localdate(now())
+    return render(
+        request,
+        "core/staff/book_room.html",
+        {
+            "rooms": Room.objects.filter(is_active=True).order_by("position", "number"),
+            "start_hours": start_hours,
+            "end_hours": end_hours,
+            "min_date": today_local,
+            "max_date": today_local + timedelta(days=settings.STAFF_BOOKING_HORIZON_DAYS),
+            "horizon_days": settings.STAFF_BOOKING_HORIZON_DAYS,
+            "values": values or {},
+            "operation_key": str(uuid.uuid4()),
+        },
+        status=status,
+    )
+
+
+@staff_required
+@require_GET
+def book_room(request):
+    # The timeline's empty hours link here with the room, date and hour filled in.
+    start_hour = _int_or_none(request.GET.get("start_hour"))
+    return _render_book_room(
+        request,
+        values={
+            "room": _int_or_none(request.GET.get("room")),
+            "date": (request.GET.get("date") or "")[:10],
+            "start_hour": start_hour,
+            "end_hour": start_hour + 1 if start_hour is not None else None,
+        },
+    )
+
+
+@staff_required
+@require_GET
+def timeline(request):
+    """Every room's day as bars on an hour axis, with the selected booking's details (D-44)."""
+    from core.services.timeline import day_timeline
+
+    moment = now()
+    today = timezone.localdate(moment)
+    try:
+        local_date = date.fromisoformat(request.GET.get("date") or "")
+    except ValueError:
+        local_date = today
+    selected = None
+    booking_id = _int_or_none(request.GET.get("booking"))
+    if booking_id:
+        selected = (
+            Booking.objects.filter(pk=booking_id, slot_date=local_date).select_related("user", "room").first()
+        )
+    return render(
+        request,
+        "core/staff/timeline.html",
+        {
+            "timeline": day_timeline(local_date, moment),
+            "local_date": local_date,
+            "today_date": today,
+            "is_today": local_date == today,
+            "prev_date": local_date - timedelta(days=1),
+            "next_date": local_date + timedelta(days=1),
+            "selected": selected,
+            "moment": moment,
+            "operation_key": str(uuid.uuid4()),
+        },
+    )
+
+
+@staff_required
+@require_POST
+def create_staff_booking(request):
+    values = {
+        "room": _int_or_none(request.POST.get("room")),
+        "date": (request.POST.get("date") or "").strip(),
+        "start_hour": _int_or_none(request.POST.get("start_hour")),
+        "end_hour": _int_or_none(request.POST.get("end_hour")),
+        "title": request.POST.get("title") or "",
+        "purpose": request.POST.get("purpose") or "",
+    }
+    room = Room.objects.filter(pk=values["room"], is_active=True).first() if values["room"] else None
+    try:
+        local_date = date.fromisoformat(values["date"])
+    except ValueError:
+        local_date = None
+    if room is None or local_date is None or values["start_hour"] is None or values["end_hour"] is None:
+        messages.error(request, "กรุณาเลือกห้อง วันที่ และเวลา / Choose a room, a date and the hours.")
+        return _render_book_room(request, values=values, status=400)
+    if values["end_hour"] <= values["start_hour"]:
+        messages.error(request, "เวลาสิ้นสุดต้องหลังเวลาเริ่ม / The end time must be after the start time.")
+        return _render_book_room(request, values=values, status=400)
+
+    details = {"title": values["title"], "purpose": values["purpose"]}
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_create_booking",
+        payload=booking_service.build_staff_payload(
+            room, local_date, values["start_hour"], values["end_hour"], details
+        ),
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            **booking_service.create_staff_booking(
+                ctx,
+                room=room,
+                local_date=local_date,
+                start_hour=values["start_hour"],
+                end_hour=values["end_hour"],
+            )
+        ),
+    )
+    if not outcome.ok:
+        add_outcome_message(request, outcome)
+        return _render_book_room(request, values=values, status=outcome_status(outcome))
+    add_outcome_message(
+        request,
+        outcome,
+        success_message=(
+            f"จองห้องเรียบร้อย {values['start_hour']}:00–{values['end_hour']}:00 / "
+            f"Room booked {values['start_hour']}:00–{values['end_hour']}:00."
+        ),
+    )
+    return redirect(f"{reverse('core:staff_upcoming')}?room={room.pk}")
+
+
+@staff_required
+@require_GET
+def upcoming_bookings(request):
+    """Every booking that has not finished yet, students' and staff holds alike."""
+    moment = now()
+    room_id = _int_or_none(request.GET.get("room"))
+    bookings = (
+        Booking.objects.filter(
+            slot_end__gt=moment,
+            status__in=[Booking.Status.PENDING_APPROVAL, Booking.Status.SCHEDULED, Booking.Status.IN_USE],
+        )
+        .select_related("room", "user")
+        .order_by("slot_start", "room__position")
+    )
+    if room_id:
+        bookings = bookings.filter(room_id=room_id)
+    limit = 500
+    rows = list(bookings[: limit + 1])
+    return render(
+        request,
+        "core/staff/upcoming.html",
+        {
+            "bookings": rows[:limit],
+            "truncated": len(rows) > limit,
+            "rooms": Room.objects.filter(is_active=True).order_by("position", "number"),
+            "selected_room": room_id,
+            "operation_key": str(uuid.uuid4()),
+        },
+    )
+
+
+# --- Members-only room access lists (D-42) ------------------------------------
+
+
+@staff_required
+@require_GET
+def room_access(request):
+    """The access list of every members-only room, with who already has an account."""
+    rooms = list(
+        Room.objects.filter(members_only=True).order_by("position", "number").prefetch_related("members")
+    )
+    listed = {member.email for room in rooms for member in room.members.all()}
+    # Matched case-insensitively, exactly as reservation matches them.
+    with_account = set(
+        User.objects.filter(is_active=True)
+        .annotate(email_lower=Lower("email"))
+        .filter(email_lower__in=listed)
+        .values_list("email_lower", flat=True)
+    )
+    return render(
+        request,
+        "core/staff/room_access.html",
+        {"rooms": rooms, "with_account": with_account, "operation_key": str(uuid.uuid4())},
+    )
+
+
+@staff_required
+@require_POST
+def add_room_members(request, pk: int):
+    from core.services import room_access as room_access_service
+
+    room = get_object_or_404(Room, pk=pk, members_only=True)
+    entries, skipped = room_access_service.parse_pasted_rows(request.POST.get("rows") or "")
+    if not entries:
+        messages.error(
+            request,
+            "ไม่พบอีเมลในข้อความที่วาง / No email addresses were found in the pasted rows.",
+        )
+        return redirect("core:staff_room_access")
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_add_room_members",
+        payload={"room": pk, "entries": sorted(email for _, email in entries)},
+        key=operation_key(request),
+        body=lambda ctx: _success(**room_access_service.add_members(ctx, room=room, entries=entries)),
+    )
+    if outcome.ok:
+        added = outcome.data.get("added", 0)
+        already = outcome.data.get("already_listed", 0)
+        add_outcome_message(
+            request,
+            outcome,
+            success_message=(
+                f"เพิ่ม {added} คน (มีอยู่แล้ว {already} คน, ข้าม {len(skipped)} บรรทัดที่ไม่มีอีเมล) / "
+                f"Added {added} (already listed {already}; skipped {len(skipped)} lines without an email)."
+            ),
+        )
+    else:
+        add_outcome_message(request, outcome)
+    return redirect("core:staff_room_access")
+
+
+@staff_required
+@require_POST
+def remove_room_member(request, pk: int, member_id: int):
+    from core.services import room_access as room_access_service
+
+    room = get_object_or_404(Room, pk=pk, members_only=True)
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_remove_room_member",
+        payload={"room": pk, "member": member_id},
+        key=operation_key(request),
+        body=lambda ctx: _success(**room_access_service.remove_member(ctx, room=room, member_id=member_id)),
+    )
+    add_outcome_message(request, outcome, success_message="นำออกจากรายชื่อแล้ว / Removed from the list.")
+    return redirect("core:staff_room_access")
+
+
 # --- Users, violations and sanctions ------------------------------------------
 
 
@@ -367,6 +623,36 @@ def set_declared_category(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
+    return redirect_back(request, "core:staff_users")
+
+
+@staff_required
+@require_POST
+def correct_institutional_id(request, pk: int):
+    """Staff fix a student ID typed wrongly at registration (D-43)."""
+    user = get_object_or_404(User, pk=pk)
+    new_id = (request.POST.get("institutional_id") or "").strip()
+    reason = (request.POST.get("reason") or "").strip()
+
+    outcome = run_view_operation(
+        request=request,
+        operation="staff_correct_institutional_id",
+        payload={"user": pk, "institutional_id": new_id, "reason": reason},
+        key=operation_key(request),
+        body=lambda ctx: _success(
+            user_id=identity_service.correct_institutional_id(
+                user=user, institutional_id=new_id, reason=reason, actor=ctx.actor
+            ).pk
+        ),
+    )
+    add_outcome_message(
+        request,
+        outcome,
+        success_message=(
+            f"แก้รหัสนิสิตเป็น {new_id} แล้ว นิสิตต้องใช้รหัสใหม่นี้เข้าสู่ระบบ / "
+            f"Student ID corrected to {new_id}. The student now signs in with it."
+        ),
+    )
     return redirect_back(request, "core:staff_users")
 
 
@@ -1223,7 +1509,13 @@ def room_admin_dashboard(request):
     return render(
         request,
         "core/staff/room_admin.html",
-        {"rooms": rooms, "pending": pending, "moment": now(), "operation_key": str(uuid.uuid4())},
+        {
+            "rooms": rooms,
+            "pending": pending,
+            "moment": now(),
+            "operation_key": str(uuid.uuid4()),
+            "approves_every_room": request.user.is_superuser or request.user.is_operational_staff,
+        },
     )
 
 
@@ -1244,7 +1536,8 @@ def decide_booking_approval(request, pk: int):
         ),
     )
     add_outcome_message(request, outcome)
-    return redirect("core:room_admin")
+    # The timeline (D-44) sends ``next`` to come back to the same day.
+    return redirect_back(request, "core:room_admin")
 
 
 @maintainer_required

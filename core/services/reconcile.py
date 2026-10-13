@@ -16,7 +16,7 @@ import logging
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from core.models import Booking, ServiceIncident, Suspension, Violation
 
@@ -35,6 +35,7 @@ def reconcile(now, *, actor=None, budget: int | None = None) -> dict:
     summary = {
         "expired_approvals": _reconcile_expired_approvals(now, budget, actor),
         "no_shows": _reconcile_no_shows(now, budget, actor),
+        "staff_holds_started": _start_staff_holds(now, budget, actor),
         "completions": _reconcile_completions(now, budget, actor),
         "suspensions": _apply_strike_thresholds(now, actor),
         "lifts": _notify_finished_suspensions(now),
@@ -77,7 +78,9 @@ def _reconcile_expired_approvals(now, budget: int, actor) -> int:
 
 def _reconcile_no_shows(now, budget: int, actor) -> int:
     due = list(
-        Booking.objects.filter(status=Booking.Status.SCHEDULED, deadline__lte=now)
+        # A staff hold is the department's, not a practice hour: nobody owes a
+        # check-in for it, so it is never a no-show (D-41).
+        Booking.objects.filter(status=Booking.Status.SCHEDULED, deadline__lte=now, is_staff_booking=False)
         .order_by("deadline", "id")
         .select_related("room", "user")
     )
@@ -138,9 +141,45 @@ def _record_no_show(booking: Booking, now, policy, actor) -> None:
         logger.info("Booking %s recorded as no-show (violation %s)", booking.pk, violation.pk)
 
 
+def _start_staff_holds(now, budget: int, actor) -> int:
+    """A staff booking is in use from the start of its hour.
+
+    Staff do not check in, so the hour is taken as used: like a student's
+    checked-in session it cannot be cancelled and released once started, only
+    ended early (the hour stays occupied), and closures and deactivations flag
+    it for on-site review.
+    """
+    due = list(
+        Booking.objects.filter(
+            status=Booking.Status.SCHEDULED, is_staff_booking=True, slot_start__lte=now, slot_end__gt=now
+        ).order_by("slot_start", "id")
+    )
+    if len(due) > budget:
+        raise ReconciliationBacklog(
+            f"{len(due)} staff bookings are due to start, above the budget of {budget}."
+        )
+    for booking in due:
+        booking.status = Booking.Status.IN_USE
+        booking.checked_in_at = booking.slot_start
+        booking.save(update_fields=["status", "checked_in_at"])
+        record_audit(
+            action="booking.staff_hold_started",
+            entity_type="Booking",
+            entity_id=booking.pk,
+            actor=actor,
+            actor_label="" if actor else "reconciler",
+            changes={"status": booking.status},
+            reason="Staff booking hour began.",
+        )
+    return len(due)
+
+
 def _reconcile_completions(now, budget: int, actor) -> int:
     due = list(
-        Booking.objects.filter(status=Booking.Status.IN_USE, slot_end__lte=now)
+        Booking.objects.filter(
+            Q(status=Booking.Status.IN_USE) | Q(status=Booking.Status.SCHEDULED, is_staff_booking=True),
+            slot_end__lte=now,
+        )
         .order_by("slot_end", "id")
         .select_related("room", "user")
     )
@@ -347,6 +386,7 @@ def enqueue_due_reminders(now) -> int:
         Booking.objects.filter(
             status=Booking.Status.SCHEDULED,
             source=Booking.Source.ADVANCE,
+            is_staff_booking=False,
             slot_start__gt=window_start,
             slot_start__lte=window_end,
         )

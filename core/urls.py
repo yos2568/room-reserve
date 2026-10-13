@@ -13,6 +13,7 @@ app_name = "core"
 urlpatterns = [
     path("", views.public.grid, name="home"),
     path("availability/", views.public.availability_fragment, name="availability"),
+    path("now/", views.public.now_board, name="now_board"),
     path("week/", views.public.week, name="week"),
     path("choose-room/", views.public.room_board, name="room_board"),
     path("lobby/", views.public.lobby, name="lobby"),
@@ -53,6 +54,17 @@ urlpatterns = [
     # Staff operations ---------------------------------------------------------
     path("staff/today/", views.staff.today, name="staff_today"),
     path("staff/room-admin/", views.staff.room_admin_dashboard, name="room_admin"),
+    path("staff/book/", views.staff.book_room, name="staff_book_room"),
+    path("staff/book/create/", views.staff.create_staff_booking, name="staff_create_booking"),
+    path("staff/upcoming/", views.staff.upcoming_bookings, name="staff_upcoming"),
+    path("staff/timeline/", views.staff.timeline, name="staff_timeline"),
+    path("staff/room-access/", views.staff.room_access, name="staff_room_access"),
+    path("staff/room-access/<int:pk>/add/", views.staff.add_room_members, name="staff_add_room_members"),
+    path(
+        "staff/room-access/<int:pk>/members/<int:member_id>/remove/",
+        views.staff.remove_room_member,
+        name="staff_remove_room_member",
+    ),
     path(
         "staff/room-admin/bookings/<int:pk>/decision/",
         views.staff.decide_booking_approval,
@@ -72,6 +84,11 @@ urlpatterns = [
         "staff/users/<int:pk>/declared-category/",
         views.staff.set_declared_category,
         name="staff_set_declared_category",
+    ),
+    path(
+        "staff/users/<int:pk>/institutional-id/",
+        views.staff.correct_institutional_id,
+        name="staff_correct_institutional_id",
     ),
     path("staff/users/<int:pk>/suspend/", views.staff.manual_suspension, name="staff_suspend"),
     path("staff/users/<int:pk>/deactivate/", views.staff.deactivate_account, name="staff_deactivate"),

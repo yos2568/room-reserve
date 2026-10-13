@@ -18,7 +18,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from core.models import Booking, RecurringReservation, Room
-from core.services import availability, clock, instruments, sanctions, slots, suggest
+from core.services import availability, clock, instruments, room_access, sanctions, slots, suggest
 from core.services import booking as booking_service
 from core.services import cancel as cancel_service
 from core.services import walkin as walkin_service
@@ -67,7 +67,9 @@ def _ics_escape(value: str) -> str:
 
 
 def _may_reserve(room: Room, user) -> bool:
-    return not room.availability_only and room.may_be_reserved_by(instruments.category_for_user(user))
+    return not room.availability_only and room.admits(
+        instruments.category_for_user(user), room_access.member_room_ids(user)
+    )
 
 
 def _booking_details(request) -> dict[str, str]:
@@ -99,7 +101,12 @@ def book_slot(request, room_id: int, slot: str):
     if not _may_reserve(room, request.user):
         # Never present a form that the server is certain to refuse. The grid
         # explains the same thing on the cell itself, with the reason.
-        messages.warning(request, message_for(Code.ROOM_NOT_FOR_INSTRUMENT))
+        refusal = (
+            Code.ROOM_MEMBERS_ONLY
+            if room.members_only and room.pk not in room_access.member_room_ids(request.user)
+            else Code.ROOM_NOT_FOR_INSTRUMENT
+        )
+        messages.warning(request, message_for(refusal))
         return redirect(_grid_url(slot_start))
 
     if request.method == "POST":
@@ -170,7 +177,7 @@ def confirm_booking(request, room_id: int, slot: str):
         )
 
     add_outcome_message(request, outcome)
-    if outcome.code in {Code.ROOM_NOT_FOR_INSTRUMENT, Code.CLOSED}:
+    if outcome.code in {Code.ROOM_NOT_FOR_INSTRUMENT, Code.ROOM_MEMBERS_ONLY, Code.CLOSED}:
         # Neither refusal can be resolved by anything on this page, so send the
         # student back to the grid rather than re-offering the same button.
         return redirect(_grid_url(slot_start))

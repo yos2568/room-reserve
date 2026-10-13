@@ -30,7 +30,7 @@
       </div>
 
       <div class="mt-6 grid gap-3 border-t border-slate-200 pt-4 text-sm sm:grid-cols-2">
-        <div><span class="font-medium">{% trans "Reservation access" %}:</span> {% if room.availability_only %}{% trans "Availability display only" %}{% elif room.is_restricted %}{% trans "Instrument categories listed by staff" %}{% else %}{% trans "Any eligible student" %}{% endif %}</div>
+        <div><span class="font-medium">{% trans "Reservation access" %}:</span> {% if room.availability_only %}{% trans "Availability display only" %}{% elif room.members_only %}{% trans "Listed students only" %}{% elif room.is_restricted %}{% trans "Instrument categories listed by staff" %}{% else %}{% trans "Any eligible student" %}{% endif %}</div>
         <div><span class="font-medium">{% trans "Approval" %}:</span> {% if room.requires_approval %}{% trans "Room administrator approval required" %}{% else %}{% trans "Instant confirmation" %}{% endif %}</div>
         <div><span class="font-medium">{% trans "Opening hours" %}:</span> {% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Monday to Friday, {{ open }}:00–{{ close }}:00{% endblocktrans %}</div>
       </div>

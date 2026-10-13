@@ -2,13 +2,16 @@
 
 import html
 import re
+from datetime import timedelta
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from django.urls import reverse
 
 from core.models import AuditEvent, User
+from core.services import clock
 from core.services.policy import create_policy_version
+from core.views import identity as identity_views
 from tests import factories
 
 pytestmark = pytest.mark.django_db
@@ -65,8 +68,9 @@ def test_onboarding_retains_booking_through_registration_and_failed_login(client
 @pytest.mark.parametrize("candidate", ["https://evil.example/", "//evil.example/", "javascript:alert(1)"])
 def test_onboarding_never_restores_an_external_destination(client, candidate):
     response = client.get(reverse("core:register"), {"next": candidate})
-    assert response.context["next"] == reverse("core:my_bookings")
-    assert "evil.example" not in client.session["onboarding_next"]
+    # Dropped, not replaced: no "return to your booking" promise is shown.
+    assert response.context["next"] == ""
+    assert "onboarding_next" not in client.session
 
 
 @pytest.mark.parametrize(
@@ -128,3 +132,51 @@ def test_login_registration_link_carries_the_selected_booking(client):
         url.path == reverse("core:register") and parse_qs(url.query).get("next") == [target]
         for url in destinations
     )
+
+
+def test_a_remembered_booking_expires_so_a_shared_computer_forgets_it(client, frozen):
+    target = "/en/book/1/20261012T0800/"
+    client.get(reverse("core:register"), {"next": target})
+    assert client.get(reverse("core:login")).context["next"] == target
+    later = frozen + timedelta(seconds=identity_views.ONBOARDING_NEXT_TTL_SECONDS + 1)
+    with clock.frozen_clock(later):
+        response = client.get(reverse("core:login"))
+    assert response.context["next"] == ""
+    assert "onboarding_next" not in client.session
+
+
+def test_a_decision_without_a_listed_reason_is_refused(client, frozen, staff_user):
+    candidate = factories.make_user(eligibility=User.Eligibility.PENDING)
+    client.force_login(staff_user)
+    response = client.post(
+        reverse("core:staff_decide_eligibility", args=[candidate.pk]),
+        {"decision": "APPROVED", "reason": "free text without a listed reason"},
+    )
+    assert response.status_code == 400
+    candidate.refresh_from_db()
+    assert candidate.eligibility == User.Eligibility.PENDING
+
+
+def test_an_invalid_decision_on_an_already_decided_account_explains_itself(client, frozen, staff_user):
+    candidate = factories.make_user(eligibility=User.Eligibility.APPROVED)
+    client.force_login(staff_user)
+    response = client.post(
+        reverse("core:staff_decide_eligibility", args=[candidate.pk]),
+        {"decision": "REJECTED", "reason_choice": "other", "reason": ""},
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert "already been decided" in response.content.decode()
+    candidate.refresh_from_db()
+    assert candidate.eligibility == User.Eligibility.APPROVED
+
+
+@pytest.mark.parametrize(
+    "route,open_group",
+    [("core:staff_today", None), ("core:staff_roster", "operations"), ("core:staff_audit", "records")],
+)
+def test_the_staff_menu_opens_the_group_holding_the_current_page(client, staff_user, route, open_group):
+    client.force_login(staff_user)
+    response = client.get(reverse(route))
+    assert response.status_code == 200
+    assert response.context["staff_nav_open"] == open_group

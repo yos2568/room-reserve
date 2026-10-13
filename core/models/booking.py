@@ -156,6 +156,10 @@ class Booking(models.Model):
         related_name="booking_approvals",
     )
     approval_note = models.TextField(blank=True)
+    # Made by operational staff or the maintainer on the staff "Book a room"
+    # screen: a department hold for a rehearsal or event, not a student's
+    # practice hour, so it is never a no-show and never earns a strike.
+    is_staff_booking = models.BooleanField(default=False)
 
     # Planning details are deliberately separate from the student's identity:
     # staff can understand what a room is being used for without exposing this
@@ -297,10 +301,11 @@ class Booking(models.Model):
                 condition=models.Q(status__in=list(BLOCKING_STATUSES)),
                 name="booking_room_slot_unique",
             ),
-            # One user may not hold two rooms or two adjacent slots at one hour.
+            # One student may not hold two rooms at one hour. Staff holds are
+            # exempt: one event may need several rooms at once (D-41).
             models.UniqueConstraint(
                 fields=["user", "slot_start"],
-                condition=models.Q(status__in=list(BLOCKING_STATUSES)),
+                condition=models.Q(status__in=list(BLOCKING_STATUSES), is_staff_booking=False),
                 name="booking_user_slot_unique",
             ),
         ]
@@ -339,6 +344,17 @@ class Booking(models.Model):
             self.Status.CANCELLED,
             self.Status.REJECTED,
         }
+
+    @property
+    def in_progress(self) -> bool:
+        """Checked in, or a staff booking whose hour has begun (staff never check in)."""
+        if self.status == self.Status.IN_USE:
+            return True
+        from core.services import clock
+
+        return (
+            self.is_staff_booking and self.status == self.Status.SCHEDULED and self.slot_start <= clock.now()
+        )
 
     @property
     def occupies_slot(self) -> bool:

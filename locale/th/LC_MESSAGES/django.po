@@ -4382,3 +4382,293 @@ msgstr "ขณะนี้อยู่นอกเวลาเปิดห้อ
 
 msgid "Choose a room and time from the timetable. Sign in to book; this lobby board only shows current status."
 msgstr "เลือกห้องและเวลาจากตารางว่าง แล้วเข้าสู่ระบบเพื่อจอง กระดานล็อบบี้นี้แสดงสถานะปัจจุบันเท่านั้น"
+
+#. D-41: staff bookings, the upcoming list and room-request guidance.
+msgid ""
+"One or more of those hours is already booked in that room. Check Upcoming "
+"bookings and choose other hours."
+msgstr ""
+"มีบางชั่วโมงในช่วงที่เลือกถูกจองไว้แล้วในห้องนี้ กรุณาตรวจสอบที่ "
+"“การจองที่กำลังจะมาถึง” แล้วเลือกเวลาอื่น"
+
+msgid "Choose hours that have not started yet."
+msgstr "กรุณาเลือกเวลาที่ยังไม่เริ่ม"
+
+msgid ""
+"For rehearsals, events and teaching. You can book several hours in a row and "
+"up to %(horizon_days)s days ahead. The booking is confirmed at once, needs "
+"no approval and no check-in at the door. Student limits do not apply; "
+"opening hours, closures and class hours still do."
+msgstr ""
+"สำหรับการซ้อมรวม กิจกรรม และการเรียนการสอน จองได้หลายชั่วโมงติดกันและล่วงหน้าได้ไม่เกิน "
+"%(horizon_days)s วัน การจองได้รับการยืนยันทันที ไม่ต้องรออนุมัติ และไม่ต้องเช็กอินที่หน้าห้อง "
+"ข้อจำกัดการจองของนิสิตไม่นำมาใช้ แต่ยังเป็นไปตามเวลาเปิด–ปิด การปิดห้อง และเวลาเรียน"
+
+msgid "For example: Orchestra rehearsal"
+msgstr "เช่น ซ้อมวงออร์เคสตรา"
+
+msgid "Book these hours"
+msgstr "จองช่วงเวลานี้"
+
+msgid ""
+"You are staff, so you can approve requests for every room, including your "
+"own. Staff bookings made on Book a room are confirmed without approval."
+msgstr ""
+"คุณเป็นเจ้าหน้าที่ จึงอนุมัติคำขอได้ทุกห้อง รวมถึงคำขอของตนเอง "
+"การจองผ่านเมนู “จองห้อง” ของเจ้าหน้าที่ได้รับการยืนยันทันทีโดยไม่ต้องรออนุมัติ"
+
+msgid ""
+"Students have asked for rooms that need approval (301, 303, 304). You can "
+"approve them."
+msgstr "มีนิสิตขอจองห้องที่ต้องได้รับอนุมัติ (301, 303, 304) คุณสามารถอนุมัติได้"
+
+msgid "Every booking that has not finished yet"
+msgstr "การจองทั้งหมดที่ยังไม่สิ้นสุด"
+
+msgid ""
+"Students' bookings and staff bookings in every room. Requests waiting for "
+"approval are decided on Room approvals."
+msgstr ""
+"การจองของนิสิตและของเจ้าหน้าที่ในทุกห้อง คำขอที่รออนุมัติให้พิจารณาที่หน้า "
+"“อนุมัติการจองห้อง”"
+
+msgid "Show"
+msgstr "แสดง"
+
+msgid "Only the first 500 are shown. Choose a room to narrow the list."
+msgstr "แสดงเฉพาะ 500 รายการแรก เลือกห้องเพื่อกรองรายการ"
+
+msgid "Upcoming bookings"
+msgstr "การจองที่กำลังจะมาถึง"
+
+msgid "Book a room"
+msgstr "จองห้อง"
+
+msgid "Book a room for the department"
+msgstr "จองห้องในนามภาควิชา"
+
+msgid "Details (optional)"
+msgstr "รายละเอียด (ไม่บังคับ)"
+
+msgid "See all upcoming bookings"
+msgstr "ดูการจองที่กำลังจะมาถึงทั้งหมด"
+
+msgid "Room requests waiting"
+msgstr "คำขอจองห้องที่รออนุมัติ"
+
+msgid "Open Room approvals"
+msgstr "ไปที่หน้าอนุมัติการจองห้อง"
+
+msgid "Booked by"
+msgstr "ผู้จอง"
+
+msgid "Staff booking"
+msgstr "จองโดยเจ้าหน้าที่"
+
+msgid "Approve or reject"
+msgstr "อนุมัติหรือปฏิเสธ"
+
+#. D-42: the members-only conference room and its access list.
+msgid "listed people only"
+msgstr "เฉพาะผู้มีรายชื่อ"
+
+msgid ""
+"Only the people on this room's access list, and staff, may reserve it. "
+"Nobody may walk in (D-42)."
+msgstr ""
+"จองได้เฉพาะผู้ที่มีชื่อในรายชื่อของห้องนี้และเจ้าหน้าที่ ไม่เปิดให้ใช้แบบไม่จองล่วงหน้า (D-42)"
+
+msgid ""
+"This room is reserved for the students on its list. Ask the department "
+"office if you should be on it."
+msgstr ""
+"ห้องนี้จองได้เฉพาะนิสิตที่มีรายชื่อ หากคิดว่าควรมีชื่อในรายชื่อ กรุณาติดต่อสำนักงานภาควิชา"
+
+msgid ""
+"Only the people below, and staff, can reserve this room. Other students see "
+"it on the timetable but cannot book it or walk in. A person is matched by "
+"the email address on their account."
+msgstr ""
+"เฉพาะผู้ที่มีรายชื่อด้านล่างและเจ้าหน้าที่เท่านั้นที่จองห้องนี้ได้ นิสิตคนอื่นจะเห็นห้องในตารางแต่จองหรือเข้าใช้ไม่ได้ "
+"ระบบตรวจสอบรายชื่อจากอีเมลที่ใช้สมัครบัญชี"
+
+msgid "Add people"
+msgstr "เพิ่มรายชื่อ"
+
+msgid ""
+"Copy the rows from Excel (number, name, email) and paste them here, one "
+"person per line. Title and header rows without an email are skipped."
+msgstr ""
+"คัดลอกแถวจาก Excel (ลำดับ ชื่อ อีเมล) แล้ววางที่นี่ หนึ่งบรรทัดต่อหนึ่งคน "
+"แถวชื่อเรื่องหรือหัวตารางที่ไม่มีอีเมลจะถูกข้ามไป"
+
+msgid "Add to the list"
+msgstr "เพิ่มเข้ารายชื่อ"
+
+msgid "No account with this email yet"
+msgstr "ยังไม่มีบัญชีที่ใช้อีเมลนี้"
+
+msgid "Has an account"
+msgstr "มีบัญชีแล้ว"
+
+msgid "Nobody is on the list yet, so only staff can reserve this room."
+msgstr "ยังไม่มีรายชื่อ ตอนนี้จึงจองได้เฉพาะเจ้าหน้าที่"
+
+msgid "No room is set to listed people only."
+msgstr "ไม่มีห้องที่กำหนดให้จองได้เฉพาะผู้มีรายชื่อ"
+
+msgid "email"
+msgstr "อีเมล"
+
+msgid "name"
+msgstr "ชื่อ"
+
+msgid ""
+"This room is for listed students only and cannot be used as a walk-in. "
+"Reserve it in advance instead."
+msgstr "ห้องนี้สำหรับนิสิตที่มีรายชื่อเท่านั้น ไม่เปิดให้เข้าใช้โดยไม่จอง กรุณาจองล่วงหน้า"
+
+msgid "Listed students only"
+msgstr "เฉพาะนิสิตที่มีรายชื่อ"
+
+msgid "Room access lists"
+msgstr "รายชื่อผู้มีสิทธิ์ใช้ห้อง"
+
+#. D-43: registering with an address from a room access list.
+msgid ""
+"Master's students: you may also use the email address the department listed "
+"for you (for example on the conference-room list). Enter your own student "
+"ID; you can book once you confirm your email."
+msgstr ""
+"นิสิตปริญญาโท: สามารถใช้อีเมลที่ภาควิชาระบุไว้ในรายชื่อได้ (เช่น รายชื่อผู้ใช้ห้องประชุม) "
+"กรุณากรอกรหัสนิสิตของตนเอง เมื่อยืนยันอีเมลแล้วจะจองห้องได้ทันที"
+
+msgid "Correct student ID"
+msgstr "แก้ไขรหัสนิสิต"
+
+#. D-44: the home page's "right now" board and the staff booking timeline.
+msgid "Right now · %(time)s"
+msgstr "ขณะนี้ · %(time)s น."
+
+msgid ""
+"A free practice room can be used straight away until the end of the hour, or "
+"reserved ahead."
+msgstr "ห้องซ้อมที่ว่างเข้าใช้ได้ทันทีจนจบชั่วโมง หรือจองล่วงหน้าก็ได้"
+
+msgid "%(counter)s room is free right now"
+msgid_plural "%(counter)s rooms are free right now"
+msgstr[0] "ตอนนี้มีห้องว่าง %(counter)s ห้อง"
+
+msgid "In use or booked"
+msgstr "ใช้อยู่หรือมีคนจอง"
+
+msgid "Show rooms"
+msgstr "แสดงห้อง"
+
+msgid "Free now"
+msgstr "ว่างตอนนี้"
+
+msgid "Practice rooms"
+msgstr "ห้องซ้อม"
+
+msgid "Classrooms and meeting room"
+msgstr "ห้องเรียนและห้องประชุม"
+
+msgid "Classrooms"
+msgstr "ห้องเรียน"
+
+msgid "Meeting room"
+msgstr "ห้องประชุม"
+
+msgid "Reserve at once, or walk in while a room is free"
+msgstr "จองได้ทันที หรือเข้าใช้ได้เลยถ้าห้องว่าง"
+
+msgid "Send a request; staff approve it"
+msgstr "ส่งคำขอ แล้วรอเจ้าหน้าที่อนุมัติ"
+
+msgid "For the students on its list"
+msgstr "สำหรับนิสิตที่มีรายชื่อ"
+
+msgid "Free until %(until)s"
+msgstr "ว่างถึง %(until)s"
+
+msgid "%(counter)s minute left this hour"
+msgid_plural "%(counter)s minutes left this hour"
+msgstr[0] "ชั่วโมงนี้เหลือ %(counter)s นาที"
+
+msgid "Free again at %(at)s"
+msgstr "ว่างอีกครั้งเวลา %(at)s น."
+
+msgid "No free hour left today"
+msgstr "วันนี้ไม่มีช่วงว่างแล้ว"
+
+msgid "Today, hour by hour"
+msgstr "วันนี้ รายชั่วโมง"
+
+msgid "Needs approval"
+msgstr "ต้องอนุมัติ"
+
+msgid "Request %(at)s"
+msgstr "ขอจองเวลา %(at)s น."
+
+msgid "Reserve %(at)s"
+msgstr "จองเวลา %(at)s น."
+
+msgid "Room details"
+msgstr "ข้อมูลห้อง"
+
+msgid "No room matches. Show all rooms to see the rest."
+msgstr "ไม่มีห้องที่ตรงเงื่อนไข เลือก “ทุกห้อง” เพื่อดูห้องอื่น"
+
+msgid "Today's bar:"
+msgstr "แถบเวลาวันนี้:"
+
+msgid "Now"
+msgstr "ตอนนี้"
+
+msgid "Plan ahead"
+msgstr "จองล่วงหน้า"
+
+msgid "Booking timeline"
+msgstr "ตารางการจอง"
+
+msgid ""
+"Select a booking to see who made it and act on it. Select an empty hour to "
+"book that room for the department."
+msgstr "เลือกแถบการจองเพื่อดูผู้จองและจัดการ เลือกช่องว่างเพื่อจองห้องนั้นให้ภาควิชา"
+
+msgid "Legend"
+msgstr "คำอธิบายสี"
+
+msgid "Rooms by hour"
+msgstr "ตารางห้องรายชั่วโมง"
+
+msgid "Book %(room)s at %(hour)s:00"
+msgstr "จอง %(room)s เวลา %(hour)s:00"
+
+msgid "Rooms are closed on this date."
+msgstr "วันนี้ห้องปิด"
+
+msgid "Close"
+msgstr "ปิด"
+
+msgid "Message to the student (optional)"
+msgstr "ข้อความถึงนิสิต (ไม่บังคับ)"
+
+msgid "Check in for the student"
+msgstr "เช็กอินแทนนิสิต"
+
+msgid "Reason for ending early"
+msgstr "เหตุผลที่จบก่อนเวลา"
+
+msgid "Cancel booking"
+msgstr "ยกเลิกการจอง"
+
+msgid "No booking selected"
+msgstr "ยังไม่ได้เลือกการจอง"
+
+msgid "Select a bar on the timeline to see its details here."
+msgstr "เลือกแถบในตารางเพื่อดูรายละเอียดที่นี่"
+
+msgid "Overlaps a class or closure"
+msgstr "ซ้อนกับคาบเรียนหรือช่วงปิดห้อง"
