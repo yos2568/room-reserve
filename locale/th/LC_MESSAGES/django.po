@@ -917,7 +917,7 @@ msgstr "ติดต่อ %(name)s %(phone)s %(email)s"
 msgid ""
 "Western Music Department, Faculty of Fine and Applied Arts, Chulalongkorn "
 "University"
-msgstr "ภาควิชาดนตรีตะวันตก คณะศิลปกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย"
+msgstr "ภาควิชาดุริยางคศิลป์ คณะศิลปกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย"
 
 #: core/templates/core/base.html:141
 #, python-format
@@ -939,10 +939,8 @@ msgid "Room booking"
 msgstr "การจองห้อง"
 
 #: core/templates/core/book_confirm.html:11
-msgid ""
-"Review the room and time, then add a short purpose so staff can understand "
-"the reservation."
-msgstr "ตรวจสอบห้องและเวลา แล้วระบุวัตถุประสงค์สั้น ๆ เพื่อให้เจ้าหน้าที่เข้าใจการจอง"
+msgid "Review the room and time. Add details only if staff need them."
+msgstr "ตรวจสอบห้องและเวลา ระบุรายละเอียดเพิ่มเติมเฉพาะเมื่อจำเป็น"
 
 #: core/templates/core/book_confirm.html:18
 msgid "Other rooms free at this hour"
@@ -1003,14 +1001,12 @@ msgstr ""
 
 #: core/templates/core/book_confirm.html:51
 #| msgid "Bookings"
-msgid "Booking details"
-msgstr "รายละเอียดการจอง"
+msgid "Booking details (optional)"
+msgstr "รายละเอียดการจอง (ไม่บังคับ)"
 
 #: core/templates/core/book_confirm.html:52
-msgid ""
-"Optional. These details are shown to you and staff, not on the public "
-"availability grid."
-msgstr "ไม่บังคับ รายละเอียดนี้แสดงเฉพาะคุณและเจ้าหน้าที่ ไม่แสดงในตารางว่างสาธารณะ"
+msgid "These details are shown to you and staff, not on the public availability grid."
+msgstr "รายละเอียดนี้แสดงเฉพาะคุณและเจ้าหน้าที่ ไม่แสดงในตารางว่างสาธารณะ"
 
 #: core/templates/core/book_confirm.html:59
 #: core/templates/core/edit_booking.html:22
