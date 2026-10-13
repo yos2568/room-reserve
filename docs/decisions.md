@@ -507,3 +507,19 @@ a text label, and "waiting for approval" a dashed outline. Bars are placed with
 CSS classes rather than inline styles, keeping the templates free of inline
 style attributes.
 
+**Review follow-up to D-41–D-44 (13 October 2026).** A code review of these
+changes found, and this change fixes:
+- *D-41.* Every booking a staff account makes is a staff booking (no check-in,
+  never a no-show or strike), not only those from Book a room; a staff move into
+  an approval room is approved as made, and a student's clears any old approval.
+  Staff holds are exempt from the one-room-per-hour constraint, so one event may
+  hold several rooms at once; students keep the constraint.
+- *D-43.* A room-listed address may not register with, or be approved under, an
+  ID the active roster gives to another student. An account approved from a room
+  list never has its self-declared instrument trusted (D-30 needs a person's
+  approval). Correct student ID applies to student accounts only, validates the
+  ID, and refuses an ID the roster gives to someone else.
+- *D-44.* The home board refreshes itself every 30 seconds like the timetable,
+  and is built only on pages that show it. On the timeline, a walk-in after a
+  no-show is the only bar for its hour.
+

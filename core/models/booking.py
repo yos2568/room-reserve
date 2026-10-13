@@ -301,10 +301,11 @@ class Booking(models.Model):
                 condition=models.Q(status__in=list(BLOCKING_STATUSES)),
                 name="booking_room_slot_unique",
             ),
-            # One user may not hold two rooms or two adjacent slots at one hour.
+            # One student may not hold two rooms at one hour. Staff holds are
+            # exempt: one event may need several rooms at once (D-41).
             models.UniqueConstraint(
                 fields=["user", "slot_start"],
-                condition=models.Q(status__in=list(BLOCKING_STATUSES)),
+                condition=models.Q(status__in=list(BLOCKING_STATUSES), is_staff_booking=False),
                 name="booking_user_slot_unique",
             ),
         ]

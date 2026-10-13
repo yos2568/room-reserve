@@ -90,7 +90,14 @@ def day_timeline(local_date, now) -> dict:
             if bar:
                 rows[room.pk].bars.append(bar)
                 taken[room.pk].update(range(bar.start_hour, bar.end_hour))
+    # A no-show releases its hour, so a walk-in may follow it in the same room:
+    # draw only the booking that holds the hour, never two bars on one cell.
+    by_hour = {}
     for booking in bookings:
+        key = (booking.room_id, booking.slot_start)
+        if key not in by_hour or by_hour[key].status == Booking.Status.NO_SHOW:
+            by_hour[key] = booking
+    for booking in by_hour.values():
         hour = booking.local_start.hour
         kind = _BOOKING_KIND[booking.status]
         if kind == "booked" and booking.is_staff_booking:

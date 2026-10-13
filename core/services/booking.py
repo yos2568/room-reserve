@@ -144,6 +144,9 @@ def create_advance_booking(ctx, *, room: Room, slot_start) -> dict:
         source=Booking.Source.ADVANCE,
         approved_at=now if self_approved else None,
         approved_by=user if self_approved else None,
+        # Any booking staff make is the department's: no check-in owed, never a
+        # no-show or a strike against a staff account (D-41).
+        is_staff_booking=is_booking_staff(user),
         policy_version=policy,
         title=ctx.payload.get("title", ""),
         purpose=ctx.payload.get("purpose", ""),
@@ -236,12 +239,10 @@ def create_staff_booking(ctx, *, room: Room, local_date, start_hour: int, end_ho
     for slot_start in starts:
         assert_slot_open(slot_start, room)
 
-    holding = Booking.objects.filter(slot_start__in=starts, status__in=list(BLOCKING_STATUSES))
-    if holding.filter(room=room).exists():
+    # One staff member may hold several rooms at once for one event: the
+    # one-room-per-hour rule (booking_user_slot_unique) is for students only.
+    if Booking.objects.filter(room=room, slot_start__in=starts, status__in=list(BLOCKING_STATUSES)).exists():
         raise OperationRejected(Code.RANGE_TAKEN)
-    if holding.filter(user=actor).exists():
-        # One person holds one room per hour (booking_user_slot_unique).
-        raise OperationRejected(Code.ADJACENCY_CONFLICT)
 
     policy = current_policy()
     created = []
@@ -416,14 +417,24 @@ def move_booking(ctx, *, booking: Booking, room: Room) -> dict:
     ):
         raise OperationRejected(Code.SLOT_TAKEN)
 
-    status = Booking.Status.PENDING_APPROVAL if room.requires_approval else Booking.Status.SCHEDULED
+    # Staff approve their own move into an approval room, as they do their own
+    # request (D-41); anyone else's move waits for approval again.
+    if room.requires_approval and not is_booking_staff(actor):
+        status = Booking.Status.PENDING_APPROVAL
+        booking.approved_at = None
+        booking.approved_by = None
+    else:
+        status = Booking.Status.SCHEDULED
+        if room.requires_approval:
+            booking.approved_at = ctx.now
+            booking.approved_by = actor
 
     booking.room = room
     booking.status = status
     # Reused as the booking's change generation so the outbox dedupe key for a
     # move cannot collide with an earlier detail edit on the same row.
     booking.details_version += 1
-    booking.save(update_fields=["room", "status", "details_version"])
+    booking.save(update_fields=["room", "status", "details_version", "approved_at", "approved_by"])
 
     ctx.audit(
         action="booking.moved",

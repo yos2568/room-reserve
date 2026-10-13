@@ -86,7 +86,18 @@ def registration_email_allowed(institutional_id: str, email: str) -> bool:
         is_active=True,
     ).exists():
         return True
-    return room_list_vouches_for(email)
+    return room_list_vouches_for(email) and not roster_claims_id(institutional_id)
+
+
+def roster_claims_id(institutional_id: str) -> bool:
+    """Whether an active roster row holds this ID (for some address, D-43).
+
+    A room-listed address types its own ID, so it may not take one the roster
+    gives to a student: that student could then never register.
+    """
+    return EligibleStudent.objects.filter(
+        institutional_id=(institutional_id or "").strip(), is_active=True
+    ).exists()
 
 
 # --- Invitations ---------------------------------------------------------------
@@ -330,6 +341,7 @@ def apply_roster_eligibility(user) -> str:
         user.eligibility == User.Eligibility.PENDING
         and user.email_is_verified
         and room_list_vouches_for(user.email)
+        and not roster_claims_id(user.institutional_id)
     ):
         return _auto_approve(user, reason=ROOM_LIST_REASON, label="room-list-match")
 
@@ -340,12 +352,19 @@ def apply_roster_eligibility(user) -> str:
 
 def approve_room_listed_accounts(emails) -> int:
     """Approve verified, pending accounts whose address was just added to a room list."""
+    from django.db.models.functions import Lower
+
     approved = 0
     wanted = {normalize_email(email) for email in emails}
-    for user in User.objects.filter(
-        eligibility=User.Eligibility.PENDING, is_active=True, email_verified_at__isnull=False
-    ):
-        if normalize_email(user.email) in wanted and room_list_vouches_for(user.email):
+    candidates = (
+        User.objects.filter(
+            eligibility=User.Eligibility.PENDING, is_active=True, email_verified_at__isnull=False
+        )
+        .annotate(email_lower=Lower("email"))
+        .filter(email_lower__in=wanted)
+    )
+    for user in candidates:
+        if room_list_vouches_for(user.email) and not roster_claims_id(user.institutional_id):
             _auto_approve(user, reason=ROOM_LIST_REASON, label="room-list-match")
             approved += 1
     return approved
@@ -649,10 +668,25 @@ def correct_institutional_id(*, user: User, institutional_id: str, reason: str, 
     reason = (reason or "").strip()
     if not institutional_id or not reason or len(institutional_id) > 64:
         raise OperationRejected(Code.INVALID_INPUT)
-    if institutional_id == user.username:
+    if institutional_id == user.username or any(char.isspace() for char in institutional_id):
+        raise OperationRejected(Code.INVALID_INPUT)
+    try:
+        User.username_validator(institutional_id)
+    except ValidationError as exc:
+        raise OperationRejected(Code.INVALID_INPUT) from exc
+    # Only student accounts: a staff, maintainer or teacher sign-in is not
+    # changed from this screen.
+    if user.is_superuser or user.is_operational_staff or user.is_teacher:
         raise OperationRejected(Code.INVALID_INPUT)
     if EligibleStudent.objects.filter(account_id=user.pk).exists():
         raise OperationRejected(Code.INVALID_INPUT)
+    if (
+        EligibleStudent.objects.filter(institutional_id=institutional_id, is_active=True)
+        .exclude(email__iexact=user.email)
+        .exists()
+    ):
+        # The roster gives this ID to a different student.
+        raise OperationRejected(Code.DUPLICATE_ACCOUNT)
     if User.objects.filter(username=institutional_id).exclude(pk=user.pk).exists():
         raise OperationRejected(Code.DUPLICATE_ACCOUNT)
 

@@ -12,6 +12,7 @@ from datetime import date, timedelta
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
@@ -39,7 +40,9 @@ def _parse_date(raw: str | None, default: date) -> date:
     return parsed
 
 
-def _grid_context(request, local_date: date, *, include_suggestions: bool = True) -> dict:
+def _grid_context(
+    request, local_date: date, *, include_suggestions: bool = True, with_board: bool = False
+) -> dict:
     moment = now()
     user = request.user if request.user.is_authenticated else None
     capacity_min = _parse_capacity(request.GET.get("capacity"))
@@ -69,14 +72,23 @@ def _grid_context(request, local_date: date, *, include_suggestions: bool = True
         if include_suggestions
         else None
     )
-    # The "right now" board leads the page for today's unfiltered view (D-44);
-    # while it shows, the suggestion panel drops the lists the board repeats.
+    # The "right now" board leads the page for today's unfiltered view during
+    # opening hours (D-44); while it shows, the suggestion panel drops the lists
+    # the board repeats. Only pages that render it build it.
     filtered = room_number or equipment_query or capacity_min
-    board = availability.status_board(grid["rows"], moment) if local_date == today and not filtered else None
+    current = slots.floor_to_slot(moment)
+    board_active = (
+        local_date == today
+        and not filtered
+        and bool(grid["rows"])
+        and any(cell.slot_start == current for cell in grid["rows"][0]["cells"])
+    )
+    board = availability.status_board(grid["rows"], moment) if board_active and with_board else None
 
     return {
         "grid": grid,
         "board": board,
+        "board_active": board_active,
         # Anonymous visitors get the actions too: they lead to sign-in and back.
         "board_can_act": user is None or bool(suggestions and suggestions.can_act),
         "suggestions": suggestions,
@@ -169,23 +181,41 @@ def grid(request):
     """The whole availability grid: configured rooms by twelve hourly slots."""
     moment = now()
     local_date = _parse_date(request.GET.get("date"), clock.local_date(moment))
-    context = _grid_context(request, local_date)
-    board = context["board"]
-    if board is not None:
-        show = request.GET.get("show") or ""
-        show = show if show in {"free", "practice", "teaching"} else ""
-        groups = []
-        for kind, cards in board["groups"]:
-            if show == "practice" and kind != "practice":
-                continue
-            if show == "teaching" and kind == "practice":
-                continue
-            if show == "free":
-                cards = [card for card in cards if card.now == "free"]
-            if cards:
-                groups.append((kind, cards))
-        context.update({"board": board, "board_groups": groups, "board_show": show})
+    context = _grid_context(request, local_date, with_board=True)
+    _filter_board(request, context)
     return render(request, "core/grid.html", context)
+
+
+def _filter_board(request, context) -> None:
+    """Apply the board's filter chips (free / practice / teaching) to its groups."""
+    board = context["board"]
+    if board is None:
+        return
+    show = request.GET.get("show") or ""
+    show = show if show in {"free", "practice", "teaching"} else ""
+    groups = []
+    for kind, cards in board["groups"]:
+        if show == "practice" and kind != "practice":
+            continue
+        if show == "teaching" and kind == "practice":
+            continue
+        if show == "free":
+            cards = [card for card in cards if card.now == "free"]
+        if cards:
+            groups.append((kind, cards))
+    context.update({"board_groups": groups, "board_show": show})
+
+
+@require_GET
+def now_board(request):
+    """HTMX target: the "right now" board, refreshed every 30 seconds (D-44)."""
+    moment = now()
+    context = _grid_context(request, clock.local_date(moment), with_board=True)
+    if context["board"] is None:
+        # Opening hours ended while the page was open: drop the board.
+        return HttpResponse("")
+    _filter_board(request, context)
+    return render(request, "core/partials/status_board.html", context)
 
 
 @require_GET

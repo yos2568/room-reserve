@@ -13,6 +13,7 @@ app_name = "core"
 urlpatterns = [
     path("", views.public.grid, name="home"),
     path("availability/", views.public.availability_fragment, name="availability"),
+    path("now/", views.public.now_board, name="now_board"),
     path("week/", views.public.week, name="week"),
     path("choose-room/", views.public.room_board, name="room_board"),
     path("lobby/", views.public.lobby, name="lobby"),

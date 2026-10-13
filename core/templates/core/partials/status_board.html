@@ -1,6 +1,8 @@
 {% load i18n %}
 {# The "right now" board (D-44): every room's state for the hour in progress. #}
-<section id="now" class="mt-4 space-y-5" aria-labelledby="now-heading">
+<section id="now" class="mt-4 space-y-5" aria-labelledby="now-heading"
+         hx-get="{% url 'core:now_board' %}{% if board_show %}?show={{ board_show }}{% endif %}"
+         hx-trigger="every 30s" hx-swap="outerHTML">
   <div class="flex flex-wrap items-stretch gap-5">
     <div class="flex min-w-[16rem] flex-1 flex-col justify-center gap-1">
       <p class="flex items-center gap-2 text-sm text-slate-600">

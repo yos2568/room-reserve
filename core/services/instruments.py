@@ -132,6 +132,12 @@ def category_for_user(user) -> str | None:
     if row is not None:
         return row.instrument_category
     if user.declared_category and user.is_approved:
+        # An account approved because its address is on a room access list
+        # (D-43) was never seen by staff, so its declaration is not trusted.
+        from .identity import ROOM_LIST_REASON
+
+        if user.eligibility_reason == ROOM_LIST_REASON:
+            return None
         return user.declared_category
     return None
 
