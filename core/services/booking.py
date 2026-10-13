@@ -23,7 +23,7 @@ from core.models import (
     advance_deadline,
 )
 
-from . import slots
+from . import clock, slots
 from .calendar import assert_slot_open
 from .eligibility import assert_may_reserve_room
 from .errors import Code, OperationRejected
@@ -234,7 +234,8 @@ def create_staff_booking(ctx, *, room: Room, local_date, start_hour: int, end_ho
     if starts[0] <= now:
         raise OperationRejected(Code.RANGE_STARTED)
     horizon_days = settings.STAFF_BOOKING_HORIZON_DAYS
-    if starts[-1] > now + timedelta(days=horizon_days):
+    # Whole Bangkok days, matching the last date the Book a room form offers.
+    if local_date > clock.local_date(now) + timedelta(days=horizon_days):
         raise OperationRejected(Code.OUTSIDE_HORIZON, horizon_days=horizon_days)
     for slot_start in starts:
         assert_slot_open(slot_start, room)

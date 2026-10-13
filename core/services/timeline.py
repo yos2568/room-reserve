@@ -35,6 +35,7 @@ class Bar:
     booking: Booking | None = None
     col_start: int = 0
     col_end: int = 0
+    lane: int = 1  # 2: a booking drawn below a class or closure it overlaps
 
 
 @dataclass
@@ -42,6 +43,7 @@ class TimelineRow:
     room: Room
     bars: list = field(default_factory=list)
     gaps: list = field(default_factory=list)  # (hour, col) a staff booking could start at
+    has_lanes: bool = False
 
 
 def day_timeline(local_date, now) -> dict:
@@ -108,7 +110,13 @@ def day_timeline(local_date, now) -> dict:
             label = booking.user.display_name + (f" · {booking.title}" if booking.title else "")
         bar = place(Bar(kind, hour, hour + 1, label, booking=booking))
         if bar:
-            rows[booking.room_id].bars.append(bar)
+            row = rows[booking.room_id]
+            # A booking made before a class or closure was added keeps its
+            # hour; show both rather than painting one over the other.
+            if hour in taken[booking.room_id]:
+                bar.lane = 2
+                row.has_lanes = True
+            row.bars.append(bar)
             taken[booking.room_id].add(hour)
 
     current = clock.local_time(slots.floor_to_slot(now)).hour if clock.local_date(now) == local_date else None

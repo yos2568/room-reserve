@@ -523,3 +523,23 @@ changes found, and this change fixes:
   and is built only on pages that show it. On the timeline, a walk-in after a
   no-show is the only bar for its hour.
 
+
+**Second review follow-up to D-41–D-44 (13 October 2026).** An independent
+review found, and this change fixes:
+- *D-43.* An instrument staff set on the Users screen is trusted for an account
+  approved from a room list (`User.declared_category_confirmed`, migration 0019);
+  the student's own declaration still is not.
+- *D-41.* The staff booking horizon counts whole Bangkok dates, so every hour of
+  the last date Book a room offers is bookable.
+- *D-42.* A student not on a members-only room's list is told so, instead of the
+  piano/percussion refusal. Door posters offer "use a free hour now" only where
+  walk-ins are allowed (not members-only or approval rooms).
+- *D-44.* The timeline lays out any span of opening hours a calendar override
+  allows (1–24 columns). A booking that overlaps a class or closure added after it
+  is drawn on a second line under it, not hidden behind it.
+
+Kept as is, pending the owner's confirmation: a staff hold has no check-in, so it
+stays *scheduled* during its hour. Staff cancelling the hour in progress release
+it (for example, an event that ended early), and a closure preview does not count
+it as an active session. The staff member who closes or cancels is the one who
+knows whether the room is in use.

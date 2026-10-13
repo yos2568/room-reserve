@@ -4597,7 +4597,7 @@ msgid_plural "%(counter)s minutes left this hour"
 msgstr[0] "ชั่วโมงนี้เหลือ %(counter)s นาที"
 
 msgid "Free again at %(at)s"
-msgstr "ว่างอีกครั้ง %(at)s"
+msgstr "ว่างอีกครั้งเวลา %(at)s น."
 
 msgid "No free hour left today"
 msgstr "วันนี้ไม่มีช่วงว่างแล้ว"
@@ -4609,10 +4609,10 @@ msgid "Needs approval"
 msgstr "ต้องอนุมัติ"
 
 msgid "Request %(at)s"
-msgstr "ส่งคำขอ %(at)s"
+msgstr "ขอจองเวลา %(at)s น."
 
 msgid "Reserve %(at)s"
-msgstr "จอง %(at)s"
+msgstr "จองเวลา %(at)s น."
 
 msgid "Room details"
 msgstr "ข้อมูลห้อง"
@@ -4641,7 +4641,7 @@ msgid "Legend"
 msgstr "คำอธิบายสี"
 
 msgid "Rooms by hour"
-msgstr "ห้องตามชั่วโมง"
+msgstr "ตารางห้องรายชั่วโมง"
 
 msgid "Book %(room)s at %(hour)s:00"
 msgstr "จอง %(room)s เวลา %(hour)s:00"
@@ -4669,3 +4669,6 @@ msgstr "ยังไม่ได้เลือกการจอง"
 
 msgid "Select a bar on the timeline to see its details here."
 msgstr "เลือกแถบในตารางเพื่อดูรายละเอียดที่นี่"
+
+msgid "Overlaps a class or closure"
+msgstr "ซ้อนกับคาบเรียนหรือช่วงปิดห้อง"

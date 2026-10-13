@@ -10,7 +10,7 @@ PR #10** — read "Merge order" before merging either.
 
 ## Honest status
 
-`NOT_DEPLOYED`. Everything below is on PR #10 only. Production still runs the image from
+`NOT_DEPLOYED`. Everything below is on PR #10 only. A second, independent review (13 Oct) found six issues; all but one are fixed (see "Second review" below). Production still runs the image from
 before PR #8 unless someone deployed #8 since 24 September; check `APP_IMAGE` in Docker
 Manager. PR #10 passes 614 tests locally (PostgreSQL 16 and Chromium), and GitHub CI is green on
 `8128219` ("Lint, tests, and verification gate" and "Build and publish immutable image").
@@ -37,6 +37,18 @@ Full details: `docs/decisions.md` D-41 to D-44 plus the "Review follow-up" entry
 | ที่นิสิตขอจองมาไม่ขึ้นในระบบของ admin | Requests appear only on Room approvals; there was no page for future bookings | Upcoming bookings page, Booking timeline, Today card linking to approvals |
 | admin ก็ขึ้นรออนุมัติห้อง | Staff requests waited like a student's | Staff bookings of approval rooms are approved as made |
 
+## Second review (13 Oct, independent reviewer)
+
+| Finding | Status |
+|---|---|
+| Staff-set instrument ignored on room-list accounts | Fixed: new field `declared_category_confirmed` (migration 0019) |
+| Timeline wrong on shortened/longer opening days | Fixed: CSS for 1–24 columns |
+| Last bookable staff date rejected afternoon hours | Fixed: horizon counts whole dates |
+| Conference-room refusal gave piano/percussion text | Fixed: "on its list" message; posters hide the walk-in line where walk-ins are not allowed |
+| Booking hidden behind a later class/closure on the timeline | Fixed: drawn on a second line |
+| Staff hold in progress can be cancelled and released | **Kept; owner to confirm** (D-41…D-44 second follow-up in `docs/decisions.md`) |
+| Thai copy polish (“ว่างอีกครั้งเวลา … น.”, “ขอจองเวลา … น.”, “จองเวลา … น.”, “ตารางห้องรายชั่วโมง”) | Applied |
+
 ## Merge order: PR #9 and PR #10 conflict
 
 A trial merge (`git merge-tree`) of the two branches conflicts in 9 files:
@@ -47,7 +59,7 @@ A trial merge (`git merge-tree`) of the two branches conflicts in 9 files:
 Three of these are not just text conflicts:
 
 1. **Migration numbers collide.** Both add `0016_…` on top of `0015`: #9 has
-   `0016_booking_duration_two_hours`, #10 has `0016_booking_is_staff_booking`, `0017`, `0018`.
+   `0016_booking_duration_two_hours`, #10 has `0016_booking_is_staff_booking`, `0017`, `0018`, `0019`.
    Whichever merges second must renumber its migrations to follow the other's, with the
    dependency updated. Never merge both and leave two `0016` leaves.
 2. **Decision numbers collide.** #9 calls its decision **D-41** too. Renumber the second one
@@ -63,7 +75,7 @@ Three of these are not just text conflicts:
    and staff holds need checking against two-hour rows.
 
 **Recommendation:** merge **#10 first** (bigger, and it touches more shared code). Then update
-#9 on top of it: renumber its migration to `0019`, its decision to D-45, resolve the
+#9 on top of it: renumber its migration to `0020`, its decision to D-45, resolve the
 conflicts, and fix the timeline's bar length. Ask Claude to do that update and run the full
 suite before merging #9. The owner should first confirm #9's rules (303 open to all
 categories with approval; two-hour off-peak bookings) are still wanted alongside D-41's
@@ -75,7 +87,8 @@ staff booking.
 2. Get the digest from the CI log line `pushing manifest for ghcr.io/yos2568/room-reserve:sha-<commit>@sha256:<digest>`.
 3. hPanel → Docker Manager → **roomreserve** → Manage → set `APP_IMAGE` → **Save and deploy**.
 4. **Migrations (required for #10):** `docker exec roomreserve-web-1 python manage.py migrate --noinput`
-   (0016 staff-booking flag, 0017 members-only room + access list, 0018 staff holds may overlap).
+   (0016 staff-booking flag, 0017 members-only room + access list, 0018 staff holds may overlap,
+   0019 staff-confirmed instrument).
 5. **Room settings (required for #10):** `docker exec roomreserve-web-1 python manage.py seed_rooms`
    creates room `ป.โท`.
 6. Optional env: `STAFF_BOOKING_HORIZON_DAYS` (default 90). No other new variables.

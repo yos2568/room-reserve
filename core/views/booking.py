@@ -101,7 +101,12 @@ def book_slot(request, room_id: int, slot: str):
     if not _may_reserve(room, request.user):
         # Never present a form that the server is certain to refuse. The grid
         # explains the same thing on the cell itself, with the reason.
-        messages.warning(request, message_for(Code.ROOM_NOT_FOR_INSTRUMENT))
+        refusal = (
+            Code.ROOM_MEMBERS_ONLY
+            if room.members_only and room.pk not in room_access.member_room_ids(request.user)
+            else Code.ROOM_NOT_FOR_INSTRUMENT
+        )
+        messages.warning(request, message_for(refusal))
         return redirect(_grid_url(slot_start))
 
     if request.method == "POST":
@@ -172,7 +177,7 @@ def confirm_booking(request, room_id: int, slot: str):
         )
 
     add_outcome_message(request, outcome)
-    if outcome.code in {Code.ROOM_NOT_FOR_INSTRUMENT, Code.CLOSED}:
+    if outcome.code in {Code.ROOM_NOT_FOR_INSTRUMENT, Code.ROOM_MEMBERS_ONLY, Code.CLOSED}:
         # Neither refusal can be resolved by anything on this page, so send the
         # student back to the grid rather than re-offering the same button.
         return redirect(_grid_url(slot_start))

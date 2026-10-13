@@ -27,7 +27,7 @@
         <p class="text-lg font-medium">{% blocktrans with open=policy.opening_hour close=policy.closing_hour %}Open Monday to Friday, {{ open }}:00–{{ close }}:00{% endblocktrans %}</p>
         <ol class="mx-auto mt-3 max-w-[150mm] list-decimal space-y-1 ps-6 text-start text-base">
           <li>{% blocktrans with minutes=policy.checkin_grace_minutes %}If you booked this hour, check in within {{ minutes }} minutes of the start.{% endblocktrans %}</li>
-          <li>{% trans "If the hour is free, confirm you are here to use it now." %}</li>
+          {% if not card.room.members_only and not card.room.requires_approval %}<li>{% trans "If the hour is free, confirm you are here to use it now." %}</li>{% endif %}
           <li>{% trans "The session ends at the hour boundary." %}</li>
         </ol>
         <p class="mt-4 break-all text-sm text-slate-700">{{ card.target }}</p>

@@ -645,7 +645,8 @@ def set_declared_category(*, user: User, declared_category: str, actor) -> User:
 
     before = user.declared_category
     user.declared_category = declared_category
-    user.save(update_fields=["declared_category"])
+    user.declared_category_confirmed = bool(declared_category)
+    user.save(update_fields=["declared_category", "declared_category_confirmed"])
     record_audit(
         action="user.declared_category_set",
         entity_type="User",

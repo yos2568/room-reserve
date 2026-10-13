@@ -51,13 +51,13 @@
                     <div class="flex min-w-0 flex-col justify-center pr-3">
                       <span class="truncate text-sm font-semibold text-[#10264a]">{{ row.room }}</span>
                     </div>
-                    <div class="timeline-track timeline-cols-{{ timeline.columns|length }}">
+                    <div class="timeline-track timeline-cols-{{ timeline.columns|length }}{% if row.has_lanes %} has-lanes{% endif %}">
                       {% for col_hour, col in row.gaps %}
                         <a class="timeline-empty tl-s{{ col }} tl-e{{ col|add:1 }}" href="{% url 'core:staff_book_room' %}?room={{ row.room.pk }}&date={{ local_date|date:'Y-m-d' }}&start_hour={{ col_hour }}"><span class="sr-only">{% blocktrans with room=row.room hour=col_hour|stringformat:"02d" %}Book {{ room }} at {{ hour }}:00{% endblocktrans %}</span></a>
                       {% endfor %}
                       {% for bar in row.bars %}
                         {% if bar.booking %}
-                          <a class="timeline-bar is-{{ bar.kind }} tl-s{{ bar.col_start }} tl-e{{ bar.col_end }}{% if selected and selected.pk == bar.booking.pk %} is-selected{% endif %}" href="?date={{ local_date|date:'Y-m-d' }}&booking={{ bar.booking.pk }}#detail" title="{{ bar.label }}" {% if selected and selected.pk == bar.booking.pk %}aria-current="true"{% endif %}>{{ bar.label }}</a>
+                          <a class="timeline-bar is-{{ bar.kind }} tl-s{{ bar.col_start }} tl-e{{ bar.col_end }}{% if bar.lane == 2 %} lane-2{% endif %}{% if selected and selected.pk == bar.booking.pk %} is-selected{% endif %}" href="?date={{ local_date|date:'Y-m-d' }}&booking={{ bar.booking.pk }}#detail" title="{{ bar.label }}" {% if selected and selected.pk == bar.booking.pk %}aria-current="true"{% endif %}>{{ bar.label }}{% if bar.lane == 2 %}<span class="sr-only"> · {% trans "Overlaps a class or closure" %}</span>{% endif %}</a>
                         {% else %}
                           <span class="timeline-bar is-{{ bar.kind }} tl-s{{ bar.col_start }} tl-e{{ bar.col_end }}" title="{{ bar.label }}">{% if bar.kind == "class" %}{% trans "Class" %}{% else %}{% trans "Closed" %}{% endif %}{% if bar.label %} · {{ bar.label }}{% endif %}</span>
                         {% endif %}

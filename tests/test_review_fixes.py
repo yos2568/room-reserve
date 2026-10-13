@@ -6,6 +6,7 @@ BASE_MOMENT is Monday 14 September 2026, 10:40 in Bangkok.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from pathlib import Path
 
 import pytest
 from django.urls import reverse
@@ -218,3 +219,95 @@ def test_the_refreshed_timetable_keeps_the_repeated_lists_hidden(client, frozen,
     fragment = client.get(reverse("core:availability")).content.decode()
     assert "Bookable later today" not in fragment and "หลังจากนี้" not in fragment
     assert client.get(reverse("core:availability")).context["board"] is None  # not built for the fragment
+
+
+# --- Second review (13 Oct) -------------------------------------------------------
+
+
+def test_an_instrument_staff_set_counts_for_a_room_listed_account(client, frozen, all_rooms, staff_user):
+    user = _register_listed(all_rooms["ป.โท"], "6900000135", "listed@gmail.com", declared_category="PIANO")
+    assert instruments.category_for_user(user) is None
+    client.force_login(staff_user)
+    client.post(
+        reverse("core:staff_set_declared_category", args=[user.pk]),
+        {"declared_category": "PIANO", "operation_key": "set-piano-1"},
+    )
+    user.refresh_from_db()
+    assert instruments.category_for_user(user) == "PIANO"
+    assert helpers.advance_booking(user, all_rooms["303"], slots.slot_start_for(TUESDAY, 10)).ok
+
+
+def test_staff_may_book_any_hour_of_the_last_date_the_form_offers(
+    client, frozen, all_rooms, staff_user, settings
+):
+    settings.STAFF_BOOKING_HORIZON_DAYS = 4  # the last date is Friday 18 September
+    client.force_login(staff_user)
+    page = client.get(reverse("core:staff_book_room"))
+    assert page.context["max_date"] == date(2026, 9, 18)
+    response = client.post(
+        reverse("core:staff_create_booking"),
+        {
+            "room": all_rooms["304"].pk,
+            "date": "2026-09-18",
+            "start_hour": 17,
+            "end_hour": 20,
+            "title": "Recital",
+        },
+    )
+    assert response.status_code == 302
+    assert Booking.objects.filter(user=staff_user).count() == 3
+    late = client.post(
+        reverse("core:staff_create_booking"),
+        {"room": all_rooms["304"].pk, "date": "2026-09-19", "start_hour": 10, "end_hour": 11},
+    )
+    assert late.status_code != 302
+
+
+def test_a_student_not_on_the_list_is_told_why_the_conference_room_is_closed_to_them(
+    client, frozen, all_rooms, student
+):
+    client.force_login(student)
+    room = all_rooms["ป.โท"]
+    url = reverse("core:book_slot", args=[room.pk, slots.encode_slot(slots.slot_start_for(TUESDAY, 10))])
+    shown = [str(m) for m in client.get(url, follow=True).context["messages"]]
+    assert any("on its list" in m or "รายชื่อ" in m for m in shown)
+    assert not any("piano" in m.lower() or "เปียโน" in m for m in shown)
+
+
+def test_the_timeline_fits_a_day_with_shortened_opening_hours(frozen, all_rooms):
+    from core.models import CalendarOverride
+
+    CalendarOverride.objects.create(local_date=TUESDAY, is_open=True, open_hour=10, close_hour=14)
+    timeline = day_timeline(TUESDAY, clock.now())
+    assert timeline["columns"] == [10, 11, 12, 13]
+    css = Path("core/static/css/tailwind.css").read_text()
+    assert ".timeline-cols-4" in css and ".tl-s24" in css and ".tl-e25" in css
+
+
+def test_a_booking_under_a_later_closure_gets_its_own_line(frozen, all_rooms, student, staff_user):
+    from core.models import Closure
+
+    room = all_rooms["3"]
+    assert helpers.advance_booking(student, room, slots.slot_start_for(TUESDAY, 11)).ok
+    Closure.objects.create(
+        room=room,
+        starts_at=slots.slot_start_for(TUESDAY, 11),
+        ends_at=slots.slot_start_for(TUESDAY, 12),
+        reason="Tuning",
+        created_by=staff_user,
+    )
+    rows = {row.room.pk: row for _, group in day_timeline(TUESDAY, clock.now())["groups"] for row in group}
+    row = rows[room.pk]
+    at_eleven = sorted((bar.kind, bar.lane) for bar in row.bars if bar.start_hour == 11)
+    assert at_eleven == [("booked", 2), ("closed", 1)]
+    assert row.has_lanes
+
+
+def test_posters_offer_walk_in_only_where_walk_ins_are_allowed(client, frozen, all_rooms, staff_user):
+    from django.utils import translation
+
+    client.force_login(staff_user)
+    with translation.override("en"):
+        html = client.get(reverse("core:staff_poster_sheet")).content.decode()
+    walk_in_rooms = Room.objects.filter(is_active=True, members_only=False, requires_approval=False).count()
+    assert html.count("If the hour is free, confirm you are here to use it now.") == walk_in_rooms
